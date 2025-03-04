@@ -1,3 +1,5 @@
+use std::env;
+
 pub fn lrngit_usage() -> &'static str {
     let usage = r"
 lrngit's cli.
@@ -17,4 +19,8 @@ Options:
 ";
 
     return usage;
+}
+
+pub fn change_wkdir(dir: &str) {
+    env::set_current_dir(dir).expect("Failed to change directory");
 }

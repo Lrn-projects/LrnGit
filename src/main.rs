@@ -1,3 +1,4 @@
+mod init;
 pub mod utils;
 
 use std::env;
@@ -40,7 +41,7 @@ fn main() {
     };
 
     match command {
-        Commands::Init => println!("prot"),
+        Commands::Init => init::init_local_repo(),
         Commands::Version => lrncore::usage_exit::command_usage(&lrngit_version()),
         Commands::Help => lrncore::usage_exit::command_usage(&utils::lrngit_usage()),
     }
