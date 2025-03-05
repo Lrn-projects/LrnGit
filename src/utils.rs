@@ -10,6 +10,7 @@ Usage: lrngit command [options]
 
 Commands:
     init            Init a local repository
+    add             Add file to local repository
     help            Show this help message
 
 Options:
