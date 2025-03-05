@@ -1,17 +1,42 @@
-use std::fs;
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
 
-use crate::utils;
+// use crate::utils;
 
 pub fn init_local_repo() {
-    let lrngit_directory_name: &str = ".lrngit";
     // create local repository directory
-    let create_lrp_dir = fs::create_dir(lrngit_directory_name);
-    if let Err(err) = create_lrp_dir {
-        lrncore::logs::error_log_with_code("Error initializing local repository", &err.to_string());
+    let current_dir = env::current_dir();
+    let current_repo: PathBuf;
+    match current_dir {
+        Ok(dir) => current_repo = dir.join(".lrngit"),
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Failed to get current directory: {}", e));
+            return;
+        }
+    };
+    if Path::new(".lrngit").exists() {
+        lrncore::logs::info_log(&format!(
+            "Reinitialized existing Git repository in {:?}",
+            current_repo
+        ));
+        let remove_dir = fs::remove_dir_all(".lrngit");
+        if let Err(e) = remove_dir {
+            lrncore::logs::error_log(&format!(
+                "Failed to remove existing .lrngit directory: {}",
+                e
+            ));
+        }
     }
-    utils::change_wkdir(lrngit_directory_name);
-    let create_hook_dir = fs::create_dir_all("hook");
-    if let Err(err) = create_hook_dir {
-        lrncore::logs::error_log_with_code("Error initializing local repository", &err.to_string());
-    }
+    Command::new("mkdir")
+        .arg(".lrngit")
+        .arg(".lrngit/hooks")
+        .arg(".lrngit/info")
+        .arg(".lrngit/logs")
+        .arg(".lrngit/objects")
+        .arg(".lrngit/refs")
+        .spawn()
+        .expect("Failed to create all directories");
 }
