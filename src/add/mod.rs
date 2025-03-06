@@ -8,12 +8,22 @@ use crate::utils;
 
 pub fn add_to_local_repo(arg: String) {
     let read_file = fs::read_to_string(arg.clone());
-    let mut folder: &str;
+    let mut folder: &str = "";
     if arg.contains("/") {
         let folder_split: Vec<&str> = arg.split("/").collect();
         folder = folder_split[0];
         println!("{}", folder);
     }
+    // if there's a folder before the file name, create a tree
+    if folder != "" {
+        let mut new_hash = Sha1::new();
+        new_hash.update(folder);
+        let hash_result = new_hash.finalize();
+        let folder_hash = format!("{:#x}", hash_result);
+        println!("prout {}", folder_hash);
+        // utils::add_folder(&folder_hash);
+    } // else
+    // just hash and convert the file to blob and add it to local repository
 
     let file: String;
     match read_file {
