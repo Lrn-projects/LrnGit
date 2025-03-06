@@ -1,7 +1,10 @@
 use sha1::{Digest, Sha1};
 use std::fs;
+use std::io::Write;
 
 use blob::{Blob, Standard};
+
+use crate::utils;
 
 pub fn add_to_local_repo(arg: String) {
     println!("{}", arg);
@@ -19,7 +22,13 @@ pub fn add_to_local_repo(arg: String) {
     let hash_result = new_hash.finalize();
     let new_blob: Blob<Standard> = Blob::from(hash_result.to_vec());
     let hash_result_hex = format!("{:#x}", hash_result);
-    let mut split_hash_result_hex = hash_result_hex.chars().collect::<Vec<char>>();
-    let mut new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
-    println!("{}", new_folder_name);
+    let split_hash_result_hex = hash_result_hex.chars().collect::<Vec<char>>();
+    let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
+    utils::add_folder(&new_folder_name);
+    let mut file = fs::File::create(format!(
+        ".lrngit/objects/{}/{}",
+        new_folder_name, hash_result_hex
+    ))
+    .unwrap();
+    file.write_all(&new_blob).unwrap();
 }

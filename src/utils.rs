@@ -27,7 +27,7 @@ pub fn change_wkdir(dir: &str) {
 }
 
 pub fn add_folder(dir: &str) {
-    let new_dir_path = format!(".lrngit/{}", dir);
+    let new_dir_path = format!(".lrngit/objects/{}", dir);
     Command::new("mkdir")
         .arg(new_dir_path)
         .spawn()
