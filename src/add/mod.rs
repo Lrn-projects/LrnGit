@@ -24,9 +24,10 @@ pub fn add_to_local_repo(arg: String) {
     let split_hash_result_hex = hash_result_hex.chars().collect::<Vec<char>>();
     let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
     utils::add_folder(&new_folder_name);
+    let new_file_name = format!("{}", split_hash_result_hex[2..].iter().collect::<String>());
     let file = fs::File::create(format!(
         ".lrngit/objects/{}/{}",
-        new_folder_name, hash_result_hex
+        new_folder_name, new_file_name
     ));
     let mut file_result: File;
     match file {
@@ -43,4 +44,5 @@ pub fn add_to_local_repo(arg: String) {
         }
     }
     file_result.write_all(&new_blob).unwrap();
+    println!("{}", hash_result_hex)
 }
