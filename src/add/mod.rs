@@ -7,7 +7,14 @@ use blob::{Blob, Standard};
 use crate::utils;
 
 pub fn add_to_local_repo(arg: String) {
-    let read_file = fs::read_to_string(arg);
+    let read_file = fs::read_to_string(arg.clone());
+    let mut folder: &str;
+    if arg.contains("/") {
+        let folder_split: Vec<&str> = arg.split("/").collect();
+        folder = folder_split[0];
+        println!("{}", folder);
+    }
+
     let file: String;
     match read_file {
         Ok(file_as_string) => file = file_as_string,
@@ -44,5 +51,6 @@ pub fn add_to_local_repo(arg: String) {
         }
     }
     file_result.write_all(&new_blob).unwrap();
-    println!("{}", hash_result_hex)
 }
+
+pub fn add_folder(folder: &str) {}
