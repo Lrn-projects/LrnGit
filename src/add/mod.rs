@@ -1,5 +1,5 @@
 use sha1::{Digest, Sha1};
-use std::fs;
+use std::fs::{self, File};
 use std::io::Write;
 
 use blob::{Blob, Standard};
@@ -7,7 +7,6 @@ use blob::{Blob, Standard};
 use crate::utils;
 
 pub fn add_to_local_repo(arg: String) {
-    println!("{}", arg);
     let read_file = fs::read_to_string(arg);
     let file: String;
     match read_file {
@@ -25,10 +24,23 @@ pub fn add_to_local_repo(arg: String) {
     let split_hash_result_hex = hash_result_hex.chars().collect::<Vec<char>>();
     let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
     utils::add_folder(&new_folder_name);
-    let mut file = fs::File::create(format!(
+    let file = fs::File::create(format!(
         ".lrngit/objects/{}/{}",
         new_folder_name, hash_result_hex
-    ))
-    .unwrap();
-    file.write_all(&new_blob).unwrap();
+    ));
+    let mut file_result: File;
+    match file {
+        Ok(f) => {
+            file_result = f;
+            lrncore::logs::info_log("File added to local repository")
+        }
+        Err(e) => {
+            lrncore::logs::error_log_with_code(
+                "Failed to add file to local repository",
+                &e.to_string(),
+            );
+            return;
+        }
+    }
+    file_result.write_all(&new_blob).unwrap();
 }

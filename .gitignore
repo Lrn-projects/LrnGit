@@ -30,3 +30,6 @@ Cargo.lock
 
 # Operating system
 .DS_Store
+
+# Compilation
+.lrngit

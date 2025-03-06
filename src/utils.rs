@@ -30,6 +30,8 @@ pub fn add_folder(dir: &str) {
     let new_dir_path = format!(".lrngit/objects/{}", dir);
     Command::new("mkdir")
         .arg(new_dir_path)
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
         .spawn()
         .expect("Failed to create all directories");
 }
