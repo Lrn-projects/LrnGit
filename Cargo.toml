@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-blob = "=0.2.0"
+blob = "=0.3.0"
 lrncore = { git = "https://github.com/Lrn-projects/LrnCore.git", version = "0.1.0", branch="main" }
+sha1 = "0.10.6"
