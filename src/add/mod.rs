@@ -1,6 +1,5 @@
-use core::hash;
-use sha1::{Digest, Sha1, Sha1Core};
-use std::{fmt::format, fs};
+use sha1::{Digest, Sha1};
+use std::fs;
 
 use blob::{Blob, Standard};
 
@@ -20,5 +19,7 @@ pub fn add_to_local_repo(arg: String) {
     let hash_result = new_hash.finalize();
     let new_blob: Blob<Standard> = Blob::from(hash_result.to_vec());
     let hash_result_hex = format!("{:#x}", hash_result);
-    println!("{}", hash_result_hex);
+    let mut split_hash_result_hex = hash_result_hex.chars().collect::<Vec<char>>();
+    let mut new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
+    println!("{}", new_folder_name);
 }

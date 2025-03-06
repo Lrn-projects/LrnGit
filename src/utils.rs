@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, process::Command};
 
 pub fn lrngit_usage() -> &'static str {
     let usage = r"
@@ -24,4 +24,12 @@ Options:
 
 pub fn change_wkdir(dir: &str) {
     env::set_current_dir(dir).expect("Failed to change directory");
+}
+
+pub fn add_folder(dir: &str) {
+    let new_dir_path = format!(".lrngit/{}", dir);
+    Command::new("mkdir")
+        .arg(new_dir_path)
+        .spawn()
+        .expect("Failed to create all directories");
 }
