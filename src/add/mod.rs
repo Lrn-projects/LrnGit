@@ -12,7 +12,7 @@ pub fn add_to_local_repo(arg: String) {
         let folder_split: Vec<&str> = arg.split("/").collect();
         folder_vec = folder_split;
     }
-    recursive_add(folder_vec, "");
+    recursive_add(folder_vec, "".to_string());
 }
 
 fn add_tree(folder: &str) {
@@ -63,13 +63,14 @@ fn add_blob(arg: &str) -> String {
     hash_result_hex
 }
 
-fn recursive_add(mut arg_vec: Vec<&str>, child: &str) {
+fn recursive_add(mut arg_vec: Vec<&str>, child: String) {
     let last = arg_vec.last().unwrap();
-    println!("last {}", last);
-    let mut file: &str = "";
+    // println!("last {}", last);
+    let mut child: String = "".to_string();
     if last.contains(".") {
-        let new_blob = add_blob(&last);
-        file = &new_blob
+        let file_path = utils::concat_elem_vec(arg_vec.clone());
+        let new_blob = add_blob(&file_path);
+        child = new_blob
     } else {
         let new_tree = add_tree(&last);
     }
