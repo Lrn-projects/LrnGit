@@ -7,24 +7,31 @@ use blob::{Blob, Standard};
 use crate::utils;
 
 pub fn add_to_local_repo(arg: String) {
-    let read_file = fs::read_to_string(arg.clone());
-    let mut folder: &str = "";
+    let mut folder_vec: Vec<&str> = Vec::new();
     if arg.contains("/") {
         let folder_split: Vec<&str> = arg.split("/").collect();
-        folder = folder_split[0];
-        println!("{}", folder);
+        folder_vec = folder_split;
     }
-    // if there's a folder before the file name, create a tree
-    if folder != "" {
-        let mut new_hash = Sha1::new();
-        new_hash.update(folder);
-        let hash_result = new_hash.finalize();
-        let folder_hash = format!("{:#x}", hash_result);
-        println!("prout {}", folder_hash);
-        // utils::add_folder(&folder_hash);
-    } // else
-    // just hash and convert the file to blob and add it to local repository
+    for each in folder_vec {
+        // if there's a folder, create a tree
+        if !each.contains(".") {
+            println!("{}", each);
+            add_tree(each);
+        } else {
+            add_blob(&arg);
+        }
+    }
+}
 
+pub fn add_tree(folder: &str) {
+    let mut new_hash = Sha1::new();
+    new_hash.update(folder);
+    let hash_result = new_hash.finalize();
+    let folder_hash = format!("{:#x}", hash_result);
+}
+
+pub fn add_blob(arg: &str) {
+    let read_file = fs::read_to_string(arg);
     let file: String;
     match read_file {
         Ok(file_as_string) => file = file_as_string,
@@ -62,5 +69,3 @@ pub fn add_to_local_repo(arg: String) {
     }
     file_result.write_all(&new_blob).unwrap();
 }
-
-pub fn add_folder(folder: &str) {}
