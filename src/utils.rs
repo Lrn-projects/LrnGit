@@ -35,22 +35,3 @@ pub fn add_folder(dir: &str) {
         .spawn()
         .expect("Failed to create all directories");
 }
-
-//TODO
-// utils function to concatenate element of vec
-// vec["src", "main.rs"] -> "src/main.rs"
-pub fn concat_elem_vec(vec: Vec<&str>) -> String {
-    let mut string: String = "".to_string();
-    // let last_elem: &str = "";
-    for each in vec {
-        if each.contains(".") {
-            string += &format!("{}", each);
-
-            return string;
-        }
-        string += &format!("{}/", each);
-    }
-    return "".to_string();
-}
-
-// and reverse function

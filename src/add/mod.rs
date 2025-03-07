@@ -45,7 +45,10 @@ pub fn add_to_local_repo(arg: String) {
     recursive_add(folder_vec, [0u8; 20], "".to_string(), "".to_string());
 }
 
-fn add_tree(folder: &str, child: [u8; 20], name: &str, child_path: &str) {
+//TODO
+// can add new item to the tree vector, like update
+// the current tree and not recreate one or panic if already exist
+fn add_tree(folder: &str, child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     let mut new_hash = Sha1::new();
     new_hash.update(folder);
     let hash_result = new_hash.finalize();
@@ -60,9 +63,10 @@ fn add_tree(folder: &str, child: [u8; 20], name: &str, child_path: &str) {
         Ok(f) => file = f,
         Err(e) => {
             lrncore::logs::error_log(&format!("Failed to create new tree file: {}", e));
-            return;
+            return [0u8; 20];
         }
     };
+    println!("debug {}", child_path);
     let mode = helpers::define_tree_mode(child_path);
     let new_tree_entry: TreeEntry = TreeEntry {
         mode: mode,
@@ -77,6 +81,7 @@ fn add_tree(folder: &str, child: [u8; 20], name: &str, child_path: &str) {
     };
     file.write_all(b"").unwrap();
     println!("{:?}", new_tree);
+    hash_result.into()
 }
 
 /// The function `add_blob` reads a file, calculates its SHA-1 hash, creates a new blob, and stores the
@@ -153,15 +158,17 @@ fn recursive_add(
         return;
     }
     let last = arg_vec.last().unwrap();
+    let file_child_path = arg_vec.join("/");
     if last.contains(".") {
-        let file_child_path = utils::concat_elem_vec(arg_vec.clone());
-        let new_blob = add_blob(&file_child_path);
+        child_path = file_child_path;
+        let new_blob = add_blob(&child_path);
         child = new_blob;
-        name = last.to_string();
-        child_path = file_child_path
     } else {
-        add_tree(&last, child.clone(), &name, &child_path);
+        let new_tree = add_tree(&last, child.clone(), &name, &child_path);
+        child = new_tree;
+        child_path = file_child_path;
     }
+    name = last.to_string();
     arg_vec.pop();
     recursive_add(arg_vec, child, name, child_path);
 }
