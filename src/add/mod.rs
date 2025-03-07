@@ -23,12 +23,15 @@ use crate::utils;
 /// (bytes). This array is used to store the SHA-1 hash value of the file or directory represented by
 /// the `TreeEntry`. The SHA-1 hash is typically used to
 #[derive(Debug)]
+#[allow(dead_code)]
 struct TreeEntry {
     mode: u32,
     sha1: [u8; 20],
     name: String,
 }
 
+#[derive(Debug)]
+#[allow(dead_code)]
 struct Tree {
     entries: Vec<TreeEntry>,
 }
@@ -51,13 +54,29 @@ fn add_tree(folder: &str, child: [u8; 20], name: &str, child_path: &str) {
     let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
     utils::add_folder(&new_folder_name);
     let new_file_name = format!("{}", split_hash_result_hex[2..].iter().collect::<String>());
+    let new_tree_path = format!(".lrngit/objects/{}/{}", new_folder_name, new_file_name);
+    let mut file: File;
+    match File::create(&new_tree_path) {
+        Ok(f) => file = f,
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Failed to create new tree file: {}", e));
+            return;
+        }
+    };
     let mode = helpers::define_tree_mode(child_path);
     let new_tree_entry: TreeEntry = TreeEntry {
         mode: mode,
         sha1: child,
         name: name.to_string(),
     };
-    println!("{:?}", new_tree_entry);
+    let mut tree_entry_vec: Vec<TreeEntry> = Vec::new();
+    tree_entry_vec.push(new_tree_entry);
+
+    let new_tree: Tree = Tree {
+        entries: tree_entry_vec,
+    };
+    file.write_all(b"").unwrap();
+    println!("{:?}", new_tree);
 }
 
 /// The function `add_blob` reads a file, calculates its SHA-1 hash, creates a new blob, and stores the
