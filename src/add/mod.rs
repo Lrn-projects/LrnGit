@@ -12,32 +12,24 @@ pub fn add_to_local_repo(arg: String) {
         let folder_split: Vec<&str> = arg.split("/").collect();
         folder_vec = folder_split;
     }
-    for each in folder_vec {
-        // if there's a folder, create a tree
-        if !each.contains(".") {
-            println!("{}", each);
-            add_tree(each);
-        } else {
-            add_blob(&arg);
-        }
-    }
+    recursive_add(folder_vec, "");
 }
 
-pub fn add_tree(folder: &str) {
+fn add_tree(folder: &str) {
     let mut new_hash = Sha1::new();
     new_hash.update(folder);
     let hash_result = new_hash.finalize();
     let folder_hash = format!("{:#x}", hash_result);
 }
 
-pub fn add_blob(arg: &str) {
+fn add_blob(arg: &str) -> String {
     let read_file = fs::read_to_string(arg);
     let file: String;
     match read_file {
         Ok(file_as_string) => file = file_as_string,
         Err(e) => {
             lrncore::logs::error_log(&format!("Failed to read the file: {}", e));
-            return;
+            return "".to_string();
         }
     }
     let mut new_hash = Sha1::new();
@@ -64,8 +56,23 @@ pub fn add_blob(arg: &str) {
                 "Failed to add file to local repository",
                 &e.to_string(),
             );
-            return;
+            return "".to_string();
         }
     }
     file_result.write_all(&new_blob).unwrap();
+    hash_result_hex
+}
+
+fn recursive_add(mut arg_vec: Vec<&str>, child: &str) {
+    let last = arg_vec.last().unwrap();
+    println!("last {}", last);
+    let mut file: &str = "";
+    if last.contains(".") {
+        let new_blob = add_blob(&last);
+        file = &new_blob
+    } else {
+        let new_tree = add_tree(&last);
+    }
+    arg_vec.pop();
+    recursive_add(arg_vec, child);
 }

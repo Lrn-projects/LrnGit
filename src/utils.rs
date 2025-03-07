@@ -1,6 +1,4 @@
-use std::{env, fs, process::Command};
-
-use sha1::{Digest, Sha1};
+use std::{env, process::Command};
 
 pub fn lrngit_usage() -> &'static str {
     let usage = r"
