@@ -1,9 +1,10 @@
 use sha1::{Digest, Sha1};
-use std::fmt::LowerHex;
 use std::fs::{self, File};
 use std::io::Write;
 
 use blob::{Blob, Standard};
+
+mod helpers;
 
 use crate::utils;
 
@@ -21,10 +22,11 @@ use crate::utils;
 /// * `sha1`: The `sha1` property in the `TreeEntry` struct is an array of 20 unsigned 8-bit integers
 /// (bytes). This array is used to store the SHA-1 hash value of the file or directory represented by
 /// the `TreeEntry`. The SHA-1 hash is typically used to
+#[derive(Debug)]
 struct TreeEntry {
     mode: u32,
-    name: String,
     sha1: [u8; 20],
+    name: String,
 }
 
 struct Tree {
@@ -37,19 +39,25 @@ pub fn add_to_local_repo(arg: String) {
         let folder_split: Vec<&str> = arg.split("/").collect();
         folder_vec = folder_split;
     }
-    recursive_add(folder_vec, [0u8; 20], "".to_string());
+    recursive_add(folder_vec, [0u8; 20], "".to_string(), "".to_string());
 }
 
-fn add_tree(folder: &str, child: [u8; 20], name: &str) {
+fn add_tree(folder: &str, child: [u8; 20], name: &str, child_path: &str) {
     let mut new_hash = Sha1::new();
     new_hash.update(folder);
     let hash_result = new_hash.finalize();
     let folder_hash = format!("{:#x}", hash_result);
+    let split_hash_result_hex = folder_hash.chars().collect::<Vec<char>>();
+    let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
+    utils::add_folder(&new_folder_name);
+    let new_file_name = format!("{}", split_hash_result_hex[2..].iter().collect::<String>());
+    let mode = helpers::define_tree_mode(child_path);
     let new_tree_entry: TreeEntry = TreeEntry {
-        mode: (),
-        name: name.to_string(),
+        mode: mode,
         sha1: child,
+        name: name.to_string(),
     };
+    println!("{:?}", new_tree_entry);
 }
 
 /// The function `add_blob` reads a file, calculates its SHA-1 hash, creates a new blob, and stores the
@@ -116,19 +124,25 @@ fn add_blob(arg: &str) -> [u8; 20] {
 /// * `child`: The `child` parameter in the `recursive_add` function seems to represent a string value
 /// that is either empty or contains some data. It is used as an argument in the function calls to
 /// `add_tree` and `recursive_add`.
-fn recursive_add(mut arg_vec: Vec<&str>, mut child: [u8; 20], mut name: String) {
+fn recursive_add(
+    mut arg_vec: Vec<&str>,
+    mut child: [u8; 20],
+    mut name: String,
+    mut child_path: String,
+) {
     if arg_vec.is_empty() {
         return;
     }
     let last = arg_vec.last().unwrap();
     if last.contains(".") {
-        let file_path = utils::concat_elem_vec(arg_vec.clone());
-        let new_blob = add_blob(&file_path);
+        let file_child_path = utils::concat_elem_vec(arg_vec.clone());
+        let new_blob = add_blob(&file_child_path);
         child = new_blob;
         name = last.to_string();
+        child_path = file_child_path
     } else {
-        add_tree(&last, child.clone(), &name);
+        add_tree(&last, child.clone(), &name, &child_path);
     }
     arg_vec.pop();
-    recursive_add(arg_vec, child, name);
+    recursive_add(arg_vec, child, name, child_path);
 }
