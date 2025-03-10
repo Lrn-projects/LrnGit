@@ -43,6 +43,7 @@ pub fn add_to_local_repo(arg: String) {
         folder_vec = folder_split;
     }
     recursive_add(folder_vec, [0u8; 20], "".to_string(), "".to_string());
+    utils::read_blob_file();
 }
 
 //TODO

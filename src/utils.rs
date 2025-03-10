@@ -1,4 +1,6 @@
-use std::{env, process::Command};
+use std::{env, fs, io::Read, path::Path, process::Command};
+
+use blob::{Blob, Standard};
 
 pub fn lrngit_usage() -> &'static str {
     let usage = r"
@@ -26,7 +28,12 @@ pub fn change_wkdir(dir: &str) {
     env::set_current_dir(dir).expect("Failed to change directory");
 }
 
+//TODO
+//Fix when path exist
 pub fn add_folder(dir: &str) {
+    if Path::new(dir).exists() {
+        return;
+    }
     let new_dir_path = format!(".lrngit/objects/{}", dir);
     let mut mkdir = Command::new("mkdir")
         .arg(new_dir_path)
@@ -38,4 +45,10 @@ pub fn add_folder(dir: &str) {
     if !wait_mkdir.success() {
         panic!("Failed ot execute the mkdir command");
     }
+}
+
+pub fn read_blob_file() {
+    let read_file = fs::File::open(".lrngit/objects/a9/4a8fe5ccb19ba61c4c0873d391e987982fbbd3")
+        .expect("Failed to open file");
+    println!("file: {:?}", read_file);
 }
