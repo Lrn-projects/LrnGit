@@ -1,3 +1,8 @@
+/*
+Module handling all the add command, creating new blob objects or tree and saving them
+in local repository
+*/
+
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
 use serde::{Deserialize, Serialize};
@@ -133,6 +138,7 @@ fn add_tree(folder: &str, child: [u8; 20], name: &str, child_path: &str) -> [u8;
 /// The function `add_blob` returns a `String` which is the hexadecimal representation of the SHA-1 hash
 /// of the file content that was read and added to the local repository.
 fn add_blob(arg: &str) -> [u8; 20] {
+    // read file content
     let read_file = fs::read_to_string(arg);
     let file: String;
     match read_file {
@@ -142,10 +148,8 @@ fn add_blob(arg: &str) -> [u8; 20] {
             return [0u8; 20];
         }
     }
-    let mut new_hash = Sha1::new();
-    new_hash.update(file);
-    let hash_result = new_hash.finalize();
-    let new_blob: Blob<Standard> = Blob::from(hash_result.to_vec());
+    // creation of blob object
+    let new_blob: Blob<Standard> = Blob::from(file.as_bytes());
     let blob_object: BlobObject = BlobObject {
         header: blob_object_header("blob", new_blob.len()),
         content: new_blob.to_vec(),
@@ -153,8 +157,14 @@ fn add_blob(arg: &str) -> [u8; 20] {
     // concat the blob object from struct
     let mut blob_object_concat = blob_object.header.clone();
     blob_object_concat.extend(blob_object.content.clone());
+    // hash file content with SHA-1
+    let mut new_hash = Sha1::new();
+    new_hash.update(&blob_object_concat);
+    let hash_result = new_hash.finalize();
+    // hash to readable format
     let hash_result_hex = format!("{:#x}", hash_result);
     let split_hash_result_hex = hash_result_hex.chars().collect::<Vec<char>>();
+    // creation of file to local repo
     let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
     utils::add_folder(&new_folder_name);
     let new_file_name = format!("{}", split_hash_result_hex[2..].iter().collect::<String>());
@@ -201,6 +211,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
             return [0u8; 20];
         }
     }
+    // write compress file with zlib to file
     file_result.write_all(&compressed_bytes_vec).unwrap();
     hash_result.into()
 }
