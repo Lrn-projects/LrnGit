@@ -31,7 +31,10 @@ pub fn change_wkdir(dir: &str) {
 //TODO
 //Fix when path exist
 pub fn add_folder(dir: &str) {
-    if Path::new(dir).exists() {
+    if dir.is_empty() {
+        return;
+    }
+    if Path::new(&format!(".lrngit/objects/{}", dir)).exists() {
         return;
     }
     let new_dir_path = format!(".lrngit/objects/{}", dir);
@@ -43,12 +46,16 @@ pub fn add_folder(dir: &str) {
         .expect("Failed to create all directories");
     let wait_mkdir = mkdir.wait().expect("Failed to wait the mkdir command");
     if !wait_mkdir.success() {
-        panic!("Failed ot execute the mkdir command");
+        panic!("Failed to execute the mkdir command");
     }
 }
 
 pub fn read_blob_file() {
-    let read_file = fs::File::open(".lrngit/objects/a9/4a8fe5ccb19ba61c4c0873d391e987982fbbd3")
+    let mut read_file = fs::File::open(".lrngit/objects/a9/4a8fe5ccb19ba61c4c0873d391e987982fbbd3")
         .expect("Failed to open file");
-    println!("file: {:?}", read_file);
+    let mut buf = Vec::new();
+    read_file
+        .read_to_end(&mut buf)
+        .expect("Failed to read file");
+    println!("file: {}", String::from_utf8_lossy(&buf));
 }

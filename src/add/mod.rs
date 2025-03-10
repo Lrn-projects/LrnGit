@@ -1,7 +1,9 @@
+use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
 use std::fs::{self, File};
 use std::io::Write;
 
+use bincode;
 use blob::{Blob, Standard};
 
 mod helpers;
@@ -22,7 +24,7 @@ use crate::utils;
 /// * `sha1`: The `sha1` property in the `TreeEntry` struct is an array of 20 unsigned 8-bit integers
 /// (bytes). This array is used to store the SHA-1 hash value of the file or directory represented by
 /// the `TreeEntry`. The SHA-1 hash is typically used to
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 #[allow(dead_code)]
 struct TreeEntry {
     mode: u32,
@@ -30,7 +32,7 @@ struct TreeEntry {
     name: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 #[allow(dead_code)]
 struct Tree {
     entries: Vec<TreeEntry>,
@@ -67,7 +69,6 @@ fn add_tree(folder: &str, child: [u8; 20], name: &str, child_path: &str) -> [u8;
             return [0u8; 20];
         }
     };
-    println!("debug {}", child_path);
     let mode = helpers::define_tree_mode(child_path);
     let new_tree_entry: TreeEntry = TreeEntry {
         mode: mode,
@@ -80,8 +81,23 @@ fn add_tree(folder: &str, child: [u8; 20], name: &str, child_path: &str) -> [u8;
     let new_tree: Tree = Tree {
         entries: tree_entry_vec,
     };
-    file.write_all(b"").unwrap();
-    println!("{:?}", new_tree);
+    let buffer: Vec<u8>;
+    let new_tree_buffer = bincode::serialize(&new_tree);
+    match new_tree_buffer {
+        Ok(b) => buffer = b,
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Failed to create buffer for new tree: {}", e));
+            return [0u8; 20];
+        }
+    }
+    let file_result = file.write(&buffer);
+    match file_result {
+        Ok(_) => (),
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Error writing to tree file: {}", e));
+            return [0u8; 20];
+        }
+    }
     hash_result.into()
 }
 
