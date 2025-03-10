@@ -51,11 +51,14 @@ pub fn add_folder(dir: &str) {
 }
 
 pub fn read_blob_file() {
-    let mut read_file = fs::File::open(".lrngit/objects/a9/4a8fe5ccb19ba61c4c0873d391e987982fbbd3")
-        .expect("Failed to open file");
-    let mut buf = Vec::new();
-    read_file
-        .read_to_end(&mut buf)
-        .expect("Failed to read file");
-    println!("file: {}", String::from_utf8_lossy(&buf));
+    // let mut read_file = fs::File::open(".lrngit/objects/87/9ca6cd64349cc58fbddb643420b5dc47ca62c8")
+    //     .expect("Failed to open file");
+    // let mut buf = Vec::new();
+    // read_file
+    //     .read_to_end(&mut buf)
+    //     .expect("Failed to read file");
+    // println!("file: {}", String::from_utf8_lossy(&buf));
+    let data = fs::read(".lrngit/objects/87/9ca6cd64349cc58fbddb643420b5dc47ca62c8")
+        .expect("Unable to read file");
+    println!("{:?}", String::from_utf8_lossy(&data));
 }

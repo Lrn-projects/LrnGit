@@ -38,11 +38,27 @@ struct Tree {
     entries: Vec<TreeEntry>,
 }
 
+struct BlobObject {
+    // "blob <size>\0" in binary
+    header: Vec<u8>,
+    content: Vec<u8>,
+}
+
+fn blob_object_header(ftype: &str, content_length: usize) -> Vec<u8> {
+    match ftype {
+        "blob" => format!("blob {}\0", content_length).as_bytes().to_vec(),
+        "tree" => format!("tree {}\0", content_length).as_bytes().to_vec(),
+        _ => vec![],
+    }
+}
+
 pub fn add_to_local_repo(arg: String) {
-    let mut folder_vec: Vec<&str> = Vec::new();
+    let folder_vec: Vec<&str>;
     if arg.contains("/") {
         let folder_split: Vec<&str> = arg.split("/").collect();
         folder_vec = folder_split;
+    } else {
+        folder_vec = vec![&arg];
     }
     recursive_add(folder_vec, [0u8; 20], "".to_string(), "".to_string());
     utils::read_blob_file();
@@ -128,6 +144,13 @@ fn add_blob(arg: &str) -> [u8; 20] {
     new_hash.update(file);
     let hash_result = new_hash.finalize();
     let new_blob: Blob<Standard> = Blob::from(hash_result.to_vec());
+    let blob_object: BlobObject = BlobObject {
+        header: blob_object_header("blob", new_blob.len()),
+        content: new_blob.to_vec(),
+    };
+    // concat the blob object from struct
+    let mut blob_object_concat = blob_object.header.clone();
+    blob_object_concat.extend(blob_object.content.clone());
     let hash_result_hex = format!("{:#x}", hash_result);
     let split_hash_result_hex = hash_result_hex.chars().collect::<Vec<char>>();
     let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
