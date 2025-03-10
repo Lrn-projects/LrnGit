@@ -1,4 +1,6 @@
-use std::{env, fs, path::Path, process::Command};
+use std::{env, fs, io::Read, path::Path, process::Command};
+
+use flate2::read::GzDecoder;
 
 pub fn lrngit_usage() -> &'static str {
     let usage = r"
@@ -47,14 +49,14 @@ pub fn add_folder(dir: &str) {
 }
 
 pub fn read_blob_file() {
-    // let mut read_file = fs::File::open(".lrngit/objects/87/9ca6cd64349cc58fbddb643420b5dc47ca62c8")
-    //     .expect("Failed to open file");
-    // let mut buf = Vec::new();
-    // read_file
-    //     .read_to_end(&mut buf)
-    //     .expect("Failed to read file");
-    // println!("file: {}", String::from_utf8_lossy(&buf));
-    let data = fs::read(".lrngit/objects/87/9ca6cd64349cc58fbddb643420b5dc47ca62c8")
-        .expect("Unable to read file");
-    println!("{:?}", String::from_utf8_lossy(&data));
+    let mut read_file = fs::File::open(".lrngit/objects/0c/89b40c61c2aae74496bf9566b76afc69ff8b66")
+        .expect("Failed to open file");
+    let mut buf = Vec::new();
+    read_file
+        .read_to_end(&mut buf)
+        .expect("Failed to read file");
+    let mut d = flate2::read::ZlibDecoder::new(buf.as_slice());
+    let mut s = String::new();
+    d.read_to_string(&mut s).unwrap();
+    println!("{}", s);
 }
