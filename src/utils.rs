@@ -1,7 +1,5 @@
 use std::{env, fs, io::Read, path::Path, process::Command};
 
-use flate2::read::GzDecoder;
-
 pub fn lrngit_usage() -> &'static str {
     let usage = r"
 lrngit's cli.
@@ -48,6 +46,8 @@ pub fn add_folder(dir: &str) {
     }
 }
 
+/// The function `read_blob_file` reads a compressed file, decompresses it, and prints its contents as a
+/// string.
 pub fn read_blob_file() {
     let mut read_file = fs::File::open(".lrngit/objects/0c/89b40c61c2aae74496bf9566b76afc69ff8b66")
         .expect("Failed to open file");

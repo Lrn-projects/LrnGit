@@ -28,21 +28,22 @@ use crate::utils;
 /// 160000 would be a commit
 /// * `name`: The `name` property in the `TreeEntry` struct represents the name of the entry in the
 /// tree. It is of type `String` and stores the name of the entry.
-/// * `sha1`: The `sha1` property in the `TreeEntry` struct is an array of 20 unsigned 8-bit integers
+/// * `hash`: The `hash` property in the `TreeEntry` struct is an array of 20 unsigned 8-bit integers
 /// (bytes). This array is used to store the SHA-1 hash value of the file or directory represented by
 /// the `TreeEntry`. The SHA-1 hash is typically used to
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(dead_code)]
 struct TreeEntry {
     mode: u32,
-    sha1: [u8; 20],
+    hash: [u8; 20],
     name: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(dead_code)]
 struct Tree {
-    entries: Vec<TreeEntry>,
+    header: Vec<u8>,
+    entries: Vec<u8>,
 }
 
 struct BlobObject {
@@ -51,7 +52,7 @@ struct BlobObject {
     content: Vec<u8>,
 }
 
-fn blob_object_header(file_type: &str, content_length: usize) -> Vec<u8> {
+fn git_object_header(file_type: &str, content_length: usize) -> Vec<u8> {
     match file_type {
         "blob" => format!("blob {}\0", content_length).as_bytes().to_vec(),
         "tree" => format!("tree {}\0", content_length).as_bytes().to_vec(),
@@ -74,9 +75,33 @@ pub fn add_to_local_repo(arg: String) {
 //TODO
 // can add new item to the tree vector, like update
 // the current tree and not recreate one or panic if already exist
-fn add_tree(folder: &str, child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
+fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
+    // creation of tree object and tree entries
+    let mode = helpers::define_tree_mode(child_path);
+    let new_tree_entry: TreeEntry = TreeEntry {
+        mode: mode,
+        hash: child,
+        name: name.to_string(),
+    };
+    let mut tree_entry_vec: Vec<u8> = Vec::new();
+    let tree_entry_string = format!(
+        "{} {}\0{:?}",
+        new_tree_entry.mode, new_tree_entry.name, new_tree_entry.hash
+    );
+    let tree_entry_bytes = tree_entry_string.as_bytes();
+    tree_entry_vec.extend_from_slice(tree_entry_bytes);
+
+    let new_tree: Tree = Tree {
+        header: git_object_header("tree", tree_entry_vec.len()),
+        entries: tree_entry_vec,
+    };
+    let mut new_tree_concat = new_tree.header.clone();
+    for entry in new_tree.entries.clone() {
+        new_tree_concat.extend(bincode::serialize(&entry).unwrap());
+    }
+    // hash tree content with SHA-1
     let mut new_hash = Sha1::new();
-    new_hash.update(folder);
+    new_hash.update(&new_tree_concat);
     let hash_result = new_hash.finalize();
     let folder_hash = format!("{:#x}", hash_result);
     let split_hash_result_hex = folder_hash.chars().collect::<Vec<char>>();
@@ -92,28 +117,33 @@ fn add_tree(folder: &str, child: [u8; 20], name: &str, child_path: &str) -> [u8;
             return [0u8; 20];
         }
     };
-    let mode = helpers::define_tree_mode(child_path);
-    let new_tree_entry: TreeEntry = TreeEntry {
-        mode: mode,
-        sha1: child,
-        name: name.to_string(),
-    };
-    let mut tree_entry_vec: Vec<TreeEntry> = Vec::new();
-    tree_entry_vec.push(new_tree_entry);
-
-    let new_tree: Tree = Tree {
-        entries: tree_entry_vec,
-    };
-    let buffer: Vec<u8>;
-    let new_tree_buffer = bincode::serialize(&new_tree);
-    match new_tree_buffer {
-        Ok(b) => buffer = b,
+    // compress the new tree object with zlib
+    let mut compress_file = ZlibEncoder::new(Vec::new(), Compression::default());
+    let compress_file_write = compress_file.write_all(&new_tree_concat);
+    match compress_file_write {
+        Ok(_) => (),
         Err(e) => {
-            lrncore::logs::error_log(&format!("Failed to create buffer for new tree: {}", e));
+            lrncore::logs::error_log_with_code(
+                "Failed to add file to local repository",
+                &e.to_string(),
+            );
             return [0u8; 20];
         }
     }
-    let file_result = file.write(&buffer);
+    let compressed_bytes = compress_file.finish();
+    let compressed_bytes_vec: Vec<u8>;
+    match compressed_bytes {
+        Ok(v) => compressed_bytes_vec = v,
+        Err(e) => {
+            lrncore::logs::error_log_with_code(
+                "Failed to add file to local repository",
+                &e.to_string(),
+            );
+            return [0u8; 20];
+        }
+    }
+    // write zlib compressed into file
+    let file_result = file.write(&compressed_bytes_vec);
     match file_result {
         Ok(_) => (),
         Err(e) => {
@@ -151,7 +181,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
     // creation of blob object
     let new_blob: Blob<Standard> = Blob::from(file.as_bytes());
     let blob_object: BlobObject = BlobObject {
-        header: blob_object_header("blob", new_blob.len()),
+        header: git_object_header("blob", new_blob.len()),
         content: new_blob.to_vec(),
     };
     // concat the blob object from struct
@@ -243,7 +273,7 @@ fn recursive_add(
         let new_blob = add_blob(&child_path);
         child = new_blob;
     } else {
-        let new_tree = add_tree(&last, child.clone(), &name, &child_path);
+        let new_tree = add_tree(child.clone(), &name, &child_path);
         child = new_tree;
         child_path = file_child_path;
     }
