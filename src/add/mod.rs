@@ -159,7 +159,8 @@ fn recursive_add(
     }
     let last = arg_vec.last().unwrap();
     let file_child_path = arg_vec.join("/");
-    if last.contains(".") {
+    let metadata = fs::symlink_metadata(&file_child_path).expect("Failed to read path metadata");
+    if metadata.file_type().is_file() {
         child_path = file_child_path;
         let new_blob = add_blob(&child_path);
         child = new_blob;

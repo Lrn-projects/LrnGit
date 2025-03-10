@@ -28,10 +28,14 @@ pub fn change_wkdir(dir: &str) {
 
 pub fn add_folder(dir: &str) {
     let new_dir_path = format!(".lrngit/objects/{}", dir);
-    Command::new("mkdir")
+    let mut mkdir = Command::new("mkdir")
         .arg(new_dir_path)
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .spawn()
         .expect("Failed to create all directories");
+    let wait_mkdir = mkdir.wait().expect("Failed to wait the mkdir command");
+    if !wait_mkdir.success() {
+        panic!("Failed ot execute the mkdir command");
+    }
 }
