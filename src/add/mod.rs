@@ -1,3 +1,5 @@
+use flate2::Compression;
+use flate2::write::ZlibEncoder;
 use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
 use std::fs::{self, File};
@@ -44,8 +46,8 @@ struct BlobObject {
     content: Vec<u8>,
 }
 
-fn blob_object_header(ftype: &str, content_length: usize) -> Vec<u8> {
-    match ftype {
+fn blob_object_header(file_type: &str, content_length: usize) -> Vec<u8> {
+    match file_type {
         "blob" => format!("blob {}\0", content_length).as_bytes().to_vec(),
         "tree" => format!("tree {}\0", content_length).as_bytes().to_vec(),
         _ => vec![],
@@ -61,7 +63,7 @@ pub fn add_to_local_repo(arg: String) {
         folder_vec = vec![&arg];
     }
     recursive_add(folder_vec, [0u8; 20], "".to_string(), "".to_string());
-    utils::read_blob_file();
+    // utils::read_blob_file();
 }
 
 //TODO
@@ -174,7 +176,32 @@ fn add_blob(arg: &str) -> [u8; 20] {
             return [0u8; 20];
         }
     }
-    file_result.write_all(&new_blob).unwrap();
+    // compress file to zlib
+    let mut compress_file = ZlibEncoder::new(Vec::new(), Compression::default());
+    let compress_file_write = compress_file.write_all(&blob_object_concat);
+    match compress_file_write {
+        Ok(_) => (),
+        Err(e) => {
+            lrncore::logs::error_log_with_code(
+                "Failed to add file to local repository",
+                &e.to_string(),
+            );
+            return [0u8; 20];
+        }
+    }
+    let compressed_bytes = compress_file.finish();
+    let compressed_bytes_vec: Vec<u8>;
+    match compressed_bytes {
+        Ok(v) => compressed_bytes_vec = v,
+        Err(e) => {
+            lrncore::logs::error_log_with_code(
+                "Failed to add file to local repository",
+                &e.to_string(),
+            );
+            return [0u8; 20];
+        }
+    }
+    file_result.write_all(&compressed_bytes_vec).unwrap();
     hash_result.into()
 }
 

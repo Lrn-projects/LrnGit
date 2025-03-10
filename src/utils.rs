@@ -1,6 +1,4 @@
-use std::{env, fs, io::Read, path::Path, process::Command};
-
-use blob::{Blob, Standard};
+use std::{env, fs, path::Path, process::Command};
 
 pub fn lrngit_usage() -> &'static str {
     let usage = r"
@@ -28,8 +26,6 @@ pub fn change_wkdir(dir: &str) {
     env::set_current_dir(dir).expect("Failed to change directory");
 }
 
-//TODO
-//Fix when path exist
 pub fn add_folder(dir: &str) {
     if dir.is_empty() {
         return;
