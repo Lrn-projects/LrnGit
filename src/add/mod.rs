@@ -47,14 +47,6 @@ struct BlobObject {
     content: Vec<u8>,
 }
 
-fn git_object_header(file_type: &str, content_length: usize) -> Vec<u8> {
-    match file_type {
-        "blob" => format!("blob {}\0", content_length).as_bytes().to_vec(),
-        "tree" => format!("tree {}\0", content_length).as_bytes().to_vec(),
-        _ => vec![],
-    }
-}
-
 pub fn add_to_local_repo(arg: String) {
     let folder_vec: Vec<&str>;
     if arg.contains("/") {
@@ -125,7 +117,7 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
 
     // creation of tree object
     let new_tree: Tree = Tree {
-        header: git_object_header("tree", tree_entry_vec.len()),
+        header: helpers::git_object_header("tree", tree_entry_vec.len()),
         entries: tree_entry_vec,
     };
     let mut new_tree_concat = new_tree.header.clone();
@@ -188,7 +180,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
     // creation of blob object
     let new_blob: Blob<Standard> = Blob::from(file.as_bytes());
     let blob_object: BlobObject = BlobObject {
-        header: git_object_header("blob", new_blob.len()),
+        header: helpers::git_object_header("blob", new_blob.len()),
         content: new_blob.to_vec(),
     };
     // concat the blob object from struct
