@@ -75,6 +75,26 @@ pub fn add_to_local_repo(arg: String) {
 //TODO
 // can add new item to the tree vector, like update
 // the current tree and not recreate one or panic if already exist
+
+/// The function `add_tree` creates a new tree object, hashes its content with SHA-1, compresses it with
+/// zlib, and writes it to a file in a local repository.
+///
+/// Arguments:
+///
+/// * `child`: The `child` parameter in the `add_tree` function represents the hash of the child object
+/// that you want to add to the tree. It is of type `[u8; 20]`, which typically represents a SHA-1 hash
+/// value in binary form.
+/// * `name`: The `name` parameter in the `add_tree` function represents the name of the child tree
+/// entry being added to the parent tree. It is a reference to a string (`&str`) that holds the name of
+/// the child tree entry.
+/// * `child_path`: The `child_path` parameter in the `add_tree` function represents the path to the
+/// child object that you want to add to a tree object. It is used to determine the mode of the tree
+/// entry for the child object.
+///
+/// Returns:
+///
+/// The function `add_tree` returns a `[u8; 20]` array, which represents the hash of the newly created
+/// tree object.
 fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     // creation of tree object and tree entries
     let mode = helpers::define_tree_mode(child_path);
@@ -143,7 +163,7 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
         }
     }
     // write zlib compressed into file
-    let file_result = file.write(&compressed_bytes_vec);
+    let file_result = file.write_all(&compressed_bytes_vec);
     match file_result {
         Ok(_) => (),
         Err(e) => {
