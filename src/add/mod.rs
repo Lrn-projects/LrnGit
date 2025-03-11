@@ -115,16 +115,19 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
         hash: child,
         name: name.to_string(),
     };
+
     let mut tree_entry_vec: Vec<u8> = Vec::new();
-    let tree_entry_string = format!(
-        "{} {} {}\0",
-        new_tree_entry.mode,
-        new_tree_entry.name,
-        &hex::ToHex::encode_hex::<String>(&new_tree_entry.hash)
-    );
-    println!("tree entry as string: {}", tree_entry_string);
-    let tree_entry_bytes = tree_entry_string.as_bytes();
-    tree_entry_vec.extend_from_slice(tree_entry_bytes);
+    let mut tree_entry_vec_bytes: Vec<u8> = Vec::new();
+    tree_entry_vec_bytes.extend_from_slice(new_tree_entry.mode.as_bytes());
+    tree_entry_vec_bytes.push(b' ');
+
+    tree_entry_vec_bytes.extend_from_slice(new_tree_entry.name.as_bytes());
+
+    tree_entry_vec_bytes.push(0);
+
+    tree_entry_vec_bytes.extend_from_slice(&new_tree_entry.hash);
+    let tree_entry_result = tree_entry_vec_bytes;
+    tree_entry_vec.extend_from_slice(&tree_entry_result);
 
     // creation of tree object
     let new_tree: Tree = Tree {
@@ -135,25 +138,6 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     for entry in new_tree.entries.clone() {
         new_tree_concat.extend(bincode::serialize(&entry).unwrap());
     }
-    // hash tree content with SHA-1
-    let mut new_hash = Sha1::new();
-    new_hash.update(&new_tree_concat);
-    let hash_result = new_hash.finalize();
-    let folder_hash = format!("{:#x}", hash_result);
-    let split_hash_result_hex = folder_hash.chars().collect::<Vec<char>>();
-    // create folder and file in local repository
-    let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
-    utils::add_folder(&new_folder_name);
-    let new_file_name = format!("{}", split_hash_result_hex[2..].iter().collect::<String>());
-    let new_tree_path = format!(".lrngit/objects/{}/{}", new_folder_name, new_file_name);
-    let mut file: File;
-    match File::create(&new_tree_path) {
-        Ok(f) => file = f,
-        Err(e) => {
-            lrncore::logs::error_log(&format!("Failed to create new tree file: {}", e));
-            return [0u8; 20];
-        }
-    };
     // compress the new tree object with zlib
     let mut compress_file = ZlibEncoder::new(Vec::new(), Compression::default());
     let compress_file_write = compress_file.write_all(&new_tree_concat);
@@ -172,13 +156,29 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     match compressed_bytes {
         Ok(v) => compressed_bytes_vec = v,
         Err(e) => {
-            lrncore::logs::error_log_with_code(
-                "Failed to add file to local repository",
-                &e.to_string(),
-            );
+            lrncore::logs::error_log_with_code("Failed to compress tree object", &e.to_string());
             return [0u8; 20];
         }
     }
+    // hash tree content with SHA-1
+    let mut new_hash = Sha1::new();
+    new_hash.update(&compressed_bytes_vec);
+    let hash_result = new_hash.finalize();
+    let folder_hash = format!("{:#x}", hash_result);
+    let split_hash_result_hex = folder_hash.chars().collect::<Vec<char>>();
+    // create folder and file in local repository
+    let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
+    utils::add_folder(&new_folder_name);
+    let new_file_name = format!("{}", split_hash_result_hex[2..].iter().collect::<String>());
+    let new_tree_path = format!(".lrngit/objects/{}/{}", new_folder_name, new_file_name);
+    let mut file: File;
+    match File::create(&new_tree_path) {
+        Ok(f) => file = f,
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Failed to create new tree file: {}", e));
+            return [0u8; 20];
+        }
+    };
     // write zlib compressed into file
     let file_result = file.write_all(&compressed_bytes_vec);
     match file_result {
