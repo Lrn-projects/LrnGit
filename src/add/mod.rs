@@ -35,6 +35,7 @@ use crate::utils;
 #[allow(dead_code)]
 struct TreeEntry {
     mode: u32,
+    fileType: String,
     hash: [u8; 20],
     name: String,
 }
@@ -96,21 +97,28 @@ pub fn add_to_local_repo(arg: String) {
 /// The function `add_tree` returns a `[u8; 20]` array, which represents the hash of the newly created
 /// tree object.
 fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
-    // creation of tree object and tree entries
+    // creation of tree entries
     let mode = helpers::define_tree_mode(child_path);
+    let ftype: String;
+    match mode {
+        
+    }
     let new_tree_entry: TreeEntry = TreeEntry {
         mode: mode,
+        fileType: 
         hash: child,
         name: name.to_string(),
     };
     let mut tree_entry_vec: Vec<u8> = Vec::new();
     let tree_entry_string = format!(
-        "{} {}\0{:?}",
+        "{}\0{}\0{:?}",
         new_tree_entry.mode, new_tree_entry.name, new_tree_entry.hash
     );
+    println!("prout {}", tree_entry_string);
     let tree_entry_bytes = tree_entry_string.as_bytes();
     tree_entry_vec.extend_from_slice(tree_entry_bytes);
 
+    // creation of tree object
     let new_tree: Tree = Tree {
         header: git_object_header("tree", tree_entry_vec.len()),
         entries: tree_entry_vec,
@@ -125,6 +133,7 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     let hash_result = new_hash.finalize();
     let folder_hash = format!("{:#x}", hash_result);
     let split_hash_result_hex = folder_hash.chars().collect::<Vec<char>>();
+    // create folder and file in local repository
     let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
     utils::add_folder(&new_folder_name);
     let new_file_name = format!("{}", split_hash_result_hex[2..].iter().collect::<String>());
