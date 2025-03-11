@@ -2,11 +2,7 @@
 Module handling all the add command, creating new blob objects or tree and saving them
 in local repository
 */
-
-use flate2::Compression;
-use flate2::write::ZlibEncoder;
 use serde::{Deserialize, Serialize};
-use sha1::{Digest, Sha1};
 use std::fs::{self, File};
 use std::io::Write;
 
@@ -14,8 +10,6 @@ use bincode;
 use blob::{Blob, Standard};
 
 mod helpers;
-
-use crate::utils;
 
 /// The `TreeEntry` struct in Rust represents an entry in a tree object with mode, name, and SHA-1 hash.
 ///
@@ -139,46 +133,22 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
         new_tree_concat.extend(bincode::serialize(&entry).unwrap());
     }
     // compress the new tree object with zlib
-    let mut compress_file = ZlibEncoder::new(Vec::new(), Compression::default());
-    let compress_file_write = compress_file.write_all(&new_tree_concat);
-    match compress_file_write {
-        Ok(_) => (),
-        Err(e) => {
-            lrncore::logs::error_log_with_code(
-                "Failed to add file to local repository",
-                &e.to_string(),
-            );
-            return [0u8; 20];
-        }
-    }
-    let compressed_bytes = compress_file.finish();
-    let compressed_bytes_vec: Vec<u8>;
-    match compressed_bytes {
-        Ok(v) => compressed_bytes_vec = v,
-        Err(e) => {
-            lrncore::logs::error_log_with_code("Failed to compress tree object", &e.to_string());
-            return [0u8; 20];
-        }
-    }
+    let compressed_bytes_vec = helpers::compress_file(new_tree_concat);
     // hash tree content with SHA-1
-    let mut new_hash = Sha1::new();
-    new_hash.update(&compressed_bytes_vec);
-    let hash_result = new_hash.finalize();
-    let folder_hash = format!("{:#x}", hash_result);
-    let split_hash_result_hex = folder_hash.chars().collect::<Vec<char>>();
+    let new_hash: [u8; 20];
+    let split_hash_result_hex: Vec<char>;
+    (new_hash, split_hash_result_hex) = helpers::hash_sha1(&compressed_bytes_vec);
+
     // create folder and file in local repository
-    let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
-    utils::add_folder(&new_folder_name);
-    let new_file_name = format!("{}", split_hash_result_hex[2..].iter().collect::<String>());
-    let new_tree_path = format!(".lrngit/objects/{}/{}", new_folder_name, new_file_name);
     let mut file: File;
-    match File::create(&new_tree_path) {
+    let file_result = helpers::new_file_dir(&split_hash_result_hex);
+    match file_result {
         Ok(f) => file = f,
         Err(e) => {
-            lrncore::logs::error_log(&format!("Failed to create new tree file: {}", e));
+            lrncore::logs::error_log(&format!("Error writing to tree file: {}", e));
             return [0u8; 20];
         }
-    };
+    }
     // write zlib compressed into file
     let file_result = file.write_all(&compressed_bytes_vec);
     match file_result {
@@ -188,7 +158,7 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
             return [0u8; 20];
         }
     }
-    hash_result.into()
+    new_hash
 }
 
 /// The function `add_blob` reads a file, calculates its SHA-1 hash, creates a new blob, and stores the
@@ -225,62 +195,24 @@ fn add_blob(arg: &str) -> [u8; 20] {
     let mut blob_object_concat = blob_object.header.clone();
     blob_object_concat.extend(blob_object.content.clone());
     // hash file content with SHA-1
-    let mut new_hash = Sha1::new();
-    new_hash.update(&blob_object_concat);
-    let hash_result = new_hash.finalize();
-    // hash to readable format
-    let hash_result_hex = format!("{:#x}", hash_result);
-    let split_hash_result_hex = hash_result_hex.chars().collect::<Vec<char>>();
+    let new_hash: [u8; 20];
+    let split_hash_result_hex: Vec<char>;
+    (new_hash, split_hash_result_hex) = helpers::hash_sha1(&blob_object_concat);
+
     // creation of file to local repo
-    let new_folder_name = format!("{}{}", split_hash_result_hex[0], split_hash_result_hex[1]);
-    utils::add_folder(&new_folder_name);
-    let new_file_name = format!("{}", split_hash_result_hex[2..].iter().collect::<String>());
-    let file = fs::File::create(format!(
-        ".lrngit/objects/{}/{}",
-        new_folder_name, new_file_name
-    ));
-    let mut file_result: File;
-    match file {
-        Ok(f) => {
-            file_result = f;
-            lrncore::logs::info_log("File added to local repository")
-        }
+    let mut file: File;
+    let file_result = helpers::new_file_dir(&split_hash_result_hex);
+    match file_result {
+        Ok(f) => file = f,
         Err(e) => {
-            lrncore::logs::error_log_with_code(
-                "Failed to add file to local repository",
-                &e.to_string(),
-            );
+            lrncore::logs::error_log(&format!("Error writing to tree file: {}", e));
             return [0u8; 20];
         }
     }
-    // compress file to zlib
-    let mut compress_file = ZlibEncoder::new(Vec::new(), Compression::default());
-    let compress_file_write = compress_file.write_all(&blob_object_concat);
-    match compress_file_write {
-        Ok(_) => (),
-        Err(e) => {
-            lrncore::logs::error_log_with_code(
-                "Failed to add file to local repository",
-                &e.to_string(),
-            );
-            return [0u8; 20];
-        }
-    }
-    let compressed_bytes = compress_file.finish();
-    let compressed_bytes_vec: Vec<u8>;
-    match compressed_bytes {
-        Ok(v) => compressed_bytes_vec = v,
-        Err(e) => {
-            lrncore::logs::error_log_with_code(
-                "Failed to add file to local repository",
-                &e.to_string(),
-            );
-            return [0u8; 20];
-        }
-    }
+    let compressed_bytes_vec = helpers::compress_file(blob_object_concat);
     // write compress file with zlib to file
-    file_result.write_all(&compressed_bytes_vec).unwrap();
-    hash_result.into()
+    file.write_all(&compressed_bytes_vec).unwrap();
+    new_hash
 }
 
 /// The `recursive_add` function in Rust recursively processes elements in a vector and performs

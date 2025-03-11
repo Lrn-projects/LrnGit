@@ -1,3 +1,7 @@
+/*
+Module handling all init command, init a local repository with all folder hierarchy
+*/
+
 use std::{
     env, fs,
     path::{Path, PathBuf},
