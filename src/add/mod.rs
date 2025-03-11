@@ -29,9 +29,8 @@ mod helpers;
 #[allow(dead_code)]
 struct TreeEntry {
     mode: String,
-    file_type: String,
-    hash: [u8; 20],
     name: String,
+    hash: [u8; 20],
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -85,35 +84,21 @@ pub fn add_to_local_repo(arg: String) {
 fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     // creation of tree entries
     let mode = helpers::define_tree_mode(child_path);
-    let ftype: &str;
-    match mode {
-        helpers::DIR => ftype = "tree",
-        helpers::EXE => ftype = "blob",
-        helpers::RWO => ftype = "blob",
-        _ => {
-            lrncore::logs::error_log(&format!("Unknown mode: {}", mode));
-            return [0u8; 20];
-        }
-    }
     let new_tree_entry: TreeEntry = TreeEntry {
         mode: mode.to_string(),
-        file_type: ftype.to_string(),
-        hash: child,
         name: name.to_string(),
+        hash: child,
     };
-
     let mut tree_entry_vec: Vec<u8> = Vec::new();
-    let mut tree_entry_vec_bytes: Vec<u8> = Vec::new();
-    tree_entry_vec_bytes.extend_from_slice(new_tree_entry.mode.as_bytes());
-    tree_entry_vec_bytes.push(b' ');
-
-    tree_entry_vec_bytes.extend_from_slice(new_tree_entry.name.as_bytes());
-
-    tree_entry_vec_bytes.push(0);
-
-    tree_entry_vec_bytes.extend_from_slice(&new_tree_entry.hash);
-    let tree_entry_result = tree_entry_vec_bytes;
-    tree_entry_vec.extend_from_slice(&tree_entry_result);
+    // write macro take a buffer and write into it
+    write!(
+        &mut tree_entry_vec,
+        "{} {}\0",
+        new_tree_entry.mode, new_tree_entry.name
+    )
+    .unwrap();
+    // add hash at the end of the buffer
+    tree_entry_vec.extend_from_slice(&new_tree_entry.hash);
 
     // creation of tree object
     let new_tree: Tree = Tree {
@@ -124,6 +109,10 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     for entry in new_tree.entries.clone() {
         new_tree_concat.extend(bincode::serialize(&entry).unwrap());
     }
+    println!(
+        "debug tree: {:?}",
+        String::from_utf8_lossy(&new_tree_concat)
+    );
     // compress the new tree object with zlib
     let compressed_bytes_vec = helpers::compress_file(new_tree_concat);
     // hash tree content with SHA-1
