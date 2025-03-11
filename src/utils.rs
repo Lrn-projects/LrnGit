@@ -49,7 +49,7 @@ pub fn add_folder(dir: &str) {
 /// The function `read_blob_file` reads a compressed file, decompresses it, and prints its contents as a
 /// string.
 pub fn read_blob_file() {
-    let mut read_file = fs::File::open(".lrngit/objects/0c/89b40c61c2aae74496bf9566b76afc69ff8b66")
+    let mut read_file = fs::File::open(".lrngit/objects/7e/c5b8f646568c7b4ae4f8331ea2fe81a6deb749")
         .expect("Failed to open file");
     let mut buf = Vec::new();
     read_file

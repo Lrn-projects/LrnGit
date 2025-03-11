@@ -34,8 +34,8 @@ use crate::utils;
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(dead_code)]
 struct TreeEntry {
-    mode: u32,
-    fileType: String,
+    mode: String,
+    file_type: String,
     hash: [u8; 20],
     name: String,
 }
@@ -99,22 +99,30 @@ pub fn add_to_local_repo(arg: String) {
 fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     // creation of tree entries
     let mode = helpers::define_tree_mode(child_path);
-    let ftype: String;
+    let ftype: &str;
     match mode {
-        
+        helpers::DIR => ftype = "tree",
+        helpers::EXE => ftype = "blob",
+        helpers::RWO => ftype = "blob",
+        _ => {
+            lrncore::logs::error_log(&format!("Unknown mode: {}", mode));
+            return [0u8; 20];
+        }
     }
     let new_tree_entry: TreeEntry = TreeEntry {
-        mode: mode,
-        fileType: 
+        mode: mode.to_string(),
+        file_type: ftype.to_string(),
         hash: child,
         name: name.to_string(),
     };
     let mut tree_entry_vec: Vec<u8> = Vec::new();
     let tree_entry_string = format!(
-        "{}\0{}\0{:?}",
-        new_tree_entry.mode, new_tree_entry.name, new_tree_entry.hash
+        "{} {} {}\0",
+        new_tree_entry.mode,
+        new_tree_entry.name,
+        &hex::ToHex::encode_hex::<String>(&new_tree_entry.hash)
     );
-    println!("prout {}", tree_entry_string);
+    println!("tree entry as string: {}", tree_entry_string);
     let tree_entry_bytes = tree_entry_string.as_bytes();
     tree_entry_vec.extend_from_slice(tree_entry_bytes);
 
