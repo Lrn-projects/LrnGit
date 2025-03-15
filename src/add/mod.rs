@@ -9,6 +9,8 @@ use std::io::Write;
 use bincode;
 use blob::{Blob, Standard};
 
+use crate::utils;
+
 mod helpers;
 
 /// The `TreeEntry` struct in Rust represents an entry in a tree object with mode, name, and SHA-1 hash.
@@ -55,7 +57,7 @@ pub fn add_to_local_repo(arg: String) {
         folder_vec = vec![&arg];
     }
     recursive_add(folder_vec, [0u8; 20], "".to_string(), "".to_string());
-    // utils::read_blob_file();
+    utils::read_blob_file();
 }
 
 //TODO
