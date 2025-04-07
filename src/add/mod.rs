@@ -1,15 +1,13 @@
 /*
-Module handling all the add command, creating new blob objects or tree and saving them
-in local repository
-*/
+   Module handling all the add command, creating new blob objects or tree and saving them
+   in local repository
+   */
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::Write;
 
 use bincode;
 use blob::{Blob, Standard};
-
-use crate::utils;
 
 mod helpers;
 
@@ -57,7 +55,6 @@ pub fn add_to_local_repo(arg: String) {
         folder_vec = vec![&arg];
     }
     recursive_add(folder_vec, [0u8; 20], "".to_string(), "".to_string());
-    utils::read_blob_file();
 }
 
 //TODO
@@ -96,12 +93,12 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     write!(
         &mut tree_entry_vec,
         "{} {}\0",
-        new_tree_entry.mode, new_tree_entry.name
+        new_tree_entry.mode.to_ascii_lowercase(), new_tree_entry.name.to_ascii_lowercase()
     )
-    .unwrap();
+        .unwrap();
     // add hash at the end of the buffer
     tree_entry_vec.extend_from_slice(&new_tree_entry.hash);
-
+    println!("debug tree entry: {:?}", String::from_utf8_lossy(&tree_entry_vec));
     // creation of tree object
     let new_tree: Tree = Tree {
         header: helpers::git_object_header("tree", tree_entry_vec.len()),
