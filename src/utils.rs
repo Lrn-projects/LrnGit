@@ -60,7 +60,7 @@ pub fn read_blob_file(hash: &str) {
         .read_to_end(&mut buf)
         .expect("Failed to read file");
     let mut d = flate2::read::ZlibDecoder::new(buf.as_slice());
-    let mut s = String::new();
-    d.read_to_string(&mut s).unwrap();
-    println!("{}", s);
+    let mut buffer = Vec::new();
+    d.read_to_end(&mut buffer).unwrap();
+    //TODO parse buffer to tree or blob struct to display
 }

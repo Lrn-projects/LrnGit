@@ -1,7 +1,7 @@
 /*
-   Module handling all the add command, creating new blob objects or tree and saving them
-   in local repository
-   */
+Module handling all the add command, creating new blob objects or tree and saving them
+in local repository
+*/
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::Write;
@@ -93,12 +93,12 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     write!(
         &mut tree_entry_vec,
         "{} {}\0",
-        new_tree_entry.mode.to_ascii_lowercase(), new_tree_entry.name.to_ascii_lowercase()
+        new_tree_entry.mode.to_ascii_lowercase(),
+        new_tree_entry.name.to_ascii_lowercase()
     )
-        .unwrap();
+    .unwrap();
     // add hash at the end of the buffer
     tree_entry_vec.extend_from_slice(&new_tree_entry.hash);
-    println!("debug tree entry: {:?}", String::from_utf8_lossy(&tree_entry_vec));
     // creation of tree object
     let new_tree: Tree = Tree {
         header: helpers::git_object_header("tree", tree_entry_vec.len()),
@@ -108,12 +108,9 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     for entry in new_tree.entries.clone() {
         new_tree_concat.extend(bincode::serialize(&entry).unwrap());
     }
-    println!(
-        "debug tree: {:?}",
-        String::from_utf8_lossy(&new_tree_concat)
-    );
     // compress the new tree object with zlib
     let compressed_bytes_vec = helpers::compress_file(new_tree_concat);
+    println!("debug tree: {:?}", String::from_utf8_lossy(&compressed_bytes_vec));
     // hash tree content with SHA-1
     let new_hash: [u8; 20];
     let split_hash_result_hex: Vec<char>;
@@ -211,7 +208,9 @@ fn recursive_add(
     mut name: String,
     mut child_path: String,
 ) {
+    // add root folder tree object and break recursive
     if arg_vec.is_empty() {
+        add_tree(child, &name, &child_path);
         return;
     }
     let last = arg_vec.last().unwrap();
@@ -222,7 +221,7 @@ fn recursive_add(
         let new_blob = add_blob(&child_path);
         child = new_blob;
     } else {
-        let new_tree = add_tree(child.clone(), &name, &child_path);
+        let new_tree = add_tree(child, &name, &child_path);
         child = new_tree;
         child_path = file_child_path;
     }
