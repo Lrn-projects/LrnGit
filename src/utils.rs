@@ -51,7 +51,7 @@ pub fn add_folder(dir: &str) {
 pub fn read_blob_file(hash: &str) {
     let hash_char: Vec<char> = hash.chars().collect();
     let folder: String = format!("{}{}", hash_char[0], hash_char[1]);
-    let object: String = hash_char[1..].iter().collect();
+    let object: String = hash_char[2..].iter().collect();
     let object_path = format!(".lrngit/objects/{}/{}", &folder, &object);
     println!("debug: {}", object_path);
     let mut read_file = fs::File::open(object_path).expect("Failed to open file");
