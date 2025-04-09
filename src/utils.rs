@@ -19,7 +19,7 @@ Options:
     -v, --version   Show the current version of LrnGit
 ";
 
-    return usage;
+    usage
 }
 
 pub fn change_wkdir(dir: &str) {

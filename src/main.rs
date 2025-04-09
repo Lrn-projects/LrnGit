@@ -1,4 +1,5 @@
 mod add;
+mod commit;
 mod init;
 pub mod utils;
 
@@ -14,6 +15,7 @@ const VERSION: &str = "0.1.0";
 enum Commands {
     Init,
     Add { arg: String },
+    Commit,
     CatFile{ arg: String },
     Version,
     Help,
@@ -46,6 +48,7 @@ fn main() {
                 })
                 .to_string(),
         },
+        Some("commit") => Commands::Commit,
         Some("cat-file") => Commands::CatFile {
             arg: args
                 // get index 2 because 0 is the binary, 1 the command and 2 the arg passed to the command
@@ -67,6 +70,7 @@ fn main() {
     match command {
         Commands::Init => init::init_local_repo(),
         Commands::Add { arg } => add::add_to_local_repo(arg),
+        Commands::Commit =>  commit::new_commit(),
         Commands::CatFile { arg } => utils::read_blob_file(&arg), 
         Commands::Version => lrncore::usage_exit::command_usage(&lrngit_version()),
         Commands::Help => lrncore::usage_exit::command_usage(utils::lrngit_usage()),
