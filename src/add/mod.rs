@@ -210,6 +210,7 @@ fn recursive_add(
 ) {
     // add root folder tree object and break recursive
     if arg_vec.is_empty() {
+        println!("debug arg_vec: {:?}{:?}{:?}", child, &name, &child_path);
         add_tree(child, &name, &child_path);
         return;
     }

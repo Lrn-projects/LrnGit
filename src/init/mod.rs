@@ -34,7 +34,7 @@ pub fn init_local_repo() {
             ));
         }
     }
-    Command::new("mkdir")
+    let mut mkdir = Command::new("mkdir")
         .arg(".lrngit")
         .arg(".lrngit/hooks")
         .arg(".lrngit/info")
@@ -43,4 +43,13 @@ pub fn init_local_repo() {
         .arg(".lrngit/refs")
         .spawn()
         .expect("Failed to create all directories");
+    let wait_mkdir = mkdir.wait().expect("Failed to wait the mkdir command");
+    if !wait_mkdir.success() {
+        panic!("Failed to execute mkdir command");
+    }
+    let mut touch = Command::new("touch").arg(".lrngit/index").spawn().expect("Failed to create index file");
+    let wait_touch = touch.wait().expect("Failed to wait the touch command");
+    if !wait_touch.success() {
+        panic!("Failed to execute touch command");
+    }
 }
