@@ -1,5 +1,7 @@
 use std::{env, fs, io::Read, path::Path, process::Command};
 
+use crate::add;
+
 pub fn lrngit_usage() -> &'static str {
     let usage = r"
 lrngit's cli.
@@ -63,4 +65,9 @@ pub fn read_blob_file(hash: &str) {
     let mut buffer = Vec::new();
     d.read_to_end(&mut buffer).unwrap();
     //TODO parse buffer to tree or blob struct to display
+}
+
+pub fn ls_file() {
+    let config = add::index::parse_index();
+    println!("{:?}", config);
 }

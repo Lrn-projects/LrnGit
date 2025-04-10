@@ -17,6 +17,7 @@ enum Commands {
     Add { arg: String },
     Commit,
     CatFile{ arg: String },
+    LsFile,
     Version,
     Help,
 }
@@ -59,6 +60,7 @@ fn main() {
                 })
             .to_string(),
         },
+        Some("ls-file") => Commands::LsFile,
         Some("version") => Commands::Version,
         Some("help") => Commands::Help,
         _ => {
@@ -72,6 +74,7 @@ fn main() {
         Commands::Add { arg } => add::add_to_local_repo(arg),
         Commands::Commit =>  commit::new_commit(),
         Commands::CatFile { arg } => utils::read_blob_file(&arg), 
+        Commands::LsFile => utils::ls_file(),
         Commands::Version => lrncore::usage_exit::command_usage(&lrngit_version()),
         Commands::Help => lrncore::usage_exit::command_usage(utils::lrngit_usage()),
     }
