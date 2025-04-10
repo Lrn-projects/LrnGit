@@ -10,7 +10,7 @@ use bincode;
 use blob::{Blob, Standard};
 
 mod helpers;
-
+pub mod index;
 /// The `TreeEntry` struct in Rust represents an entry in a tree object with mode, name, and SHA-1 hash.
 ///
 /// Properties:

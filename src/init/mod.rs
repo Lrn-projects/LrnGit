@@ -8,14 +8,15 @@ use std::{
     process::Command,
 };
 
+use crate::add::index;
+
 // use crate::utils;
 
 pub fn init_local_repo() {
     // create local repository directory
     let current_dir = env::current_dir();
-    let current_repo: PathBuf;
-    match current_dir {
-        Ok(dir) => current_repo = dir.join(".lrngit"),
+    let current_repo: PathBuf = match current_dir {
+        Ok(dir) => dir.join(".lrngit"),
         Err(e) => {
             lrncore::logs::error_log(&format!("Failed to get current directory: {}", e));
             return;
@@ -47,9 +48,5 @@ pub fn init_local_repo() {
     if !wait_mkdir.success() {
         panic!("Failed to execute mkdir command");
     }
-    let mut touch = Command::new("touch").arg(".lrngit/index").spawn().expect("Failed to create index file");
-    let wait_touch = touch.wait().expect("Failed to wait the touch command");
-    if !wait_touch.success() {
-        panic!("Failed to execute touch command");
-    }
+    index::init_index();
 }
