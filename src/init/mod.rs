@@ -10,8 +10,6 @@ use std::{
 
 use crate::add::index;
 
-// use crate::utils;
-
 pub fn init_local_repo() {
     // create local repository directory
     let current_dir = env::current_dir();

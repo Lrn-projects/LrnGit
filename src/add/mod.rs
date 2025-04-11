@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::Write;
 
-use bincode;
 use blob::{Blob, Standard};
 
 mod helpers;
@@ -17,15 +16,15 @@ pub mod index;
 /// Properties:
 ///
 /// * `mode`: The `mode` property in the `TreeEntry` struct represents the file mode or permissions of
-/// the entry. It is typically a 32-bit unsigned integer that specifies the file type and permissions,
-/// such as whether the entry is a file, directory, or symbolic link, and the read, write,
-/// example: if the mode is `40000` it's a folder, else if it's `100644` it's a blob,
-/// 160000 would be a commit
+///   the entry. It is typically a 32-bit unsigned integer that specifies the file type and permissions,
+///   such as whether the entry is a file, directory, or symbolic link, and the read, write,
+///   example: if the mode is `40000` it's a folder, else if it's `100644` it's a blob,
+///   160000 would be a commit
 /// * `name`: The `name` property in the `TreeEntry` struct represents the name of the entry in the
-/// tree. It is of type `String` and stores the name of the entry.
+///   tree. It is of type `String` and stores the name of the entry.
 /// * `hash`: The `hash` property in the `TreeEntry` struct is an array of 20 unsigned 8-bit integers
-/// (bytes). This array is used to store the SHA-1 hash value of the file or directory represented by
-/// the `TreeEntry`. The SHA-1 hash is typically used to
+///   (bytes). This array is used to store the SHA-1 hash value of the file or directory represented by
+///   the `TreeEntry`. The SHA-1 hash is typically used to
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(dead_code)]
 struct TreeEntry {
@@ -48,13 +47,12 @@ struct BlobObject {
 }
 
 pub fn add_to_local_repo(arg: String) {
-    let folder_vec: Vec<&str>;
-    if arg.contains("/") {
+    let folder_vec: Vec<&str> = if arg.contains("/") {
         let folder_split: Vec<&str> = arg.split("/").collect();
-        folder_vec = folder_split;
+        folder_split
     } else {
-        folder_vec = vec![&arg];
-    }
+        vec![&arg]
+    };
     recursive_add(folder_vec, [0u8; 20], "".to_string(), "".to_string());
 }
 
@@ -62,31 +60,33 @@ pub fn add_to_local_repo(arg: String) {
 // can add new item to the tree vector, like update
 // the current tree and not recreate one or panic if already exist
 
-/// The function `add_tree` creates a new tree object, hashes its content with SHA-1, compresses it with
-/// zlib, and writes it to a file in a local repository.
-///
-/// Arguments:
-///
-/// * `child`: The `child` parameter in the `add_tree` function represents the hash of the child object
-/// that you want to add to the tree. It is of type `[u8; 20]`, which typically represents a SHA-1 hash
-/// value in binary form.
-/// * `name`: The `name` parameter in the `add_tree` function represents the name of the child tree
-/// entry being added to the parent tree. It is a reference to a string (`&str`) that holds the name of
-/// the child tree entry.
-/// * `child_path`: The `child_path` parameter in the `add_tree` function represents the path to the
-/// child object that you want to add to a tree object. It is used to determine the mode of the tree
-/// entry for the child object.
-///
-/// Returns:
-///
-/// The function `add_tree` returns a `[u8; 20]` array, which represents the hash of the newly created
-/// tree object.
+/*
+The function `add_tree` creates a new tree object, hashes its content with SHA-1, compresses it with
+zlib, and writes it to a file in a local repository.
+
+Arguments:
+
+* `child`: The `child` parameter in the `add_tree` function represents the hash of the child object
+that you want to add to the tree. It is of type `[u8; 20]`, which typically represents an SHA-1 hash
+value in binary form.
+* `name`: The `name` parameter in the `add_tree` function represents the name of the child tree
+entry being added to the parent tree. It is a reference to a string (`&str`) that holds the name of
+the child tree entry.
+* `child_path`: The `child_path` parameter in the `add_tree` function represents the path to the
+child object that you want to add to a tree object. It is used to determine the mode of the tree
+entry for the child object.
+
+Returns:
+
+The function `add_tree` returns a `[u8; 20]` array, which represents the hash of the newly created
+tree object.
+*/
 //TO-Do fix tree structure to make compatible with git
 fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     // creation of tree entries
     let mode = helpers::define_tree_mode(child_path);
     let new_tree_entry: TreeEntry = TreeEntry {
-        mode: mode,
+        mode,
         name: name.as_bytes().to_vec(),
         hash: child,
     };
@@ -97,7 +97,6 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     tree_entry_vec.extend_from_slice(name.as_bytes());
     // add hash at the end of the buffer
     tree_entry_vec.extend_from_slice(&new_tree_entry.hash);
-    println!("debug new tree entry: {:?}", new_tree_entry);
     // creation of tree object
     let new_tree: Tree = Tree {
         header: helpers::git_object_header("tree", tree_entry_vec.len()),
@@ -107,14 +106,14 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     for entry in new_tree.entries.clone() {
         new_tree_concat.extend(bincode::serialize(&entry).unwrap());
     }
-    // compress the new tree object with zlib
+    // Compress the new tree object with zlib
     let compressed_bytes_vec = helpers::compress_file(new_tree_concat);
    // hash tree content with SHA-1
     let new_hash: [u8; 20];
     let split_hash_result_hex: Vec<char>;
     (new_hash, split_hash_result_hex) = helpers::hash_sha1(&compressed_bytes_vec);
 
-    // create folder and file in local repository
+    // Create folder and file in local repository
     let mut file: File;
     let file_result = helpers::new_file_dir(&split_hash_result_hex);
     match file_result {
@@ -142,8 +141,8 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
 /// Arguments:
 ///
 /// * `arg`: The function `add_blob` takes a reference to a string `arg` as a parameter. This function
-/// reads the contents of a file specified by the `arg`, calculates its SHA-1 hash, creates a new blob
-/// from the hash, and then stores the blob in a local repository.
+///   reads the contents of a file specified by the `arg`, calculates its SHA-1 hash, creates a new blob
+///   from the hash, and then stores the blob in a local repository.
 ///
 /// Returns:
 ///
@@ -152,14 +151,14 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
 fn add_blob(arg: &str) -> [u8; 20] {
     // read file content
     let read_file = fs::read_to_string(arg);
-    let file: String;
-    match read_file {
-        Ok(file_as_string) => file = file_as_string,
+    
+    let file: String = match read_file {
+        Ok(file_as_string) => file_as_string,
         Err(e) => {
             lrncore::logs::error_log(&format!("Failed to read the file: {}", e));
             return [0u8; 20];
         }
-    }
+    };
     // creation of blob object
     let new_blob: Blob<Standard> = Blob::from(file.as_bytes());
     let blob_object: BlobObject = BlobObject {
@@ -199,10 +198,10 @@ fn add_blob(arg: &str) -> [u8; 20] {
 /// Arguments:
 ///
 /// * `arg_vec`: arg_vec is a vector of string references that contains the elements being processed
-/// recursively in the function.
+///   recursively in the function.
 /// * `child`: The `child` parameter in the `recursive_add` function seems to represent a string value
-/// that is either empty or contains some data. It is used as an argument in the function calls to
-/// `add_tree` and `recursive_add`.
+///   that is either empty or contains some data. It is used as an argument in the function calls to
+///   `add_tree` and `recursive_add`.
 fn recursive_add(
     mut arg_vec: Vec<&str>,
     mut child: [u8; 20],
