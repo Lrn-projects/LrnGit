@@ -69,5 +69,5 @@ pub fn read_blob_file(hash: &str) {
 
 pub fn ls_file() {
     let config = add::index::parse_index();
-    println!("{:?}", config);
+    println!("{:?}", config.entries);
 }

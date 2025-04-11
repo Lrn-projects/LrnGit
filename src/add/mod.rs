@@ -1,3 +1,4 @@
+use helpers::RWO;
 /*
 Module handling all the add command, creating new blob objects or tree and saving them
 in local repository
@@ -5,6 +6,7 @@ in local repository
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::Write;
+use std::mem;
 
 use bincode;
 use blob::{Blob, Standard};
@@ -110,8 +112,7 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     }
     // compress the new tree object with zlib
     let compressed_bytes_vec = helpers::compress_file(new_tree_concat);
-    println!("debug tree: {:?}", String::from_utf8_lossy(&compressed_bytes_vec));
-    // hash tree content with SHA-1
+   // hash tree content with SHA-1
     let new_hash: [u8; 20];
     let split_hash_result_hex: Vec<char>;
     (new_hash, split_hash_result_hex) = helpers::hash_sha1(&compressed_bytes_vec);
@@ -189,6 +190,9 @@ fn add_blob(arg: &str) -> [u8; 20] {
     let compressed_bytes_vec = helpers::compress_file(blob_object_concat);
     // write compress file with zlib to file
     file.write_all(&compressed_bytes_vec).unwrap();
+    let mode: u32 = RWO.trim().parse().unwrap();
+    let path = arg.to_string().into_bytes();
+    index::add_index_entry(mode, new_hash, path);
     new_hash
 }
 
@@ -210,7 +214,6 @@ fn recursive_add(
 ) {
     // add root folder tree object and break recursive
     if arg_vec.is_empty() {
-        println!("debug arg_vec: {:?}{:?}{:?}", child, &name, &child_path);
         add_tree(child, &name, &child_path);
         return;
     }

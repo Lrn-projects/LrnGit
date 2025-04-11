@@ -1,6 +1,6 @@
 use std::{
     fs::{File, OpenOptions},
-    io::{BufReader, Read, Write},
+    io::{BufReader, BufWriter, Read, Write},
     process::exit,
 };
 
@@ -8,15 +8,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IndexHeader {
-    magic_number: [u8; 4],
-    version: u8,
-    entry_count: u8,
+    pub magic_number: [u8; 4],
+    pub version: u8,
+    pub entry_count: u8,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IndexObject {
-    header: IndexHeader,
-    entries: Vec<IndexEntry>,
+    pub header: IndexHeader,
+    pub entries: Vec<IndexEntry>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -81,13 +81,16 @@ pub fn add_index_entry(mode: u32, hash: [u8; 20], path: Vec<u8>) {
 
 /// update index file with new index object
 fn update_index(index: IndexObject) {
-    let mut f = OpenOptions::new()
-        .append(true)
-        .create(true) // Optionally create the file if it doesn't already exist
+    let f = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
         .open(".lrngit/index")
         .expect("Unable to open file");
     let index_as_bytes = bincode::serialize(&index).expect("Failed to serialize new indew file");
+    let mut f = BufWriter::new(f);
     f.write_all(&index_as_bytes).expect("Unable to write data");
+    println!("debug bufwriter: {:?}", f);
 }
 
 /// parse index file and return structure
@@ -117,4 +120,4 @@ pub fn parse_index() -> IndexObject {
     index
 }
 
-pub fn remove_index_entry(hash: [u8; 20]) {}
+// pub fn remove_index_entry(hash: [u8; 20]) {}
