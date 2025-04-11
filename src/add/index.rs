@@ -90,7 +90,6 @@ fn update_index(index: IndexObject) {
     let index_as_bytes = bincode::serialize(&index).expect("Failed to serialize new indew file");
     let mut f = BufWriter::new(f);
     f.write_all(&index_as_bytes).expect("Unable to write data");
-    println!("debug bufwriter: {:?}", f);
 }
 
 /// parse index file and return structure

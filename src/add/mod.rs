@@ -53,7 +53,7 @@ pub fn add_to_local_repo(arg: String) {
     } else {
         vec![&arg]
     };
-    recursive_add(folder_vec, [0u8; 20], "".to_string(), "".to_string());
+    add_blob(&arg);
 }
 
 //TODO
@@ -84,7 +84,7 @@ tree object.
 //TO-Do fix tree structure to make compatible with git
 fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     // creation of tree entries
-    let mode = helpers::define_tree_mode(child_path);
+    let mode = helpers::DIR;
     let new_tree_entry: TreeEntry = TreeEntry {
         mode,
         name: name.as_bytes().to_vec(),
@@ -108,7 +108,7 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     }
     // Compress the new tree object with zlib
     let compressed_bytes_vec = helpers::compress_file(new_tree_concat);
-   // hash tree content with SHA-1
+    // hash tree content with SHA-1
     let new_hash: [u8; 20];
     let split_hash_result_hex: Vec<char>;
     (new_hash, split_hash_result_hex) = helpers::hash_sha1(&compressed_bytes_vec);
@@ -151,7 +151,7 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
 fn add_blob(arg: &str) -> [u8; 20] {
     // read file content
     let read_file = fs::read_to_string(arg);
-    
+
     let file: String = match read_file {
         Ok(file_as_string) => file_as_string,
         Err(e) => {
@@ -202,7 +202,8 @@ fn add_blob(arg: &str) -> [u8; 20] {
 /// * `child`: The `child` parameter in the `recursive_add` function seems to represent a string value
 ///   that is either empty or contains some data. It is used as an argument in the function calls to
 ///   `add_tree` and `recursive_add`.
-fn recursive_add(
+
+pub fn recursive_add(
     mut arg_vec: Vec<&str>,
     mut child: [u8; 20],
     mut name: String,
@@ -215,16 +216,13 @@ fn recursive_add(
     }
     let last = arg_vec.last().unwrap();
     let file_child_path = arg_vec.join("/");
-    let metadata = fs::symlink_metadata(&file_child_path).expect("Failed to read path metadata");
-    if metadata.file_type().is_file() {
-        child_path = file_child_path;
-        let new_blob = add_blob(&child_path);
-        child = new_blob;
-    } else {
-        let new_tree = add_tree(child, &name, &child_path);
-        child = new_tree;
-        child_path = file_child_path;
+    match fs::symlink_metadata(&file_child_path) {
+        Ok(_) => (),
+        Err(_) => panic!("Failed to read path metadata"),
     }
+    let new_tree = add_tree(child, &name, &child_path);
+    child = new_tree;
+    child_path = file_child_path;
     name = last.to_string();
     arg_vec.pop();
     recursive_add(arg_vec, child, name, child_path);
