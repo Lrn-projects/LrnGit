@@ -69,5 +69,7 @@ pub fn read_blob_file(hash: &str) {
 
 pub fn ls_file() {
     let config = add::index::parse_index();
-    println!("{:?}", config.entries);
+    for each in config.entries {
+        println!("{} {} {} {}\n", each.mode, hex::encode(each.hash), each.flag, String::from_utf8_lossy(&each.path));
+    }
 }

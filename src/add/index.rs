@@ -21,10 +21,10 @@ pub struct IndexObject {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IndexEntry {
-    mode: u32,
-    hash: [u8; 20],
-    flag: u16,
-    path: Vec<u8>,
+    pub mode: u32,
+    pub hash: [u8; 20],
+    pub flag: u16,
+    pub path: Vec<u8>,
 }
 
 pub fn init_index() {
