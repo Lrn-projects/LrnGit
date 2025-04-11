@@ -10,10 +10,10 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 
-pub const SYM: &str = "120000";
-pub const DIR: &str = "040000";
-pub const EXE: &str = "100755";
-pub const RWO: &str = "100644";
+pub const SYM: u32 = 0o120000;
+pub const DIR: u32 = 0o040000;
+pub const EXE: u32 = 0o100755;
+pub const RWO: u32 = 0o100644;
 
 /// The function `define_tree_mode` determines the mode of a file (symlink, directory, executable, or
 /// read-write).
@@ -31,7 +31,7 @@ pub const RWO: &str = "100644";
 /// - "DIR" for directory
 /// - "EXE" for executable file
 /// - "RWO" for read-write file
-pub fn define_tree_mode(path: &str) -> &str {
+pub fn define_tree_mode(path: &str) -> u32 {
     let metadata = fs::symlink_metadata(path).expect("Failed to read metadata");
     if metadata.file_type().is_symlink() {
         return SYM; // Symlink

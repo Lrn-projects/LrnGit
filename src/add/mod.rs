@@ -6,7 +6,6 @@ in local repository
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::Write;
-use std::mem;
 
 use bincode;
 use blob::{Blob, Standard};
@@ -30,8 +29,8 @@ pub mod index;
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(dead_code)]
 struct TreeEntry {
-    mode: String,
-    name: String,
+    mode: u32,
+    name: Vec<u8>,
     hash: [u8; 20],
 }
 
@@ -82,25 +81,23 @@ pub fn add_to_local_repo(arg: String) {
 ///
 /// The function `add_tree` returns a `[u8; 20]` array, which represents the hash of the newly created
 /// tree object.
+//TO-Do fix tree structure to make compatible with git
 fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     // creation of tree entries
     let mode = helpers::define_tree_mode(child_path);
     let new_tree_entry: TreeEntry = TreeEntry {
-        mode: mode.to_string(),
-        name: name.to_string(),
+        mode: mode,
+        name: name.as_bytes().to_vec(),
         hash: child,
     };
     let mut tree_entry_vec: Vec<u8> = Vec::new();
     // write macro take a buffer and write into it
-    write!(
-        &mut tree_entry_vec,
-        "{} {}\0",
-        new_tree_entry.mode.to_ascii_lowercase(),
-        new_tree_entry.name.to_ascii_lowercase()
-    )
-    .unwrap();
+    tree_entry_vec.push(new_tree_entry.mode as u8);
+    tree_entry_vec.extend_from_slice(b" ");
+    tree_entry_vec.extend_from_slice(name.as_bytes());
     // add hash at the end of the buffer
     tree_entry_vec.extend_from_slice(&new_tree_entry.hash);
+    println!("debug new tree entry: {:?}", new_tree_entry);
     // creation of tree object
     let new_tree: Tree = Tree {
         header: helpers::git_object_header("tree", tree_entry_vec.len()),
@@ -190,7 +187,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
     let compressed_bytes_vec = helpers::compress_file(blob_object_concat);
     // write compress file with zlib to file
     file.write_all(&compressed_bytes_vec).unwrap();
-    let mode: u32 = RWO.trim().parse().unwrap();
+    let mode: u32 = RWO;
     let path = arg.to_string().into_bytes();
     index::add_index_entry(mode, new_hash, path);
     new_hash
