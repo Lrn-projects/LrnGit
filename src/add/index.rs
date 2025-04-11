@@ -1,4 +1,8 @@
-use std::{fs::File, io::{BufReader, Read, Write}, process::exit};
+use std::{
+    fs::{File, OpenOptions},
+    io::{BufReader, Read, Write},
+    process::exit,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -18,9 +22,9 @@ pub struct IndexObject {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IndexEntry {
     mode: u32,
-    hash: [u8;20],
+    hash: [u8; 20],
     flag: u16,
-    name: Vec<u8>
+    path: Vec<u8>,
 }
 
 pub fn init_index() {
@@ -58,7 +62,35 @@ pub fn init_index() {
     }
 }
 
-// parse index file and return structure
+/// add a new indew entry to the index content
+pub fn add_index_entry(mode: u32, hash: [u8; 20], path: Vec<u8>) {
+    let config = parse_index();
+    let mut header = config.header;
+    let mut entries = config.entries;
+    let new_entry: IndexEntry = IndexEntry {
+        mode,
+        hash,
+        flag: 0,
+        path,
+    };
+    entries.push(new_entry);
+    header.entry_count += 1;
+    let updated_index: IndexObject = IndexObject { header, entries };
+    update_index(updated_index);
+}
+
+/// update index file with new index object
+fn update_index(index: IndexObject) {
+    let mut f = OpenOptions::new()
+        .append(true)
+        .create(true) // Optionally create the file if it doesn't already exist
+        .open(".lrngit/index")
+        .expect("Unable to open file");
+    let index_as_bytes = bincode::serialize(&index).expect("Failed to serialize new indew file");
+    f.write_all(&index_as_bytes).expect("Unable to write data");
+}
+
+/// parse index file and return structure
 pub fn parse_index() -> IndexObject {
     // get buffer from file
     let index_path = ".lrngit/index";
@@ -67,15 +99,22 @@ pub fn parse_index() -> IndexObject {
     let mut bytes_vec: Vec<u8> = Vec::new();
     for bytes in buffer.bytes() {
         bytes_vec.push(bytes.unwrap());
+    }
+    // header
+    let header_size = std::mem::size_of::<IndexHeader>();
+    let header_bytes = &bytes_vec[..header_size];
+    let header: IndexHeader =
+        bincode::deserialize(header_bytes).expect("Failed to deserialize header bytes");
+    // contents
+    let content_bytes = &bytes_vec[header_size..];
+    let content: Vec<IndexEntry> =
+        bincode::deserialize(content_bytes).expect("Failed to deserialize content bytes");
+    // index
+    let index: IndexObject = IndexObject {
+        header,
+        entries: content,
     };
-   // header
-   let header_size = std::mem::size_of::<IndexHeader>();
-   let header_bytes = &bytes_vec[..header_size];
-   let header: IndexHeader = bincode::deserialize(header_bytes).expect("Failed to deserialize header bytes");
-   // contents
-   let content_bytes = &bytes_vec[header_size..];
-   let content: Vec<IndexEntry> = bincode::deserialize(content_bytes).expect("Failed to deserialize content bytes");
-   // index
-   let index: IndexObject = IndexObject { header, entries: content };
-   index
+    index
 }
+
+pub fn remove_index_entry(hash: [u8; 20]) {}
