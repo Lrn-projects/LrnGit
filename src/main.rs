@@ -2,9 +2,11 @@ mod add;
 mod commit;
 mod init;
 pub mod utils;
+mod config;
 
 use std::env;
 use std::process::exit;
+
 
 // Current version of lrngit
 // if modified and then running update command it will replace
@@ -18,6 +20,7 @@ enum Commands {
     Commit,
     CatFile{ arg: String },
     LsFile,
+    Config,
     Version,
     Help,
 }
@@ -61,6 +64,7 @@ fn main() {
             .to_string(),
         },
         Some("ls-file") => Commands::LsFile,
+        Some("config") => Commands::Config, 
         Some("version") => Commands::Version,
         Some("help") => Commands::Help,
         _ => {
@@ -75,6 +79,7 @@ fn main() {
         Commands::Commit =>  commit::new_commit(),
         Commands::CatFile { arg } => utils::read_blob_file(&arg), 
         Commands::LsFile => utils::ls_file(),
+        Commands::Config => config::config_commands(),
         Commands::Version => lrncore::usage_exit::command_usage(&lrngit_version()),
         Commands::Help => lrncore::usage_exit::command_usage(utils::lrngit_usage()),
     }

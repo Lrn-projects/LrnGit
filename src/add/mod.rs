@@ -208,22 +208,27 @@ pub fn recursive_add(
     mut child: [u8; 20],
     mut name: String,
     mut child_path: String,
+    root_tree_ptr: &mut [u8; 20],
 ) {
     // add root folder tree object and break recursive
     if arg_vec.is_empty() {
-        add_tree(child, &name, &child_path);
+        let root_tree = add_tree(child, &name, &child_path);
+        root_tree_ptr.copy_from_slice(&root_tree);
         return;
     }
-    let last = arg_vec.last().unwrap();
+    let last = arg_vec
+        .last()
+        .expect("Failed to get last element of file path");
     let file_child_path = arg_vec.join("/");
     match fs::symlink_metadata(&file_child_path) {
         Ok(_) => (),
         Err(_) => panic!("Failed to read path metadata"),
     }
     let new_tree = add_tree(child, &name, &child_path);
+    root_tree_ptr.copy_from_slice(&new_tree);
     child = new_tree;
-    child_path = file_child_path;
+    root_tree_ptr.copy_from_slice(&new_tree);
     name = last.to_string();
     arg_vec.pop();
-    recursive_add(arg_vec, child, name, child_path);
+    recursive_add(arg_vec, child, name, child_path, root_tree_ptr);
 }
