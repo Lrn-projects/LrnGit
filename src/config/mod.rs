@@ -1,9 +1,5 @@
-use std::{
-    env,
-    fs::File,
-    io::{Read, Write},
-    process::exit,
-};
+use std::{env, fs::File, io::Write, process::exit};
+
 
 pub struct GlobalConfig {
     pub user: GlobalConfigUser,
@@ -21,6 +17,7 @@ pub fn config_commands() {
     }
     match args[2].as_str() {
         "init" => init_global_config(),
+        "cat" => cat_global_config(), 
 
         _ => {
             eprintln!("enter a config commands")
@@ -74,6 +71,33 @@ fn write_global_config() {
     let mut user_email_stdi = String::new();
     std::io::stdout().flush().unwrap();
     std::io::stdin().read_line(&mut user_email_stdi).unwrap();
-    user.set("email", user_email_stdi.trim_end()); 
-    config_file.write_to_file(config_path).expect("Failed to update global config file");
+    user.set("email", user_email_stdi.trim_end());
+    config_file
+        .write_to_file(config_path)
+        .expect("Failed to update global config file");
+}
+
+pub fn parse_global_config() -> GlobalConfig {
+    let config_path = dirs::home_dir().unwrap().to_str().unwrap().to_string() + "/.lrngitconfig";
+    let ini_file =
+        ini::Ini::load_from_file(&config_path).expect("Failed to open global config file");
+    let user_section = ini_file
+        .section(Some("user"))
+        .expect("Missing [user] section in config file");
+    let name = user_section
+        .get("name")
+        .expect("Missing 'name' in [user] section")
+        .to_string();
+    let email = user_section
+        .get("email")
+        .expect("Missing 'email' in [user] section")
+        .to_string();
+    GlobalConfig {
+        user: GlobalConfigUser { name, email },
+    }
+}
+
+fn cat_global_config() {
+    let config = parse_global_config();
+    println!("[user]\nname = {}\nemail = {}\n", config.user.name, config.user.email);
 }

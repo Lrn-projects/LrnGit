@@ -38,5 +38,5 @@ pub fn new_commit() {
 }
 
 fn create_commit_object(root_tree_hash: [u8;20]) {
-
+    
 }
