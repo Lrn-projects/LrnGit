@@ -9,6 +9,8 @@ use std::io::Write;
 
 use blob::{Blob, Standard};
 
+use crate::utils;
+
 mod helpers;
 pub mod index;
 /// The `TreeEntry` struct in Rust represents an entry in a tree object with mode, name, and SHA-1 hash.
@@ -99,7 +101,7 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
     tree_entry_vec.extend_from_slice(&new_tree_entry.hash);
     // creation of tree object
     let new_tree: Tree = Tree {
-        header: helpers::git_object_header("tree", tree_entry_vec.len()),
+        header: utils::git_object_header("tree", tree_entry_vec.len()),
         entries: tree_entry_vec,
     };
     let mut new_tree_concat = new_tree.header.clone();
@@ -162,7 +164,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
     // creation of blob object
     let new_blob: Blob<Standard> = Blob::from(file.as_bytes());
     let blob_object: BlobObject = BlobObject {
-        header: helpers::git_object_header("blob", new_blob.len()),
+        header: utils::git_object_header("blob", new_blob.len()),
         content: new_blob.to_vec(),
     };
     // concat the blob object from struct

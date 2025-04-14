@@ -132,27 +132,3 @@ pub fn hash_sha1(data: &Vec<u8>) -> ([u8; 20], Vec<char>) {
     (hash_result.into(), split_hash_result_hex)
 }
 
-/// The function `git_object_header` generates a Git object header based on the file type and content
-/// length provided.
-///
-/// Arguments:
-///
-/// * `file_type`: The `file_type` parameter represents the type of Git object, which can be either
-/// "blob" or "tree".
-/// * `content_length`: The `content_length` parameter represents the length of the content associated
-/// with the Git object. It is used to construct the header of the Git object based on the specified
-/// `file_type`.
-///
-/// Returns:
-///
-/// The function `git_object_header` returns a vector of bytes representing the header of a Git object
-/// based on the provided `file_type` and `content_length`. If the `file_type` is "blob", it will return
-/// a byte vector containing the header "blob {content_length}\0". If the `file_type` is "tree", it will
-/// return a byte vector containing the header "tree
-pub fn git_object_header(file_type: &str, content_length: usize) -> Vec<u8> {
-    match file_type {
-        "blob" => format!("blob {}\0", content_length).as_bytes().to_vec(),
-        "tree" => format!("tree {}\0", content_length).as_bytes().to_vec(),
-        _ => vec![],
-    }
-}
