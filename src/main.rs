@@ -76,7 +76,7 @@ fn main() {
     match command {
         Commands::Init => init::init_local_repo(),
         Commands::Add { arg } => add::add_to_local_repo(arg),
-        Commands::Commit =>  commit::new_commit(),
+        Commands::Commit =>  commit::commit_command(),
         Commands::CatFile { arg } => utils::read_blob_file(&arg), 
         Commands::LsFile => utils::ls_file(),
         Commands::Config => config::config_commands(),

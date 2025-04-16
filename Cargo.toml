@@ -8,7 +8,7 @@ bincode = "1.0.0"
 serde = { version = "1.0.219", features = ["derive"] }
 blob = "=0.3.0"
 hex = "0.4.3"
-lrncore = { git = "https://github.com/Lrn-projects/LrnCore.git", version = "0.1.0", branch="main" }
+lrncore = { git = "https://github.com/Lrn-projects/LrnCore.git", version = "0.2.0", branch="main" }
 sha1 = "0.10.6"
 flate2 = "1.1.0"
 rust-ini = "0.21.1"

@@ -1,4 +1,4 @@
-use std::{os::unix, time::SystemTime};
+use std::{env, process::exit, time::SystemTime};
 
 use chrono::{Local, Offset, TimeZone};
 use serde::{Deserialize, Serialize};
@@ -31,7 +31,25 @@ struct CommitUser {
     timezone: Vec<u8>,
 }
 
-pub fn new_commit() {
+pub fn commit_command() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() <= 2 {
+        lrncore::usage_exit::usage_and_exit("Invalid command", "use -m flag");
+    }
+    match args[2].as_str() {
+        "-m" => {
+            let message = args[3].as_str();
+            println!("{}", message);
+            new_commit(message);
+        }
+        _ => {
+             lrncore::logs::warning_log("Unknown command");
+             exit(1);
+         }
+    }
+}
+
+pub fn new_commit(commit_message: &str) {
     let config = index::parse_index();
     let mut root_tree: [u8; 20] = [0; 20];
     for each in config.entries {
@@ -52,10 +70,10 @@ pub fn new_commit() {
         );
     }
     println!("root tree: {:x?}", root_tree);
-    create_commit_object(root_tree);
+    create_commit_object(root_tree, commit_message);
 }
 
-fn create_commit_object(root_tree_hash: [u8; 20]) {
+fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     let global_config = config::parse_global_config();
     let offset = Local::now().offset().fix().local_minus_utc();
     let sign = if offset >= 0 { "+" } else { "-" };
@@ -74,12 +92,15 @@ fn create_commit_object(root_tree_hash: [u8; 20]) {
     let commiter_bytes: Vec<u8> = bincode::serialize(&commiter).expect("Failed to serialize CommitUser struct");
     let commit_content: CommitContent = CommitContent {
         tree: root_tree_hash,
-        author: commiter_bytes,
+        author: commiter_bytes.clone(),
         commiter: commiter_bytes,
-        message: (),
+        message: commit_message.as_bytes().to_vec(),
     };
+    let commit_content_bytes: Vec<u8> = bincode::serialize(&commit_content).expect("Failed to serialize commit content");
     let commit: Commit = Commit {
-        header: utils::git_object_header("commit", content_length),
-        content: (),
+        header: utils::git_object_header("commit", commit_content_bytes.len()),
+        content: commit_content_bytes,
     };
+    let commit_bytes: Vec<u8> = bincode::serialize(&commit).expect("Failed to serialize commit");
+
 }
