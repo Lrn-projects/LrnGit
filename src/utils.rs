@@ -66,6 +66,7 @@ pub fn read_blob_file(hash: &str) {
     let mut d = flate2::read::ZlibDecoder::new(buf.as_slice());
     let mut buffer = Vec::new();
     d.read_to_end(&mut buffer).unwrap();
+    println!("{}", String::from_utf8_lossy(&buffer));
     //TODO parse buffer to tree or blob struct to display
 }
 
