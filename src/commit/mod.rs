@@ -1,6 +1,6 @@
-use std::{env, process::exit, time::SystemTime};
+use std::{env, fs::File, io::Write, process::exit, time::SystemTime};
 
-use chrono::{Local, Offset, TimeZone};
+use chrono::{Local, Offset};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -43,9 +43,9 @@ pub fn commit_command() {
             new_commit(message);
         }
         _ => {
-             lrncore::logs::warning_log("Unknown command");
-             exit(1);
-         }
+            lrncore::logs::warning_log("Unknown command");
+            exit(1);
+        }
     }
 }
 
@@ -65,7 +65,6 @@ pub fn new_commit(commit_message: &str) {
             folder_vec,
             each.hash,
             file.to_string(),
-            String::new(),
             &mut root_tree,
         );
     }
@@ -89,18 +88,45 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
             .as_secs() as i64,
         timezone: tz_str.as_bytes().to_vec(),
     };
-    let commiter_bytes: Vec<u8> = bincode::serialize(&commiter).expect("Failed to serialize CommitUser struct");
+    let commiter_bytes: Vec<u8> =
+        bincode::serialize(&commiter).expect("Failed to serialize CommitUser struct");
     let commit_content: CommitContent = CommitContent {
         tree: root_tree_hash,
         author: commiter_bytes.clone(),
         commiter: commiter_bytes,
         message: commit_message.as_bytes().to_vec(),
     };
-    let commit_content_bytes: Vec<u8> = bincode::serialize(&commit_content).expect("Failed to serialize commit content");
+    let commit_content_bytes: Vec<u8> =
+        bincode::serialize(&commit_content).expect("Failed to serialize commit content");
     let commit: Commit = Commit {
         header: utils::git_object_header("commit", commit_content_bytes.len()),
         content: commit_content_bytes,
     };
-    let commit_bytes: Vec<u8> = bincode::serialize(&commit).expect("Failed to serialize commit");
+    let commit_bytes: Vec<u8> =
+        bincode::serialize(&commit).expect("Failed to serialize new commit");
+    let commit_bytes_compressed = utils::compress_file(commit_bytes.clone());
+    println!("debug: {:?}", String::from_utf8_lossy(&commit_bytes));
+    // hash tree content with SHA-1
+    let split_hash_result_hex: Vec<char>;
+    (_, split_hash_result_hex) = utils::hash_sha1(&commit_bytes_compressed);
 
+    // Create folder and file in local repository
+    let mut file: File;
+    let file_result = utils::new_file_dir(&split_hash_result_hex);
+    match file_result {
+        Ok(f) => file = f,
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Error writing to tree file: {}", e));
+            return;
+        }
+    }
+    // write zlib compressed into file
+    let file_result = file.write_all(&commit_bytes_compressed);
+    match file_result {
+        Ok(_) => (),
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Error writing to tree file: {}", e));
+            exit(1)
+        }
+    }
 }

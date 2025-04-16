@@ -49,7 +49,7 @@ struct BlobObject {
 }
 
 pub fn add_to_local_repo(arg: String) {
-    let folder_vec: Vec<&str> = if arg.contains("/") {
+    let _folder_vec: Vec<&str> = if arg.contains("/") {
         let folder_split: Vec<&str> = arg.split("/").collect();
         folder_split
     } else {
@@ -84,7 +84,7 @@ The function `add_tree` returns a `[u8; 20]` array, which represents the hash of
 tree object.
 */
 //TO-Do fix tree structure to make compatible with git
-fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
+fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
     // creation of tree entries
     let mode = helpers::DIR;
     let new_tree_entry: TreeEntry = TreeEntry {
@@ -109,15 +109,15 @@ fn add_tree(child: [u8; 20], name: &str, child_path: &str) -> [u8; 20] {
         new_tree_concat.extend(bincode::serialize(&entry).unwrap());
     }
     // Compress the new tree object with zlib
-    let compressed_bytes_vec = helpers::compress_file(new_tree_concat);
+    let compressed_bytes_vec = utils::compress_file(new_tree_concat);
     // hash tree content with SHA-1
     let new_hash: [u8; 20];
     let split_hash_result_hex: Vec<char>;
-    (new_hash, split_hash_result_hex) = helpers::hash_sha1(&compressed_bytes_vec);
+    (new_hash, split_hash_result_hex) = utils::hash_sha1(&compressed_bytes_vec);
 
     // Create folder and file in local repository
     let mut file: File;
-    let file_result = helpers::new_file_dir(&split_hash_result_hex);
+    let file_result = utils::new_file_dir(&split_hash_result_hex);
     match file_result {
         Ok(f) => file = f,
         Err(e) => {
@@ -173,11 +173,11 @@ fn add_blob(arg: &str) -> [u8; 20] {
     // hash file content with SHA-1
     let new_hash: [u8; 20];
     let split_hash_result_hex: Vec<char>;
-    (new_hash, split_hash_result_hex) = helpers::hash_sha1(&blob_object_concat);
+    (new_hash, split_hash_result_hex) = utils::hash_sha1(&blob_object_concat);
 
     // creation of file to local repo
     let mut file: File;
-    let file_result = helpers::new_file_dir(&split_hash_result_hex);
+    let file_result = utils::new_file_dir(&split_hash_result_hex);
     match file_result {
         Ok(f) => file = f,
         Err(e) => {
@@ -185,7 +185,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
             return [0u8; 20];
         }
     }
-    let compressed_bytes_vec = helpers::compress_file(blob_object_concat);
+    let compressed_bytes_vec = utils::compress_file(blob_object_concat);
     // write compress file with zlib to file
     file.write_all(&compressed_bytes_vec).unwrap();
     let mode: u32 = RWO;
@@ -204,17 +204,15 @@ fn add_blob(arg: &str) -> [u8; 20] {
 /// * `child`: The `child` parameter in the `recursive_add` function seems to represent a string value
 ///   that is either empty or contains some data. It is used as an argument in the function calls to
 ///   `add_tree` and `recursive_add`.
-
 pub fn recursive_add(
     mut arg_vec: Vec<&str>,
     mut child: [u8; 20],
     mut name: String,
-    mut child_path: String,
     root_tree_ptr: &mut [u8; 20],
 ) {
     // add root folder tree object and break recursive
     if arg_vec.is_empty() {
-        let root_tree = add_tree(child, &name, &child_path);
+        let root_tree = add_tree(child, &name);
         root_tree_ptr.copy_from_slice(&root_tree);
         return;
     }
@@ -226,11 +224,11 @@ pub fn recursive_add(
         Ok(_) => (),
         Err(_) => panic!("Failed to read path metadata"),
     }
-    let new_tree = add_tree(child, &name, &child_path);
+    let new_tree = add_tree(child, &name);
     root_tree_ptr.copy_from_slice(&new_tree);
     child = new_tree;
     root_tree_ptr.copy_from_slice(&new_tree);
     name = last.to_string();
     arg_vec.pop();
-    recursive_add(arg_vec, child, name, child_path, root_tree_ptr);
+    recursive_add(arg_vec, child, name, root_tree_ptr);
 }

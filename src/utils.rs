@@ -1,6 +1,9 @@
-use std::{env, fs, io::Read, path::Path, process::Command};
+use std::{env, fs::{self, File}, io::{Read, Write}, path::Path, process::Command};
 
 use crate::add;
+use flate2::Compression;
+use flate2::write::ZlibEncoder;
+use sha1::{Digest, Sha1};
 
 pub fn lrngit_usage() -> &'static str {
     let usage = r"
@@ -98,3 +101,89 @@ pub fn git_object_header(file_type: &str, content_length: usize) -> Vec<u8> {
         _ => vec![],
     }
 }
+
+/// The `compress_file` function compresses a vector of bytes using zlib compression.
+///
+/// Arguments:
+///
+/// * `vec`: The `vec` parameter in the `compress_file` function is a vector of unsigned 8-bit integers
+/// (`Vec<u8>`) that represents the data of a file that you want to compress using the zlib compression
+/// algorithm.
+///
+/// Returns:
+///
+/// The function `compress_file` returns a `Vec<u8>` containing the compressed bytes of the input
+/// `Vec<u8>` after compressing it using zlib compression.
+pub fn compress_file(vec: Vec<u8>) -> Vec<u8> {
+    // compress file to zlib
+    let mut compress_file = ZlibEncoder::new(Vec::new(), Compression::default());
+    let compress_file_write = compress_file.write_all(&vec);
+    match compress_file_write {
+        Ok(_) => (),
+        Err(e) => {
+            lrncore::logs::error_log_with_code(
+                "Failed to add file to local repository",
+                &e.to_string(),
+            );
+            return vec![];
+        }
+    }
+    let compressed_bytes = compress_file.finish();
+    let compressed_bytes_vec: Vec<u8>;
+    match compressed_bytes {
+        Ok(v) => compressed_bytes_vec = v,
+        Err(e) => {
+            lrncore::logs::error_log_with_code(
+                "Failed to add file to local repository",
+                &e.to_string(),
+            );
+            return vec![];
+        }
+    }
+    compressed_bytes_vec
+}
+
+/// The function `new_file_dir` creates a new file in a specified directory based on input characters.
+///
+/// Arguments:
+///
+/// * `hash_vec`: The `hash_vec` parameter is a reference to a vector of characters. The function
+/// `new_file_dir` takes this vector as input and performs the following operations:
+///
+/// Returns:
+///
+/// The function `new_file_dir` is returning a `Result` enum with the success variant containing a
+/// `File` if the file creation is successful, and the error variant containing a `std::io::Error` if
+/// there is an error during the file creation process.
+pub fn new_file_dir(hash_vec: &Vec<char>) -> Result<File, std::io::Error> {
+    let new_folder_name = format!("{}{}", hash_vec[0], hash_vec[1]);
+    add_folder(&new_folder_name);
+    let new_file_name = format!("{}", hash_vec[2..].iter().collect::<String>());
+    let new_tree_path = format!(".lrngit/objects/{}/{}", new_folder_name, new_file_name);
+    let file: File;
+    match File::create(&new_tree_path) {
+        Ok(f) => file = f,
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Failed to create new tree file: {}", e));
+            return Err(e);
+        }
+    };
+    Ok(file)
+}
+
+/// The function `hash_sha1` calculates the SHA-1 hash of a given vector of bytes and returns the hash
+/// as an array of bytes and as a vector of characters representing the hexadecimal hash.
+///
+/// Arguments:
+///
+/// * `data`: The `data` parameter is a reference to a vector of unsigned 8-bit integers (`Vec<u8>`),
+/// which represents the data that you want to hash using the SHA-1 algorithm.
+pub fn hash_sha1(data: &Vec<u8>) -> ([u8; 20], Vec<char>) {
+    let mut new_hash = Sha1::new();
+    new_hash.update(data);
+    let hash_result = new_hash.finalize();
+    let folder_hash = format!("{:#x}", hash_result);
+    let split_hash_result_hex = folder_hash.chars().collect::<Vec<char>>();
+    (hash_result.into(), split_hash_result_hex)
+}
+
