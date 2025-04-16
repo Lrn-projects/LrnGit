@@ -4,8 +4,7 @@ use chrono::{Local, Offset};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    add::{self, index},
-    config, utils,
+    add::{self, index}, branch, config, utils
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -105,7 +104,6 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     let commit_bytes: Vec<u8> =
         bincode::serialize(&commit).expect("Failed to serialize new commit");
     let commit_bytes_compressed = utils::compress_file(commit_bytes.clone());
-    println!("debug: {:?}", String::from_utf8_lossy(&commit_bytes));
     // hash tree content with SHA-1
     let split_hash_result_hex: Vec<char>;
     (_, split_hash_result_hex) = utils::hash_sha1(&commit_bytes_compressed);
@@ -129,4 +127,7 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
             exit(1)
         }
     }
+    let commit_hash_string: String = split_hash_result_hex.iter().collect();
+    let commit_hash_bytes = commit_hash_string.as_bytes();
+    branch::init_refs(commit_hash_bytes);
 }

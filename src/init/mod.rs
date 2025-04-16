@@ -8,7 +8,7 @@ use std::{
     process::Command,
 };
 
-use crate::add::index;
+use crate::{add::index, branch};
 
 pub fn init_local_repo() {
     // create local repository directory
@@ -40,11 +40,15 @@ pub fn init_local_repo() {
         .arg(".lrngit/logs")
         .arg(".lrngit/objects")
         .arg(".lrngit/refs")
+        .arg(".lrngit/refs/heads")
+        .arg(".lrngit/refs/tags")
+        .arg(".lrngit/refs/remotes")
         .spawn()
         .expect("Failed to create all directories");
     let wait_mkdir = mkdir.wait().expect("Failed to wait the mkdir command");
     if !wait_mkdir.success() {
         panic!("Failed to execute mkdir command");
     }
+    branch::init_head();
     index::init_index();
 }

@@ -3,6 +3,7 @@ mod commit;
 mod init;
 pub mod utils;
 mod config;
+pub mod branch;
 
 use std::env;
 use std::process::exit;
