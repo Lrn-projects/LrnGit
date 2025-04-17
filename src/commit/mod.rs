@@ -4,7 +4,8 @@ use chrono::{Local, Offset};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    add::{self, index}, branch, config, utils
+    add::{self, index},
+    branch, config, utils,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -15,8 +16,17 @@ struct Commit {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+struct InitCommitContent {
+    tree: [u8; 20],
+    author: Vec<u8>,
+    commiter: Vec<u8>,
+    message: Vec<u8>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 struct CommitContent {
     tree: [u8; 20],
+    parent: [u8; 20],
     author: Vec<u8>,
     commiter: Vec<u8>,
     message: Vec<u8>,
@@ -60,12 +70,7 @@ pub fn new_commit(commit_message: &str) {
             vec![&path]
         };
         let file = folder_vec.pop().unwrap();
-        add::recursive_add(
-            folder_vec,
-            each.hash,
-            file.to_string(),
-            &mut root_tree,
-        );
+        add::recursive_add(folder_vec, each.hash, file.to_string(), &mut root_tree);
     }
     println!("root tree: {:x?}", root_tree);
     create_commit_object(root_tree, commit_message);
@@ -89,14 +94,29 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     };
     let commiter_bytes: Vec<u8> =
         bincode::serialize(&commiter).expect("Failed to serialize CommitUser struct");
-    let commit_content: CommitContent = CommitContent {
-        tree: root_tree_hash,
-        author: commiter_bytes.clone(),
-        commiter: commiter_bytes,
-        message: commit_message.as_bytes().to_vec(),
-    };
-    let commit_content_bytes: Vec<u8> =
-        bincode::serialize(&commit_content).expect("Failed to serialize commit content");
+    let parent_commit = branch::parse_current_branch();
+    let mut commit_content_bytes: Vec<u8> = Vec::new();
+    if parent_commit.is_empty() {
+        let init_commit_content: InitCommitContent = InitCommitContent {
+            tree: root_tree_hash,
+            author: commiter_bytes.clone(),
+            commiter: commiter_bytes.clone(),
+            message: commit_message.as_bytes().to_vec(),
+        };
+        commit_content_bytes =
+            bincode::serialize(&init_commit_content).expect("Failed to serialize commit content");
+    } else {
+        let commit_content: CommitContent = CommitContent {
+            tree: root_tree_hash,
+            parent: [0u8; 20],
+            author: commiter_bytes.clone(),
+            commiter: commiter_bytes,
+            message: commit_message.as_bytes().to_vec(),
+        };
+        commit_content_bytes =
+            bincode::serialize(&commit_content).expect("Failed to serialize commit content");
+    }
+    println!("debug {}", String::from_utf8_lossy(&commit_content_bytes));
     let commit: Commit = Commit {
         header: utils::git_object_header("commit", commit_content_bytes.len()),
         content: commit_content_bytes,
