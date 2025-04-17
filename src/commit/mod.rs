@@ -116,7 +116,6 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
         commit_content_bytes =
             bincode::serialize(&commit_content).expect("Failed to serialize commit content");
     }
-    println!("debug {}", String::from_utf8_lossy(&commit_content_bytes));
     let commit: Commit = Commit {
         header: utils::git_object_header("commit", commit_content_bytes.len()),
         content: commit_content_bytes,
