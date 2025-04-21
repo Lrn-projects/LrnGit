@@ -1,9 +1,22 @@
-use std::{env, fs::{self, File}, io::{Read, Write}, path::Path, process::Command};
+use std::{
+    env,
+    fs::{self, File},
+    io::{Read, Write},
+    path::Path,
+    process::Command,
+};
 
 use crate::add;
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
+use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ObjectHeader {
+    pub types: Vec<u8>,
+    pub size: usize,
+}
 
 pub fn lrngit_usage() -> &'static str {
     let usage = r"
@@ -73,7 +86,13 @@ pub fn read_blob_file(hash: &str) {
 pub fn ls_file() {
     let config = add::index::parse_index();
     for each in config.entries {
-        println!("{:o} {} {} {}\n", each.mode, hex::encode(each.hash), each.flag, String::from_utf8_lossy(&each.path));
+        println!(
+            "{:o} {} {} {}\n",
+            each.mode,
+            hex::encode(each.hash),
+            each.flag,
+            String::from_utf8_lossy(&each.path)
+        );
     }
 }
 
@@ -188,3 +207,14 @@ pub fn hash_sha1(data: &Vec<u8>) -> ([u8; 20], Vec<char>) {
     (hash_result.into(), split_hash_result_hex)
 }
 
+pub fn get_file_by_hash(hash: &str) -> File {
+    let split_hash: Vec<char> = hash.chars().collect();
+    let folder_name: String = format!("{}{}", split_hash[0], split_hash[1]);
+    let file_name: String = split_hash[2..].iter().collect::<String>().to_string();
+    let path = format!(".lrngit/objects/{}/{}", folder_name, file_name);
+    File::open(path).expect("Failed to open file")
+}
+
+// pub fn get_hash_by_path(path: &str) -> String {
+//
+// }

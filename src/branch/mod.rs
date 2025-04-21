@@ -10,6 +10,7 @@ pub fn init_head() {
         .expect("Failed to write in HEAD file");
 }
 
+/// get content of the HEAD file, ref of the current branch
 fn parse_head() -> String {
     let mut head = File::open(".lrngit/HEAD").expect("Failed to open HEAD file");
     let mut content: String = String::new();
@@ -19,6 +20,7 @@ fn parse_head() -> String {
     split_content[1].to_string()
 }
 
+/// get last commit from the current HEAD
 pub fn parse_current_branch() -> String {
     let head = parse_head();
     let branch_string = ".lrngit/".to_string() + &head;
