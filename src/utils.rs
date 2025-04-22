@@ -215,6 +215,18 @@ pub fn get_file_by_hash(hash: &str) -> File {
     File::open(path).expect("Failed to open file")
 }
 
-// pub fn get_hash_by_path(path: &str) -> String {
-//
-// }
+/// parse git object header and return rest of the buffer
+pub fn split_object_header(mut buf: Vec<u8>) -> Vec<u8> {
+    // parse buffer until reach \0
+    // remove header from rest of the buffer and add them in a new vec
+    for bytes in buf.clone() {
+        if let Some(index) = buf.iter().position(|value| *value == bytes) {
+            buf.remove(index);
+        }
+        if bytes == 0 {
+            break;
+        }
+    }
+    let new_vec = buf.clone();
+    new_vec
+}

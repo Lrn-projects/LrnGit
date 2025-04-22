@@ -1,4 +1,4 @@
-use std::{env, fs::File, io::Write, process::exit, time::SystemTime};
+use std::{env, error::Error, fs::File, io::Write, process::exit, time::SystemTime};
 
 use chrono::{Local, Offset};
 use serde::{Deserialize, Serialize};
@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     add::{self, index},
     branch, config,
-    utils::{self, ObjectHeader},
+    utils::{self},
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -95,7 +95,7 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     let commiter_bytes: Vec<u8> =
         bincode::serialize(&commiter).expect("Failed to serialize CommitUser struct");
     let parent_commit = branch::parse_current_branch();
-    let mut commit_content_bytes: Vec<u8> = Vec::new();
+    let commit_content_bytes: Vec<u8>;
     if parent_commit.is_empty() {
         let init_commit_content: InitCommitContent = InitCommitContent {
             tree: root_tree_hash,
@@ -108,7 +108,14 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     } else {
         let commit_content: CommitContent = CommitContent {
             tree: root_tree_hash,
-            parent: [0u8; 20],
+            // Inline field to copy parent bytes as buffer in a buffer of 20 bytes
+            parent: {
+                let mut parent_array = [0u8; 20];
+                let parent_bytes = parent_commit.as_bytes();
+                parent_array[..parent_bytes.len().min(20)]
+                    .copy_from_slice(&parent_bytes[..parent_bytes.len().min(20)]);
+                parent_array
+            },
             author: commiter_bytes.clone(),
             commiter: commiter_bytes,
             message: commit_message.as_bytes().to_vec(),
@@ -117,7 +124,10 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
             bincode::serialize(&commit_content).expect("Failed to serialize commit content");
     }
     let mut commit_bytes: Vec<u8> = Vec::new();
-    commit_bytes.extend_from_slice(&utils::git_object_header("commit", commit_content_bytes.len()));
+    commit_bytes.extend_from_slice(&utils::git_object_header(
+        "commit",
+        commit_content_bytes.len(),
+    ));
     commit_bytes.extend_from_slice(&commit_content_bytes);
     let commit_bytes_compressed = utils::compress_file(commit_bytes.clone());
     // hash tree content with SHA-1
@@ -148,15 +158,9 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     branch::init_refs(commit_hash_bytes);
 }
 
-pub fn parse_commit(buf: Vec<u8>) {
-    let commit_header_size = std::mem::size_of::<utils::ObjectHeader>();
-    if buf.len() < commit_header_size {
-        lrncore::logs::error_log("Buffer too small to contain a valid commit header");
-        return;
-    }
-    let commit_header: utils::ObjectHeader = bincode::deserialize(&buf[..commit_header_size])
-        .expect("Failed to deserialize commit header");
-    println!("debug commit_header: {:?}", commit_header)
-    // let commit:Commit = bincode::deserialize(&buf).expect("Failed to deserialize commit");
-    // commit
+pub fn parse_commit(buf: Vec<u8>) -> Result<CommitContent, Box<dyn Error>> {
+    let content = utils::split_object_header(buf);
+    let commit: CommitContent =
+        bincode::deserialize(&content).expect("Failed to deserialize commit");
+    Ok(commit)
 }
