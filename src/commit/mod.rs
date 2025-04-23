@@ -24,10 +24,10 @@ pub struct InitCommitContent {
     pub message: Vec<u8>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CommitContent {
     pub tree: [u8; 20],
-    pub parent: [u8; 20],
+    pub parent: Vec<u8>,
     pub author: Vec<u8>,
     pub commiter: Vec<u8>,
     pub message: Vec<u8>,
@@ -109,13 +109,7 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
         let commit_content: CommitContent = CommitContent {
             tree: root_tree_hash,
             // Inline field to copy parent bytes as buffer in a buffer of 20 bytes
-            parent: {
-                let mut parent_array = [0u8; 20];
-                let parent_bytes = parent_commit.as_bytes();
-                parent_array[..parent_bytes.len().min(20)]
-                    .copy_from_slice(&parent_bytes[..parent_bytes.len().min(20)]);
-                parent_array
-            },
+            parent: parent_commit.as_bytes().to_vec(),
             author: commiter_bytes.clone(),
             commiter: commiter_bytes,
             message: commit_message.as_bytes().to_vec(),
@@ -160,7 +154,18 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
 
 pub fn parse_commit(buf: Vec<u8>) -> Result<CommitContent, Box<dyn Error>> {
     let content = utils::split_object_header(buf);
-    let commit: CommitContent =
-        bincode::deserialize(&content).expect("Failed to deserialize commit");
+    let commit: CommitContent = match bincode::deserialize(&content[1]) {
+        Ok(c) => c,
+        Err(e) => {
+            return Err(Box::new(e));
+        }
+    };
     Ok(commit)
+}
+
+pub fn parse_init_commit(buf: Vec<u8>) -> Result<InitCommitContent, Box<dyn Error>> {
+    let content = utils::split_object_header(buf);
+    let init_commit: InitCommitContent =
+        bincode::deserialize(&content[1]).expect("Failed to deserialize init commit");
+    Ok(init_commit)
 }
