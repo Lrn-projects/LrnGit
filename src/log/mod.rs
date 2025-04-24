@@ -2,7 +2,7 @@ use std::{env, io::Read, process::exit};
 
 use crate::{
     branch,
-    commit::{self, CommitContent, CommitUser, InitCommitContent},
+    commit::{self, CommitContent, CommitObject, CommitUser, InitCommitContent},
     utils,
 };
 
@@ -27,8 +27,9 @@ pub fn log_command() {
 fn log_commits() {
     let last_commit = branch::parse_current_branch();
     let last_commit_buf = last_commit.as_bytes().to_vec();
-    let mut commits_vec: (Vec<CommitContent>, InitCommitContent) = (
-        vec![],
+    let commit_vec: Vec<CommitObject> = Vec::new();
+    let mut commits_vec: (Vec<CommitObject>, InitCommitContent) = (
+        commit_vec,
         InitCommitContent {
             tree: [0u8; 20],
             author: vec![],
@@ -39,15 +40,15 @@ fn log_commits() {
     commits_vec = unwind_commits(last_commit_buf, commits_vec);
     let mut author: CommitUser;
     for each in commits_vec.0 {
-        println!("commit: {}", hex::encode(each.tree));
-        author = commit::parse_commit_author(each.author);
+        println!("commit: {}", str::from_utf8(&each.commit_hash).unwrap());
+        author = commit::parse_commit_author(each.commit_content.author);
         println!(
             "author: {} {}",
             String::from_utf8_lossy(&author.name),
             String::from_utf8_lossy(&author.email)
         );
         println!("date: ");
-        println!("\n\t{}", String::from_utf8_lossy(&each.message));
+        println!("\n\t{}", String::from_utf8_lossy(&each.commit_content.message));
         println!();
     }
     let init_commit = commits_vec.1;
@@ -64,8 +65,8 @@ fn log_commits() {
 
 fn unwind_commits(
     commit_hash: Vec<u8>,
-    mut commits: (Vec<CommitContent>, InitCommitContent),
-) -> (Vec<CommitContent>, InitCommitContent) {
+    mut commits: (Vec<CommitObject>, InitCommitContent),
+) -> (Vec<CommitObject>, InitCommitContent) {
     let mut commit_object = utils::get_file_by_hash(
         str::from_utf8(&commit_hash).expect("Failed to convert buffer to str"),
     );
@@ -87,6 +88,7 @@ fn unwind_commits(
         return commits;
     };
     let commit_unwrapped = parse_commit.unwrap();
-    commits.0.push(commit_unwrapped.clone());
+    let new_commit_object: CommitObject = CommitObject { commit_hash, commit_content: commit_unwrapped.clone() };
+    commits.0.push(new_commit_object);
     unwind_commits(commit_unwrapped.parent.to_vec(), commits)
 }

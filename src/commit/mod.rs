@@ -17,6 +17,12 @@ pub struct Commit {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct CommitObject {
+    pub commit_hash: Vec<u8>,
+    pub commit_content: CommitContent
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct InitCommitContent {
     pub tree: [u8; 20],
     pub author: Vec<u8>,
