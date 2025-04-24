@@ -169,3 +169,8 @@ pub fn parse_init_commit(buf: Vec<u8>) -> Result<InitCommitContent, Box<dyn Erro
         bincode::deserialize(&content[1]).expect("Failed to deserialize init commit");
     Ok(init_commit)
 }
+
+pub fn parse_commit_author(buf: Vec<u8>) -> CommitUser {
+    let commit_user: CommitUser = bincode::deserialize(&buf).expect("Failed to deserialize commit user"); 
+    commit_user
+}
