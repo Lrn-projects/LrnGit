@@ -2,7 +2,7 @@ use std::{env, io::Read, process::exit};
 
 use crate::{
     branch,
-    commit::{self, CommitContent, CommitObject, CommitUser, InitCommitContent},
+    commit::{self, CommitObject, CommitUser, InitCommitContent},
     utils,
 };
 
@@ -47,8 +47,15 @@ fn log_commits() {
             String::from_utf8_lossy(&author.name),
             String::from_utf8_lossy(&author.email)
         );
-        println!("date: ");
-        println!("\n\t{}", String::from_utf8_lossy(&each.commit_content.message));
+        println!(
+            "date: {} {}",
+            utils::timestamp_to_datetime(author.timestamp),
+            str::from_utf8(&author.timezone).expect("Failed to parse timezone to str")
+        );
+        println!(
+            "\n\t{}",
+            String::from_utf8_lossy(&each.commit_content.message)
+        );
         println!();
     }
     let init_commit = commits_vec.1;
@@ -59,7 +66,11 @@ fn log_commits() {
         String::from_utf8_lossy(&author.name),
         String::from_utf8_lossy(&author.email)
     );
-    println!("date: ");
+    println!(
+        "date: {} {}",
+        utils::timestamp_to_datetime(author.timestamp),
+        str::from_utf8(&author.timezone).expect("Failed to parse timezone to str")
+    );
     println!("\n\t{}", String::from_utf8_lossy(&init_commit.message));
 }
 
@@ -88,7 +99,10 @@ fn unwind_commits(
         return commits;
     };
     let commit_unwrapped = parse_commit.unwrap();
-    let new_commit_object: CommitObject = CommitObject { commit_hash, commit_content: commit_unwrapped.clone() };
+    let new_commit_object: CommitObject = CommitObject {
+        commit_hash,
+        commit_content: commit_unwrapped.clone(),
+    };
     commits.0.push(new_commit_object);
     unwind_commits(commit_unwrapped.parent.to_vec(), commits)
 }

@@ -7,6 +7,7 @@ use std::{
 };
 
 use crate::add;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
 use serde::{Deserialize, Serialize};
@@ -19,7 +20,9 @@ pub struct ObjectHeader {
 }
 
 pub fn lrngit_usage() -> &'static str {
-    let usage = r"
+    
+
+    (r"
 lrngit's cli.
 
 
@@ -35,9 +38,7 @@ Options:
 
     -h, --help      Show command usage
     -v, --version   Show the current version of LrnGit
-";
-
-    usage
+") as _
 }
 
 pub fn change_wkdir(dir: &str) {
@@ -96,23 +97,25 @@ pub fn ls_file() {
     }
 }
 
-/// The function `git_object_header` generates a Git object header based on the file type and content
-/// length provided.
-///
-/// Arguments:
-///
-/// * `file_type`: The `file_type` parameter represents the type of Git object, which can be either
-/// "blob" or "tree".
-/// * `content_length`: The `content_length` parameter represents the length of the content associated
-/// with the Git object. It is used to construct the header of the Git object based on the specified
-/// `file_type`.
-///
-/// Returns:
-///
-/// The function `git_object_header` returns a vector of bytes representing the header of a Git object
-/// based on the provided `file_type` and `content_length`. If the `file_type` is "blob", it will return
-/// a byte vector containing the header "blob {content_length}\0". If the `file_type` is "tree", it will
-/// return a byte vector containing the header "tree
+/**
+The function `git_object_header` generates a Git object header based on the file type and content
+length provided.
+
+Arguments:
+
+* `file_type`: The `file_type` parameter represents the type of Git object, which can be either
+  "blob" or "tree".
+* `content_length`: The `content_length` parameter represents the length of the content associated
+  with the Git object. It is used to construct the header of the Git object based on the specified
+  `file_type`.
+
+Returns:
+
+The function `git_object_header` returns a vector of bytes representing the header of a Git object
+based on the provided `file_type` and `content_length`. If the `file_type` is "blob", it will return
+a byte vector containing the header "blob {content_length}\0". If the `file_type` is "tree", it will
+return a byte vector containing the header "tree
+*/
 pub fn git_object_header(file_type: &str, content_length: usize) -> Vec<u8> {
     match file_type {
         "blob" => format!("blob {}\0", content_length).as_bytes().to_vec(),
@@ -122,18 +125,20 @@ pub fn git_object_header(file_type: &str, content_length: usize) -> Vec<u8> {
     }
 }
 
-/// The `compress_file` function compresses a vector of bytes using zlib compression.
-///
-/// Arguments:
-///
-/// * `vec`: The `vec` parameter in the `compress_file` function is a vector of unsigned 8-bit integers
-/// (`Vec<u8>`) that represents the data of a file that you want to compress using the zlib compression
-/// algorithm.
-///
-/// Returns:
-///
-/// The function `compress_file` returns a `Vec<u8>` containing the compressed bytes of the input
-/// `Vec<u8>` after compressing it using zlib compression.
+/**
+The `compress_file` function compresses a vector of bytes using zlib compression.
+
+Arguments:
+
+* `vec`: The `vec` parameter in the `compress_file` function is a vector of unsigned 8-bit integers
+  (`Vec<u8>`) that represents the data of a file that you want to compress using the zlib compression
+  algorithm.
+
+Returns:
+
+The function `compress_file` returns a `Vec<u8>` containing the compressed bytes of the input
+`Vec<u8>` after compressing it using zlib compression.
+*/
 pub fn compress_file(vec: Vec<u8>) -> Vec<u8> {
     // compress file to zlib
     let mut compress_file = ZlibEncoder::new(Vec::new(), Compression::default());
@@ -149,9 +154,9 @@ pub fn compress_file(vec: Vec<u8>) -> Vec<u8> {
         }
     }
     let compressed_bytes = compress_file.finish();
-    let compressed_bytes_vec: Vec<u8>;
-    match compressed_bytes {
-        Ok(v) => compressed_bytes_vec = v,
+    
+    let compressed_bytes_vec: Vec<u8> = match compressed_bytes {
+        Ok(v) => v,
         Err(e) => {
             lrncore::logs::error_log_with_code(
                 "Failed to add file to local repository",
@@ -159,30 +164,31 @@ pub fn compress_file(vec: Vec<u8>) -> Vec<u8> {
             );
             return vec![];
         }
-    }
+    };
     compressed_bytes_vec
 }
 
-/// The function `new_file_dir` creates a new file in a specified directory based on input characters.
-///
-/// Arguments:
-///
-/// * `hash_vec`: The `hash_vec` parameter is a reference to a vector of characters. The function
-/// `new_file_dir` takes this vector as input and performs the following operations:
-///
-/// Returns:
-///
-/// The function `new_file_dir` is returning a `Result` enum with the success variant containing a
-/// `File` if the file creation is successful, and the error variant containing a `std::io::Error` if
-/// there is an error during the file creation process.
-pub fn new_file_dir(hash_vec: &Vec<char>) -> Result<File, std::io::Error> {
+/**
+The function `new_file_dir` creates a new file in a specified directory based on input characters.
+
+Arguments:
+
+* `hash_vec`: The `hash_vec` parameter is a reference to a vector of characters. The function
+  new_file_dir` takes this vector as input and performs the following operations:
+
+Returns:
+
+The function `new_file_dir` is returning a `Result` enum with the success variant containing a
+`File` if the file creation is successful, and the error variant containing a `std::io::Error` if
+there is an error during the file creation process.
+*/
+pub fn new_file_dir(hash_vec: &[char]) -> Result<File, std::io::Error> {
     let new_folder_name = format!("{}{}", hash_vec[0], hash_vec[1]);
     add_folder(&new_folder_name);
-    let new_file_name = format!("{}", hash_vec[2..].iter().collect::<String>());
+    let new_file_name = hash_vec[2..].iter().collect::<String>().to_string();
     let new_tree_path = format!(".lrngit/objects/{}/{}", new_folder_name, new_file_name);
-    let file: File;
-    match File::create(&new_tree_path) {
-        Ok(f) => file = f,
+    let file: File = match File::create(&new_tree_path) {
+        Ok(f) => f,
         Err(e) => {
             lrncore::logs::error_log(&format!("Failed to create new tree file: {}", e));
             return Err(e);
@@ -191,13 +197,13 @@ pub fn new_file_dir(hash_vec: &Vec<char>) -> Result<File, std::io::Error> {
     Ok(file)
 }
 
-/// The function `hash_sha1` calculates the SHA-1 hash of a given vector of bytes and returns the hash
-/// as an array of bytes and as a vector of characters representing the hexadecimal hash.
-///
-/// Arguments:
-///
-/// * `data`: The `data` parameter is a reference to a vector of unsigned 8-bit integers (`Vec<u8>`),
-/// which represents the data that you want to hash using the SHA-1 algorithm.
+// The function `hash_sha1` calculates the SHA-1 hash of a given vector of bytes and returns the hash
+// as an array of bytes and as a vector of characters representing the hexadecimal hash.
+//
+// Arguments:
+//
+// * `data`: The `data` parameter is a reference to a vector of unsigned 8-bit integers (`Vec<u8>`),
+// which represents the data that you want to hash using the SHA-1 algorithm.
 pub fn hash_sha1(data: &Vec<u8>) -> ([u8; 20], Vec<char>) {
     let mut new_hash = Sha1::new();
     new_hash.update(data);
@@ -235,4 +241,15 @@ pub fn split_object_header(mut buf: Vec<u8>) -> Vec<Vec<u8>> {
     output_vec.push(header_bytes);
     output_vec.push(new_vec);
     output_vec
+}
+
+pub fn timestamp_to_datetime(timestamp: i64) -> String {
+    // Create a NaiveDateTime from the timestamp
+    let naive = NaiveDateTime::from_timestamp(timestamp, 0);
+
+    // Create a normal DateTime from the NaiveDateTime
+    let datetime: DateTime<Utc> = DateTime::from_naive_utc_and_offset(naive, Utc);
+
+    // Format the datetime how you want
+    datetime.format("%Y-%m-%d %H:%M:%S").to_string()
 }
