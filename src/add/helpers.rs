@@ -1,7 +1,7 @@
 /*
 Helper module for the add module, contain useful pub function
 */
-
+#![allow(dead_code)]
 use std::{fs, os::unix::fs::PermissionsExt};
 
 
@@ -16,7 +16,7 @@ pub const RWO: u32 = 0o100644;
 /// Arguments:
 ///
 /// * `path`: The function `define_tree_mode` takes a path as input and determines the mode of the file
-/// or directory located at that path. The mode can be one of the following:
+///   or directory located at that path. The mode can be one of the following:
 ///
 /// Returns:
 ///
@@ -29,7 +29,7 @@ pub const RWO: u32 = 0o100644;
 pub fn define_tree_mode(path: &str) -> u32 {
     let metadata = fs::symlink_metadata(path).expect("Failed to read metadata");
     if metadata.file_type().is_symlink() {
-        return SYM; // Symlink
+        SYM// Symlink
     } else if metadata.file_type().is_dir() {
         return DIR; // Tree (directory)
     } else {
