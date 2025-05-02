@@ -1,4 +1,11 @@
-use std::{env, error::Error, fs::File, io::Write, process::exit, time::SystemTime};
+use std::{
+    env,
+    error::Error,
+    fs::File,
+    io::{Read, Write},
+    process::exit,
+    time::SystemTime,
+};
 
 use chrono::{Local, Offset};
 use serde::{Deserialize, Serialize};
@@ -19,7 +26,7 @@ pub struct Commit {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CommitObject {
     pub commit_hash: Vec<u8>,
-    pub commit_content: CommitContent
+    pub commit_content: CommitContent,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -158,6 +165,29 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     branch::init_refs(commit_hash_bytes);
 }
 
+pub fn parse_commit_by_hash(hash: String) -> CommitContent {
+    let mut commit_object = utils::get_file_by_hash(&hash);
+    let mut content_buf: Vec<u8> = Vec::new();
+    commit_object
+        .read_to_end(&mut content_buf)
+        .expect("Failed to read commit content");
+    // decode buffer using zlib
+    let mut d = flate2::read::ZlibDecoder::new(content_buf.as_slice());
+    let mut buffer = Vec::new();
+    // read decoded file and populate buffer
+    d.read_to_end(&mut buffer).unwrap();
+
+    match parse_commit(buffer) {
+        Ok(c) => {
+            c
+        },
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Error parsing commit: {}", e));
+            exit(1)
+        }
+    }
+}
+
 pub fn parse_commit(buf: Vec<u8>) -> Result<CommitContent, Box<dyn Error>> {
     let content = utils::split_object_header(buf);
     let commit: CommitContent = match bincode::deserialize(&content[1]) {
@@ -177,6 +207,7 @@ pub fn parse_init_commit(buf: Vec<u8>) -> Result<InitCommitContent, Box<dyn Erro
 }
 
 pub fn parse_commit_author(buf: Vec<u8>) -> CommitUser {
-    let commit_user: CommitUser = bincode::deserialize(&buf).expect("Failed to deserialize commit user"); 
+    let commit_user: CommitUser =
+        bincode::deserialize(&buf).expect("Failed to deserialize commit user");
     commit_user
 }
