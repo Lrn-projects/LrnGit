@@ -5,6 +5,8 @@ pub mod utils;
 mod config;
 pub mod branch;
 mod log;
+mod status;
+pub mod macros;
 
 use std::env;
 use std::process::exit;
@@ -22,6 +24,7 @@ enum Commands {
     Commit,
     CatFile{ arg: String },
     LsFile,
+    Status,
     Log,
     Config,
     Version,
@@ -67,6 +70,7 @@ fn main() {
             .to_string(),
         },
         Some("ls-file") => Commands::LsFile,
+        Some("status") => Commands::Status,
         Some("log") => Commands::Log,
         Some("config") => Commands::Config, 
         Some("version") => Commands::Version,
@@ -83,6 +87,7 @@ fn main() {
         Commands::Commit =>  commit::commit_command(),
         Commands::CatFile { arg } => utils::read_blob_file(&arg), 
         Commands::LsFile => utils::ls_file(),
+        Commands::Status => status::status_command(),
         Commands::Log => log::log_command(),
         Commands::Config => config::config_commands(),
         Commands::Version => lrncore::usage_exit::command_usage(&lrngit_version()),
