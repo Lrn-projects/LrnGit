@@ -54,8 +54,18 @@ fn workdir_status() {
     let mut file_vec: Vec<PathBuf> = Vec::new();
     walkdir(&workdir, &mut file_vec);
     let status = check_file_status(index_entries, file_vec, &workdir);
-    for each in status.entries {
-        println!("{:?}", each);
+    let (tracked, untracked, modify) = sort_file_status_vec(status.entries);
+    println!("Tracked file:");
+    for each in tracked {
+        println!("{:?}", each.file);
+    }
+    println!("\nUntracked file:");
+    for each in untracked {
+        println!("{:?}", each.file);
+    }
+    println!("\nModified file:");
+    for each in modify {
+        println!("{:?}", each.file);
     }
 }
 
@@ -119,4 +129,26 @@ fn check_file_status(
         entries: files_status_vec,
     };
     repo_status
+}
+
+/// Sort the file status vector and return two separate vectors containing, 1: All tracked files,
+/// 2: All untracked files
+fn sort_file_status_vec(
+    files: Vec<FileStatusEntry>,
+) -> (
+    Vec<FileStatusEntry>,
+    Vec<FileStatusEntry>,
+    Vec<FileStatusEntry>,
+) {
+    let mut tracked: Vec<FileStatusEntry> = Vec::new();
+    let mut untracked: Vec<FileStatusEntry> = Vec::new();
+    let mut modify: Vec<FileStatusEntry> = Vec::new();
+    for each in files {
+        match each.status {
+            FileStatus::Untracked => untracked.push(each),
+            FileStatus::Tracked => tracked.push(each),
+            FileStatus::Modify => modify.push(each),
+        }
+    }
+    (tracked, untracked, modify)
 }
