@@ -5,7 +5,28 @@ use std::{
     process::exit,
 };
 
-use crate::{add, branch, commit, vec_of_path};
+#[derive(Debug)]
+enum FileStatus {
+    Untracked,
+    Tracked,
+    Modify,
+}
+
+#[derive(Debug)]
+struct RepositoryStatus {
+    entries: Vec<FileStatusEntry>,
+}
+
+#[derive(Debug)]
+struct FileStatusEntry {
+    file: String,
+    status: FileStatus,
+}
+
+use crate::{
+    add::{self, index::IndexEntry},
+    branch, commit, vec_of_path,
+};
 
 pub fn status_command() {
     let args: Vec<String> = env::args().collect();
@@ -27,15 +48,22 @@ pub fn status_command() {
 fn workdir_status() {
     let parse_head = branch::parse_current_branch();
     let last_commit = commit::parse_commit_by_hash(parse_head);
-    println!("debug: {:?}", last_commit);
     let index = add::index::parse_index();
-    println!("debug index: {:?}", index);
+    let index_entries = index.entries;
     let workdir = current_dir().expect("Failed to get the current working directory");
     let mut file_vec: Vec<PathBuf> = Vec::new();
     walkdir(&workdir, &mut file_vec);
-    println!("debug file_vec len {:?}", file_vec);
+    let status = check_file_status(index_entries, file_vec, &workdir);
+    for each in status.entries {
+        println!("{:?}", each);
+    }
 }
 
+/// Recursive function to get all files in current workdir
+///
+/// # Errors
+///
+/// This function will return an error if the function cannot access a directory.
 fn walkdir(workdir: &PathBuf, file_vec: &mut Vec<PathBuf>) -> io::Result<()> {
     let avoid_path_sufx: Vec<&Path> = vec_of_path!(".lrngit", ".git", "target");
     if workdir.is_dir() {
@@ -56,11 +84,39 @@ fn walkdir(workdir: &PathBuf, file_vec: &mut Vec<PathBuf>) -> io::Result<()> {
                 }
             }
         }
-        // TODO
-        // need to sort the entries by all != from avoid_path
-        // maybe keep the long version from https://doc.rust-lang.org/std/fs/fn.read_dir.html
-        // or sort from this one idk
     }
 
     Ok(())
+}
+
+fn check_file_status(
+    index_entries: Vec<IndexEntry>,
+    files: Vec<PathBuf>,
+    workdir: &Path,
+) -> RepositoryStatus {
+    let mut files_status_vec: Vec<FileStatusEntry> = Vec::new();
+    for entries in index_entries {
+        let entry_path_str = str::from_utf8(&entries.path).expect("Failed to parse buffer to str");
+        (0..files.len()).for_each(|i| {
+            let workdir_owned = workdir.to_str().unwrap();
+            let files_path_concat = workdir_owned.to_owned() + "/" + entry_path_str;
+            if files_path_concat == *files[i].to_str().unwrap() {
+                let file_status: FileStatusEntry = FileStatusEntry {
+                    file: entry_path_str.to_owned(),
+                    status: FileStatus::Tracked,
+                };
+                files_status_vec.push(file_status);
+            } else {
+                let file_status: FileStatusEntry = FileStatusEntry {
+                    file: entry_path_str.to_owned(),
+                    status: FileStatus::Untracked,
+                };
+                files_status_vec.push(file_status);
+            }
+        });
+    }
+    let repo_status: RepositoryStatus = RepositoryStatus {
+        entries: files_status_vec,
+    };
+    repo_status
 }
