@@ -51,9 +51,12 @@ fn workdir_status() {
     let index = add::index::parse_index();
     let index_entries = index.entries;
     let workdir = current_dir().expect("Failed to get the current working directory");
+    // vec containing all files path
     let mut file_vec: Vec<PathBuf> = Vec::new();
     walkdir(&workdir, &mut file_vec);
+    // fill the file_vec with all files path inside the repository
     let status = check_file_status(index_entries, file_vec, &workdir);
+    // sort all file path by status
     let (tracked, untracked, modify) = sort_file_status_vec(status.entries);
     println!("Tracked file:");
     for each in tracked {
@@ -101,13 +104,18 @@ fn walkdir(workdir: &PathBuf, file_vec: &mut Vec<PathBuf>) -> io::Result<()> {
 
 fn check_file_status(
     index_entries: Vec<IndexEntry>,
-    files: Vec<PathBuf>,
+    mut files: Vec<PathBuf>,
     workdir: &Path,
 ) -> RepositoryStatus {
     let mut files_status_vec: Vec<FileStatusEntry> = Vec::new();
     for entries in index_entries {
         let entry_path_str = str::from_utf8(&entries.path).expect("Failed to parse buffer to str");
-        (0..files.len()).for_each(|i| {
+        // TODO
+        // fix the loop by checking if the element is in files, if it is then add in
+        // as tracked, else untracked.
+        // check both vector, check if there's one element in both, if not, untracked
+        let mut i = 0;
+        while i < files.len() {
             let workdir_owned = workdir.to_str().unwrap();
             let files_path_concat = workdir_owned.to_owned() + "/" + entry_path_str;
             if files_path_concat == *files[i].to_str().unwrap() {
@@ -116,15 +124,20 @@ fn check_file_status(
                     status: FileStatus::Tracked,
                 };
                 files_status_vec.push(file_status);
+                files.remove(i);
             } else {
-                let file_status: FileStatusEntry = FileStatusEntry {
-                    file: entry_path_str.to_owned(),
-                    status: FileStatus::Untracked,
-                };
-                files_status_vec.push(file_status);
+                i += 1;
             }
-        });
+        }
+        for each in &files {
+            let file_status: FileStatusEntry = FileStatusEntry {
+                file: each.to_str().unwrap().to_owned(),
+                status: FileStatus::Untracked,
+            };
+            files_status_vec.push(file_status);
+        }
     }
+    files = vec![];
     let repo_status: RepositoryStatus = RepositoryStatus {
         entries: files_status_vec,
     };
