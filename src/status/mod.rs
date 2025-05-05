@@ -129,14 +129,15 @@ fn check_file_status(
                 i += 1;
             }
         }
-        for each in &files {
-            let file_status: FileStatusEntry = FileStatusEntry {
-                file: each.to_str().unwrap().to_owned(),
-                status: FileStatus::Untracked,
-            };
-            files_status_vec.push(file_status);
-        }
     }
+    for each in files {
+        let file_status: FileStatusEntry = FileStatusEntry {
+            file: each.to_str().unwrap().to_owned(),
+            status: FileStatus::Untracked,
+        };
+        files_status_vec.push(file_status);
+    }
+
     files = vec![];
     let repo_status: RepositoryStatus = RepositoryStatus {
         entries: files_status_vec,
