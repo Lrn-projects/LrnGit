@@ -55,13 +55,14 @@ fn workdir_status() {
     let index = add::index::parse_index();
     let index_entries = index.entries;
     let workdir = current_dir().expect("Failed to get the current working directory");
-    // vec containing all files path
+    // Vec containing all files path
     let mut file_vec: Vec<PathBuf> = Vec::new();
+    // Fill the file_vec with all files path inside the repository
     walkdir(&workdir, &mut file_vec);
-    // fill the file_vec with all files path inside the repository
+    // Vector containing all files with their status
     let status = check_file_status(index_entries, file_vec.to_owned(), &workdir);
 
-    // sort all file path by status
+    // Sort all file path by status
     let (tracked, untracked, modify) = sort_file_status_vec(status.entries);
     println!("Tracked file:");
     for each in tracked {
@@ -121,10 +122,6 @@ fn check_file_status(
     let mut files_status_vec: Vec<FileStatusEntry> = Vec::new();
     for entries in index_entries {
         let entry_path_str = str::from_utf8(&entries.path).expect("Failed to parse buffer to str");
-        // TODO
-        // fix the loop by checking if the element is in files, if it is then add in
-        // as tracked, else untracked.
-        // check both vector, check if there's one element in both, if not, untracked
         let mut i = 0;
         while i < files.len() {
             let workdir_owned = workdir.to_str().unwrap();
@@ -149,7 +146,6 @@ fn check_file_status(
         files_status_vec.push(file_status);
     }
 
-    files = vec![];
     let repo_status: RepositoryStatus = RepositoryStatus {
         entries: files_status_vec,
     };
