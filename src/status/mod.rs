@@ -5,6 +5,9 @@ use std::{
     process::exit,
 };
 
+mod helper;
+use helper::sort_file_status_vec;
+
 #[derive(Debug)]
 enum FileStatus {
     Untracked,
@@ -55,20 +58,25 @@ fn workdir_status() {
     let mut file_vec: Vec<PathBuf> = Vec::new();
     walkdir(&workdir, &mut file_vec);
     // fill the file_vec with all files path inside the repository
-    let status = check_file_status(index_entries, file_vec, &workdir);
+    let status = check_file_status(index_entries, file_vec.to_owned(), &workdir);
+
     // sort all file path by status
     let (tracked, untracked, modify) = sort_file_status_vec(status.entries);
     println!("Tracked file:");
     for each in tracked {
-        println!("{:?}", each.file);
+        println!("\t{}", each.file);
     }
     println!("\nUntracked file:");
     for each in untracked {
-        println!("{:?}", each.file);
+        let split: Vec<&str> = each.file
+            .split(&(workdir.to_str().unwrap().to_owned() + "/"))
+            .collect();
+
+        println!("\t{}", split[1]);
     }
     println!("\nModified file:");
     for each in modify {
-        println!("{:?}", each.file);
+        println!("\t{}", each.file);
     }
 }
 
@@ -143,26 +151,4 @@ fn check_file_status(
         entries: files_status_vec,
     };
     repo_status
-}
-
-/// Sort the file status vector and return two separate vectors containing, 1: All tracked files,
-/// 2: All untracked files
-fn sort_file_status_vec(
-    files: Vec<FileStatusEntry>,
-) -> (
-    Vec<FileStatusEntry>,
-    Vec<FileStatusEntry>,
-    Vec<FileStatusEntry>,
-) {
-    let mut tracked: Vec<FileStatusEntry> = Vec::new();
-    let mut untracked: Vec<FileStatusEntry> = Vec::new();
-    let mut modify: Vec<FileStatusEntry> = Vec::new();
-    for each in files {
-        match each.status {
-            FileStatus::Untracked => untracked.push(each),
-            FileStatus::Tracked => tracked.push(each),
-            FileStatus::Modify => modify.push(each),
-        }
-    }
-    (tracked, untracked, modify)
 }
