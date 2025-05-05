@@ -48,6 +48,7 @@ pub fn status_command() {
     }
 }
 
+// print the repository status, files tracked, untracked and modified
 fn workdir_status() {
     let parse_head = branch::parse_current_branch();
     let last_commit = commit::parse_commit_by_hash(parse_head);
@@ -67,6 +68,8 @@ fn workdir_status() {
         println!("\t{}", each.file);
     }
     println!("\nUntracked file:");
+    println!("  (use 'git add <file>...' to update what will be committed)");
+    println!("  (use 'git restore <file>...' to discard changes in working directory)");
     for each in untracked {
         let split: Vec<&str> = each.file
             .split(&(workdir.to_str().unwrap().to_owned() + "/"))
