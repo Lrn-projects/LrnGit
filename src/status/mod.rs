@@ -114,6 +114,11 @@ fn walkdir(workdir: &PathBuf, file_vec: &mut Vec<PathBuf>) -> io::Result<()> {
     Ok(())
 }
 
+/// Create a RepositoryStatus struct containing all files inside the repository with their status.
+/// Params:
+/// Vec<IndexEntry> Containing all entries of the index file
+/// Vec<PathBuf> Containing all files inside the repository
+/// &Path Path reference of the current workdir
 fn check_file_status(
     index_entries: Vec<IndexEntry>,
     mut files: Vec<PathBuf>,
