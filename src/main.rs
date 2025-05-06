@@ -17,6 +17,7 @@ use std::process::exit;
 // your current lrngit installation with the newer version
 const VERSION: &str = "0.1.0";
 
+// enum of all lrngit command
 #[derive(Debug, Clone)]
 enum Commands {
     Init,

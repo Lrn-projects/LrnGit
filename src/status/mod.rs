@@ -1,6 +1,7 @@
 use std::{
     env::{self, current_dir},
     fs, io,
+    os::unix::fs::MetadataExt,
     path::{Path, PathBuf},
     process::exit,
 };
@@ -27,8 +28,11 @@ struct FileStatusEntry {
 }
 
 use crate::{
-    add::{self, index::IndexEntry},
-    branch, commit, vec_of_path,
+    add::{
+        self,
+        index::{self, IndexEntry},
+    },
+    branch, commit, utils, vec_of_path,
 };
 
 pub fn status_command() {
@@ -50,15 +54,13 @@ pub fn status_command() {
 
 // print the repository status, files tracked, untracked and modified
 fn workdir_status() {
-    let parse_head = branch::parse_current_branch();
-    let last_commit = commit::parse_commit_by_hash(parse_head);
     let index = add::index::parse_index();
     let index_entries = index.entries;
     let workdir = current_dir().expect("Failed to get the current working directory");
     // Vec containing all files path
     let mut file_vec: Vec<PathBuf> = Vec::new();
     // Fill the file_vec with all files path inside the repository
-    walkdir(&workdir, &mut file_vec);
+    let _ = walkdir(&workdir, &mut file_vec);
     // Vector containing all files with their status
     let status = check_file_status(index_entries, file_vec.to_owned(), &workdir);
 
@@ -72,7 +74,8 @@ fn workdir_status() {
     println!("  (use 'git add <file>...' to update what will be committed)");
     println!("  (use 'git restore <file>...' to discard changes in working directory)");
     for each in untracked {
-        let split: Vec<&str> = each.file
+        let split: Vec<&str> = each
+            .file
             .split(&(workdir.to_str().unwrap().to_owned() + "/"))
             .collect();
 
@@ -132,10 +135,7 @@ fn check_file_status(
             let workdir_owned = workdir.to_str().unwrap();
             let files_path_concat = workdir_owned.to_owned() + "/" + entry_path_str;
             if files_path_concat == *files[i].to_str().unwrap() {
-                let file_status: FileStatusEntry = FileStatusEntry {
-                    file: entry_path_str.to_owned(),
-                    status: FileStatus::Tracked,
-                };
+                let file_status: FileStatusEntry = check_modified_file(&entry_path_str, &workdir);
                 files_status_vec.push(file_status);
                 files.remove(i);
             } else {
@@ -155,4 +155,37 @@ fn check_file_status(
         entries: files_status_vec,
     };
     repo_status
+}
+
+fn check_modified_file(files_path: &str, workdir: &Path) -> FileStatusEntry {
+    let index = index::parse_index();
+    let mut index_entries = index.entries;
+    let split: Vec<&str> = files_path
+        .split(&(workdir.to_str().unwrap().to_owned() + "/"))
+        .collect();
+    let file_metadata = fs::metadata(files_path).expect("Failed to get file metadata");
+    let mut file_status: FileStatusEntry = FileStatusEntry {
+        file: "".to_owned(),
+        status: FileStatus::Untracked,
+    };
+    if let Some(pos) = index_entries
+        .iter()
+        .position(|x| str::from_utf8(&x.path).unwrap() == files_path)
+    {
+        let entry = index_entries.remove(pos);
+        if file_metadata.mtime() as u32 != entry.mtime
+            || file_metadata.len() as u32 != entry.file_size
+        {
+            file_status = FileStatusEntry {
+                file: files_path.to_owned(),
+                status: FileStatus::Modify,
+            };
+        } else {
+            file_status = FileStatusEntry {
+                file: files_path.to_owned(),
+                status: FileStatus::Tracked,
+            };
+        }
+    }
+    file_status
 }

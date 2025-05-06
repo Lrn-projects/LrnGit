@@ -1,5 +1,4 @@
 use crate::status::{FileStatus, FileStatusEntry};
-use std::path::PathBuf;
 
 /// Sort the file status vector and return two separate vectors containing, 1: All tracked files,
 /// 2: All untracked files

@@ -6,6 +6,7 @@ in local repository
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
 use std::io::Write;
+use std::os::unix::fs::MetadataExt;
 
 use blob::{Blob, Standard};
 
@@ -188,9 +189,12 @@ fn add_blob(arg: &str) -> [u8; 20] {
     let compressed_bytes_vec = utils::compress_file(blob_object_concat);
     // write compress file with zlib to file
     file.write_all(&compressed_bytes_vec).unwrap();
+    let added_file_metadata = fs::metadata(arg).expect("Failed to get added file metadata");
+    let mtime: u32 = added_file_metadata.mtime().try_into().unwrap();
+    let file_size: u32 = added_file_metadata.len().try_into().unwrap();
     let mode: u32 = RWO;
     let path = arg.to_string().into_bytes();
-    index::add_index_entry(mode, new_hash, path);
+    index::add_index_entry(mtime, file_size, mode, new_hash, path);
     new_hash
 }
 

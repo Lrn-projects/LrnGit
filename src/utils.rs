@@ -20,8 +20,6 @@ pub struct ObjectHeader {
 }
 
 pub fn lrngit_usage() -> &'static str {
-    
-
     (r"
 lrngit's cli.
 
@@ -154,7 +152,7 @@ pub fn compress_file(vec: Vec<u8>) -> Vec<u8> {
         }
     }
     let compressed_bytes = compress_file.finish();
-    
+
     let compressed_bytes_vec: Vec<u8> = match compressed_bytes {
         Ok(v) => v,
         Err(e) => {
@@ -252,4 +250,12 @@ pub fn timestamp_to_datetime(timestamp: i64) -> String {
 
     // Format the datetime how you want
     datetime.format("%Y-%m-%d %H:%M:%S").to_string()
+}
+
+pub fn split_hash(hash: &str) -> String {
+    let split_hash: Vec<char> = hash.chars().collect();
+    let folder_name: String = format!("{}{}", split_hash[0], split_hash[1]);
+    let file_name: String = split_hash[2..].iter().collect::<String>().to_string();
+    let path = format!(".lrngit/objects/{}/{}", folder_name, file_name);
+    path
 }
