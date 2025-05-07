@@ -23,6 +23,7 @@ enum Commands {
     Init,
     Add { arg: String },
     Commit,
+    Branch,
     CatFile{ arg: String },
     LsFile,
     Status,
@@ -51,7 +52,7 @@ fn main() {
         Some("init") => Commands::Init,
         Some("add") => Commands::Add {
             arg: args
-                // get index 2 because 0 is the binary, 1 the command and 2 the arg passed to the command
+                // Get index 2 because 0 is the binary, 1 the command and 2 the arg passed to the command
                 .get(2)
                 .unwrap_or_else(|| {
                     eprintln!("Please provide a file to add.");
@@ -60,9 +61,10 @@ fn main() {
                 .to_string(),
         },
         Some("commit") => Commands::Commit,
+        Some("branch") => Commands::Branch,
         Some("cat-file") => Commands::CatFile {
             arg: args
-                // get index 2 because 0 is the binary, 1 the command and 2 the arg passed to the command
+                // Get index 2 because 0 is the binary, 1 the command and 2 the arg passed to the command
                 .get(2)
                 .unwrap_or_else(|| {
                     eprintln!("Please provide a file to add.");
@@ -86,6 +88,7 @@ fn main() {
         Commands::Init => init::init_local_repo(),
         Commands::Add { arg } => add::add_to_local_repo(arg),
         Commands::Commit =>  commit::commit_command(),
+        Commands::Branch => branch::branch_command(),
         Commands::CatFile { arg } => utils::read_blob_file(&arg), 
         Commands::LsFile => utils::ls_file(),
         Commands::Status => status::status_command(),

@@ -1,8 +1,28 @@
 use std::{
-    fs::File,
-    io::{Read, Write},
-    path::Path,
+    env, fs::File, io::{Read, Write}, path::Path, process::exit
 };
+
+pub fn branch_command() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() >= 2 {
+        create_new_branch(&args[2]);
+    }
+    // match args[2].as_str() {
+    //     "" => {
+    //         todo!()
+    //     }
+    //     _ => {
+    //         lrncore::logs::warning_log("Unknown command");
+    //         exit(1);
+    //     }
+    // }
+}
+
+fn create_new_branch(branch_name: &str) {
+    let mut file = File::create(format!(".lrngit/refs/heads/{}", branch_name)).expect("Failed to create new branch");
+    let last_commit = parse_current_branch(); 
+    file.write_all(last_commit.as_bytes()).expect("Failed to write in the new branch file");
+}
 
 pub fn init_head() {
     let mut file = File::create(".lrngit/HEAD").expect("Failed to create HEAD file");
@@ -28,8 +48,8 @@ pub fn parse_current_branch() -> String {
     if !Path::exists(branch_path) {
         return "".to_string();
     }
-    let mut parse_branch =
-        File::open(".lrngit/".to_string() + &head).unwrap_or_else(|_| panic!("Failed to open {} file", head));
+    let mut parse_branch = File::open(".lrngit/".to_string() + &head)
+        .unwrap_or_else(|_| panic!("Failed to open {} file", head));
     let mut content: String = String::new();
     parse_branch
         .read_to_string(&mut content)
