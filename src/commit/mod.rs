@@ -62,7 +62,6 @@ pub fn commit_command() {
     match args[2].as_str() {
         "-m" => {
             let message = args[3].as_str();
-            println!("{}", message);
             new_commit(message);
         }
         _ => {
