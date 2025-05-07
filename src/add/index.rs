@@ -19,7 +19,7 @@ pub struct IndexObject {
     pub entries: Vec<IndexEntry>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct IndexEntry {
     pub mtime: u32,
     pub file_size: u32,

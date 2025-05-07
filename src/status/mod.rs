@@ -128,13 +128,16 @@ fn check_file_status(
     workdir: &Path,
 ) -> RepositoryStatus {
     let mut files_status_vec: Vec<FileStatusEntry> = Vec::new();
-    for entries in index_entries {
+    let mut found_index_entries_vec: Vec<IndexEntry> = Vec::new();
+    // check if file tracked
+    for entries in &index_entries {
         let entry_path_str = str::from_utf8(&entries.path).expect("Failed to parse buffer to str");
         let mut i = 0;
         while i < files.len() {
             let workdir_owned = workdir.to_str().unwrap();
             let files_path_concat = workdir_owned.to_owned() + "/" + entry_path_str;
             if files_path_concat == *files[i].to_str().unwrap() {
+                found_index_entries_vec.push(entries.clone());
                 let file_status: FileStatusEntry = check_modified_file(&entry_path_str, &workdir);
                 files_status_vec.push(file_status);
                 files.remove(i);
@@ -143,6 +146,22 @@ fn check_file_status(
             }
         }
     }
+    // check differences between found file in index and disk
+    let mut difference = vec![];
+    for i in index_entries {
+        if !found_index_entries_vec.contains(&i) {
+            difference.push(i);
+        }
+    }
+    // for each differences, create a new file_status for a deleted file
+    for each in difference {
+        let file_status = FileStatusEntry {
+            file: str::from_utf8(&each.path).unwrap().to_owned(),
+            status: FileStatus::Modify,
+        };
+        files_status_vec.push(file_status);
+    }
+    // all files not tracked is untracked
     for each in files {
         let file_status: FileStatusEntry = FileStatusEntry {
             file: each.to_str().unwrap().to_owned(),
@@ -163,11 +182,13 @@ fn check_modified_file(files_path: &str, workdir: &Path) -> FileStatusEntry {
     let split: Vec<&str> = files_path
         .split(&(workdir.to_str().unwrap().to_owned() + "/"))
         .collect();
-    let file_metadata = fs::metadata(files_path).expect("Failed to get file metadata");
     let mut file_status: FileStatusEntry = FileStatusEntry {
         file: "".to_owned(),
         status: FileStatus::Untracked,
     };
+
+    let file_metadata = fs::metadata(files_path).expect("Failed to get file metadata");
+
     if let Some(pos) = index_entries
         .iter()
         .position(|x| str::from_utf8(&x.path).unwrap() == files_path)
