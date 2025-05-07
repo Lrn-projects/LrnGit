@@ -17,6 +17,7 @@ pub fn sort_file_status_vec(
             FileStatus::Untracked => untracked.push(each),
             FileStatus::Tracked => tracked.push(each),
             FileStatus::Modify => modify.push(each),
+            FileStatus::Deleted => modify.push(each),
         }
     }
     (tracked, untracked, modify)

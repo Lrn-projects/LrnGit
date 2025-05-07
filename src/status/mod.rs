@@ -14,6 +14,7 @@ enum FileStatus {
     Untracked,
     Tracked,
     Modify,
+    Deleted,
 }
 
 #[derive(Debug)]
@@ -83,7 +84,7 @@ fn workdir_status() {
     }
     println!("\nModified file:");
     for each in modify {
-        println!("\t{}", each.file);
+        println!("\t{:?} {}",each.status, each.file);
     }
 }
 
@@ -157,7 +158,7 @@ fn check_file_status(
     for each in difference {
         let file_status = FileStatusEntry {
             file: str::from_utf8(&each.path).unwrap().to_owned(),
-            status: FileStatus::Modify,
+            status: FileStatus::Deleted,
         };
         files_status_vec.push(file_status);
     }
