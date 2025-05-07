@@ -157,14 +157,14 @@ fn check_file_status(
             }
         }
     }
-    // check differences between found file in index and disk
+    // Check differences between found file in index and disk
     let mut difference = vec![];
     for i in index_entries {
         if !found_index_entries_vec.contains(&i) {
             difference.push(i);
         }
     }
-    // for each differences, create a new file_status for a deleted file
+    // For each differences, create a new file_status for a deleted file
     for each in difference {
         let file_status = FileStatusEntry {
             file: str::from_utf8(&each.path).unwrap().to_owned(),
@@ -172,7 +172,7 @@ fn check_file_status(
         };
         files_status_vec.push(file_status);
     }
-    // all files not tracked is untracked
+    // All files not tracked is untracked
     for each in files {
         let file_status: FileStatusEntry = FileStatusEntry {
             file: each.to_str().unwrap().to_owned(),
