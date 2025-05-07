@@ -13,7 +13,7 @@ pub struct FileStatusSort {
     untracked: Vec<FileStatusEntry>,
     tracked: Vec<FileStatusEntry>,
     modify: Vec<FileStatusEntry>,
-    deleted: Vec<FileStatusEntry>
+    deleted: Vec<FileStatusEntry>,
 }
 
 #[derive(Debug)]
@@ -40,7 +40,7 @@ use crate::{
         self,
         index::{self, IndexEntry},
     },
-    branch, commit, utils, vec_of_path,
+    vec_of_path,
 };
 
 pub fn status_command() {
@@ -91,10 +91,10 @@ fn workdir_status() {
     }
     println!("\nModified file:");
     for each in sort_files_status.modify {
-        println!("\t{:?} {}",each.status, each.file);
+        println!("\t{:?} {}", each.status, each.file);
     }
     for each in sort_files_status.deleted {
-        println!("\t{:?} {}",each.status, each.file);
+        println!("\t{:?} {}", each.status, each.file);
     }
 }
 
@@ -149,7 +149,7 @@ fn check_file_status(
             let files_path_concat = workdir_owned.to_owned() + "/" + entry_path_str;
             if files_path_concat == *files[i].to_str().unwrap() {
                 found_index_entries_vec.push(entries.clone());
-                let file_status: FileStatusEntry = check_modified_file(&entry_path_str, &workdir);
+                let file_status: FileStatusEntry = check_modified_file(&entry_path_str);
                 files_status_vec.push(file_status);
                 files.remove(i);
             } else {
@@ -187,12 +187,9 @@ fn check_file_status(
     repo_status
 }
 
-fn check_modified_file(files_path: &str, workdir: &Path) -> FileStatusEntry {
+fn check_modified_file(files_path: &str) -> FileStatusEntry {
     let index = index::parse_index();
     let mut index_entries = index.entries;
-    let split: Vec<&str> = files_path
-        .split(&(workdir.to_str().unwrap().to_owned() + "/"))
-        .collect();
     let mut file_status: FileStatusEntry = FileStatusEntry {
         file: "".to_owned(),
         status: FileStatus::Untracked,

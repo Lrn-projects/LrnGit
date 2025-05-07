@@ -164,6 +164,7 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     branch::init_refs(commit_hash_bytes);
 }
 
+#[allow(dead_code)]
 pub fn parse_commit_by_hash(hash: String) -> CommitContent {
     let mut commit_object = utils::get_file_by_hash(&hash);
     let mut content_buf: Vec<u8> = Vec::new();

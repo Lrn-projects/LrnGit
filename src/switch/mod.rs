@@ -1,6 +1,6 @@
 use std::{
     env,
-    fs::{self, File, OpenOptions},
+    fs::{self, OpenOptions},
     io::Write,
     process::exit,
 };

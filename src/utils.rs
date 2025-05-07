@@ -30,7 +30,16 @@ Usage: lrngit command [options]
 Commands:
     init            Init a local repository
     add             Add file to local repository
+    commit          Commit to the local repository
+    branch          Create a new branch or list all branches
+    switch          Switch branch to the given one
+    cat-file        Cat content of a given hash
+    ls-file         Print content of the index file
+    status          Show the status of the local repository
+    log             Show the commit historic
+    config          Manage config
     help            Show this help message
+    version         Show the version
 
 Options:
 
