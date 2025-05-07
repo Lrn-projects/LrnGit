@@ -7,6 +7,7 @@ pub mod branch;
 mod log;
 mod status;
 pub mod macros;
+mod switch;
 
 use std::env;
 use std::process::exit;
@@ -24,6 +25,7 @@ enum Commands {
     Add { arg: String },
     Commit,
     Branch,
+    Switch,
     CatFile{ arg: String },
     LsFile,
     Status,
@@ -62,6 +64,7 @@ fn main() {
         },
         Some("commit") => Commands::Commit,
         Some("branch") => Commands::Branch,
+        Some("switch") => Commands::Switch,
         Some("cat-file") => Commands::CatFile {
             arg: args
                 // Get index 2 because 0 is the binary, 1 the command and 2 the arg passed to the command
@@ -89,6 +92,7 @@ fn main() {
         Commands::Add { arg } => add::add_to_local_repo(arg),
         Commands::Commit =>  commit::commit_command(),
         Commands::Branch => branch::branch_command(),
+        Commands::Switch => switch::switch_command(),
         Commands::CatFile { arg } => utils::read_blob_file(&arg), 
         Commands::LsFile => utils::ls_file(),
         Commands::Status => status::status_command(),
