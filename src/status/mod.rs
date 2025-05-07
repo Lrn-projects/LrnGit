@@ -9,6 +9,13 @@ use std::{
 mod helper;
 use helper::sort_file_status_vec;
 
+pub struct FileStatusSort {
+    untracked: Vec<FileStatusEntry>,
+    tracked: Vec<FileStatusEntry>,
+    modify: Vec<FileStatusEntry>,
+    deleted: Vec<FileStatusEntry>
+}
+
 #[derive(Debug)]
 enum FileStatus {
     Untracked,
@@ -66,15 +73,15 @@ fn workdir_status() {
     let status = check_file_status(index_entries, file_vec.to_owned(), &workdir);
 
     // Sort all file path by status
-    let (tracked, untracked, modify) = sort_file_status_vec(status.entries);
+    let sort_files_status = sort_file_status_vec(status.entries);
     println!("Tracked file:");
-    for each in tracked {
+    for each in sort_files_status.tracked {
         println!("\t{}", each.file);
     }
     println!("\nUntracked file:");
     println!("  (use 'git add <file>...' to update what will be committed)");
     println!("  (use 'git restore <file>...' to discard changes in working directory)");
-    for each in untracked {
+    for each in sort_files_status.untracked {
         let split: Vec<&str> = each
             .file
             .split(&(workdir.to_str().unwrap().to_owned() + "/"))
@@ -83,7 +90,10 @@ fn workdir_status() {
         println!("\t{}", split[1]);
     }
     println!("\nModified file:");
-    for each in modify {
+    for each in sort_files_status.modify {
+        println!("\t{:?} {}",each.status, each.file);
+    }
+    for each in sort_files_status.deleted {
         println!("\t{:?} {}",each.status, each.file);
     }
 }
