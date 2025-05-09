@@ -123,4 +123,20 @@ pub fn parse_index() -> IndexObject {
     index
 }
 
-// pub fn remove_index_entry(hash: [u8; 20]) {}
+pub fn remove_index_entry(entry_path: &str) {
+    let mut entries = parse_index().entries;
+    if let Some(pos) = entries
+        .iter()
+        .position(|x| str::from_utf8(&x.path).unwrap() == entry_path)
+    {
+        entries.remove(pos);
+        let magic_number = b"DIRC";
+        let header: IndexHeader = IndexHeader {
+            magic_number: *magic_number,
+            version: 1,
+            entry_count: 0,
+        };
+        let updated_index: IndexObject = IndexObject { header, entries };
+        update_index(updated_index);
+    }
+}

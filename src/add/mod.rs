@@ -154,7 +154,9 @@ fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
 fn add_blob(arg: &str) -> [u8; 20] {
     // read file content
     let read_file = fs::read_to_string(arg);
-
+    // check index entry
+    index::remove_index_entry(arg);
+    
     let file: String = match read_file {
         Ok(file_as_string) => file_as_string,
         Err(e) => {
