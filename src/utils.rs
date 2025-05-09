@@ -6,7 +6,7 @@ use std::{
     process::Command,
 };
 
-use crate::add;
+use crate::{add, parser};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
@@ -261,6 +261,7 @@ pub fn timestamp_to_datetime(timestamp: i64) -> String {
     datetime.format("%Y-%m-%d %H:%M:%S").to_string()
 }
 
+/// Split the given hash to return the path to the hash object
 pub fn split_hash(hash: &str) -> String {
     let split_hash: Vec<char> = hash.chars().collect();
     let folder_name: String = format!("{}{}", split_hash[0], split_hash[1]);
@@ -268,3 +269,13 @@ pub fn split_hash(hash: &str) -> String {
     let path = format!(".lrngit/objects/{}/{}", folder_name, file_name);
     path
 }
+
+pub fn walk_root_tree_to_file(root_tree: &str, target_path: &str) {
+    let root_tree_path = split_hash(root_tree);
+    let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
+    let mut file_buff: Vec<u8> = Vec::new();
+    root_tree_obj.read_to_end(&mut file_buff).expect("Failed to read root tree content to buffer");
+    let parse_root_tree = parser::parse_tree_entries_obj(file_buff); 
+    let root_tree = parse_root_tree.unwrap().name;
+    println!("DEBUG: {:?}", str::from_utf8(&root_tree));
+} 

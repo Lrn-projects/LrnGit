@@ -8,6 +8,7 @@ mod log;
 mod status;
 pub mod macros;
 mod switch;
+pub mod parser;
 
 use std::env;
 use std::process::exit;

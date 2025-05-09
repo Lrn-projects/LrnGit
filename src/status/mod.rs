@@ -10,14 +10,16 @@ mod helper;
 use helper::sort_file_status_vec;
 
 pub struct FileStatusSort {
+    staged: Vec<FileStatusEntry>,
     untracked: Vec<FileStatusEntry>,
     tracked: Vec<FileStatusEntry>,
-    modify: Vec<FileStatusEntry>,
+    modified: Vec<FileStatusEntry>,
     deleted: Vec<FileStatusEntry>,
 }
 
 #[derive(Debug)]
 enum FileStatus {
+    Staged,
     Untracked,
     Tracked,
     Modify,
@@ -40,7 +42,9 @@ use crate::{
         self,
         index::{self, IndexEntry},
     },
-    vec_of_path,
+    branch,
+    commit::{parse_commit, parse_commit_by_hash},
+    utils, vec_of_path,
 };
 
 pub fn status_command() {
@@ -77,6 +81,10 @@ fn workdir_status() {
     println!("Tracked file:");
     for each in sort_files_status.tracked {
         println!("\t{}", each.file);
+        let last_commit = branch::parse_current_branch();
+        let parse_commit = parse_commit_by_hash(&last_commit);
+        let root_tree_file_hash = utils::walk_root_tree_to_file(&hex::encode(parse_commit.tree), &each.file);
+        
     }
     println!("\nUntracked file:");
     println!("  (use 'git add <file>...' to update what will be committed)");
@@ -90,7 +98,7 @@ fn workdir_status() {
         println!("\t{}", split[1]);
     }
     println!("\nModified file:");
-    for each in sort_files_status.modify {
+    for each in sort_files_status.modified {
         println!("\t{:?} {}", each.status, each.file);
     }
     for each in sort_files_status.deleted {

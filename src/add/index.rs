@@ -123,6 +123,8 @@ pub fn parse_index() -> IndexObject {
     index
 }
 
+// remove index entry by entry path
+// used when adding a tracked file to avoid entry duplication
 pub fn remove_index_entry(entry_path: &str) {
     let mut entries = parse_index().entries;
     if let Some(pos) = entries

@@ -1,4 +1,4 @@
-use helpers::RWO;
+use helpers::{DIR, RWO};
 /*
 Module handling all the add command, creating new blob objects or tree and saving them
 in local repository
@@ -30,17 +30,17 @@ pub mod index;
 ///   the `TreeEntry`. The SHA-1 hash is typically used to
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(dead_code)]
-struct TreeEntry {
-    mode: u32,
-    name: Vec<u8>,
-    hash: [u8; 20],
+pub struct TreeEntry {
+    pub mode: u32,
+    pub name: Vec<u8>,
+    pub hash: [u8; 20],
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[allow(dead_code)]
-struct Tree {
-    header: Vec<u8>,
-    entries: Vec<u8>,
+pub struct Tree {
+    pub header: Vec<u8>,
+    pub entries: Vec<TreeEntry>,
 }
 
 struct BlobObject {
@@ -93,28 +93,18 @@ fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
         name: name.as_bytes().to_vec(),
         hash: child,
     };
-    let mut tree_entry_vec: Vec<u8> = Vec::new();
-    // write macro take a buffer and write into it
-    tree_entry_vec.push(new_tree_entry.mode as u8);
-    tree_entry_vec.extend_from_slice(b" ");
-    tree_entry_vec.extend_from_slice(name.as_bytes());
-    // add hash at the end of the buffer
-    tree_entry_vec.extend_from_slice(&new_tree_entry.hash);
+    let mut tree_entry_vec: Vec<TreeEntry> = Vec::new();
+    tree_entry_vec.push(new_tree_entry);
     // creation of tree object
     let new_tree: Tree = Tree {
         header: utils::git_object_header("tree", tree_entry_vec.len()),
         entries: tree_entry_vec,
     };
-    let mut new_tree_concat = new_tree.header.clone();
-    for entry in new_tree.entries.clone() {
-        new_tree_concat.extend(bincode::serialize(&entry).unwrap());
-    }
+    let tree_vec: Vec<u8> = bincode::serialize(&new_tree).expect("Failed to serialize tree");
     // Compress the new tree object with zlib
-    let compressed_bytes_vec = utils::compress_file(new_tree_concat);
+    let compressed_bytes_vec = utils::compress_file(tree_vec);
     // hash tree content with SHA-1
-    let new_hash: [u8; 20];
-    let split_hash_result_hex: Vec<char>;
-    (new_hash, split_hash_result_hex) = utils::hash_sha1(&compressed_bytes_vec);
+    let (new_hash, split_hash_result_hex) = utils::hash_sha1(&compressed_bytes_vec);
 
     // Create folder and file in local repository
     let mut file: File;
@@ -156,7 +146,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
     let read_file = fs::read_to_string(arg);
     // check index entry
     index::remove_index_entry(arg);
-    
+
     let file: String = match read_file {
         Ok(file_as_string) => file_as_string,
         Err(e) => {
