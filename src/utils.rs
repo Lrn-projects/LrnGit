@@ -275,7 +275,9 @@ pub fn walk_root_tree_to_file(root_tree: &str, target_path: &str) {
     let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
     let mut file_buff: Vec<u8> = Vec::new();
     root_tree_obj.read_to_end(&mut file_buff).expect("Failed to read root tree content to buffer");
-    let parse_root_tree = parser::parse_tree_entries_obj(file_buff); 
-    let root_tree = parse_root_tree.unwrap().name;
-    println!("DEBUG: {:?}", str::from_utf8(&root_tree));
+    let parse_root_tree = parser::parse_tree_entries_obj(file_buff).expect("Failed to parse tree entries"); 
+    for each in parse_root_tree {
+        println!("{:?}", str::from_utf8(&each.name))
+    }
+    // println!("DEBUG: {:?}", str::from_utf8(&root_tree));
 } 

@@ -1,22 +1,18 @@
-use std::error::Error;
+use std::{error::Error, io::Read};
 
 use crate::add::{Tree, TreeEntry};
 
-pub fn parse_tree_entries_obj(buff: Vec<u8>) -> Result<TreeEntry, Box<dyn Error>> {
-    println!("debug: {:?}", buff);
-    let entries: Tree = match bincode::deserialize(&buff) {
+pub fn parse_tree_entries_obj(buff: Vec<u8>) -> Result<Vec<TreeEntry>, Box<dyn Error>> {
+    let mut d = flate2::read::ZlibDecoder::new(buff.as_slice());
+    let mut buffer = Vec::new();
+    d.read_to_end(&mut buffer).unwrap();
+
+    let entries: Tree = match bincode::deserialize(&buffer) {
         Ok(c) => c,
         Err(e) => {
             eprintln!("Error parsing tree");
             return Err(Box::new(e));
         }
     };
-    println!("debug {entries:?}");
-    let content: TreeEntry = match bincode::deserialize(&buff) {
-        Ok(c) => c,
-        Err(e) => {
-            return Err(Box::new(e));
-        }
-    };
-    Ok(content)
+    Ok(entries.entries)
 }
