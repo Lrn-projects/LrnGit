@@ -266,18 +266,52 @@ pub fn split_hash(hash: &str) -> String {
     let split_hash: Vec<char> = hash.chars().collect();
     let folder_name: String = format!("{}{}", split_hash[0], split_hash[1]);
     let file_name: String = split_hash[2..].iter().collect::<String>().to_string();
-    let path = format!(".lrngit/objects/{}/{}", folder_name, file_name);
+    let path = format!(".lrngit/objects/{folder_name}/{file_name}");
     path
 }
 
-pub fn walk_root_tree_to_file(root_tree: &str, target_path: &str) {
+/// Walkdir trough the tree object from the root tree until reach the specify path and return the
+/// blob object hash. The file we want to get must be a file committed, or else the tree wont be
+/// created and the function will not work.
+///
+/// Params:
+/// root_tree: the root tree hash as &str
+/// target_path: the path we want to have as tree and blob object, consider we want to get the
+/// files at the end of the path.
+/// current_path: mutable reference to a string to keep track of the path across recursively. It's
+/// used to compare with the target_path and to get the metadata of the path.
+/// hash: mutable reference to a buffer to return through a pointer the hash of the blob at the end
+/// of the recursive
+pub fn walk_root_tree_to_file(
+    root_tree: &str,
+    target_path: &str,
+    current_path: &mut String,
+    hash: &mut [u8;20]
+) {
     let root_tree_path = split_hash(root_tree);
     let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
     let mut file_buff: Vec<u8> = Vec::new();
-    root_tree_obj.read_to_end(&mut file_buff).expect("Failed to read root tree content to buffer");
-    let parse_root_tree = parser::parse_tree_entries_obj(file_buff).expect("Failed to parse tree entries"); 
+    root_tree_obj
+        .read_to_end(&mut file_buff)
+        .expect("Failed to read root tree content to buffer");
+    let parse_root_tree =
+        parser::parse_tree_entries_obj(file_buff).expect("Failed to parse tree entries");
     for each in parse_root_tree {
-        println!("{:?}", str::from_utf8(&each.name))
+        match current_path.is_empty() {
+            true => *current_path = str::from_utf8(&each.name).unwrap().to_string(),
+            false => {
+                current_path.push('/');
+                current_path.push_str(str::from_utf8(&each.name).unwrap());
+                // current_path.push_str(str::from_utf8(&each.name).unwrap());
+            }
+        }
+        let metadata = std::fs::metadata(&current_path).unwrap();
+        if metadata.is_dir() {
+            walk_root_tree_to_file(&hex::encode(each.hash), target_path, current_path, hash);
+        };
+        if metadata.is_file() {
+            // Deferencing ptr to assign mut value
+           *hash = each.hash; 
+        }
     }
-    // println!("DEBUG: {:?}", str::from_utf8(&root_tree));
-} 
+}

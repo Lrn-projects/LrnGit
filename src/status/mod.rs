@@ -83,8 +83,9 @@ fn workdir_status() {
         println!("\t{}", each.file);
         let last_commit = branch::parse_current_branch();
         let parse_commit = parse_commit_by_hash(&last_commit);
-        let root_tree_file_hash = utils::walk_root_tree_to_file(&hex::encode(parse_commit.tree), &each.file);
-        
+        let mut file_hash: [u8;20] = [0u8;20];
+        utils::walk_root_tree_to_file(&hex::encode(parse_commit.tree), &each.file, &mut String::new(), &mut file_hash);
+        println!("root tree hash: {file_hash:?}"); 
     }
     println!("\nUntracked file:");
     println!("  (use 'git add <file>...' to update what will be committed)");
