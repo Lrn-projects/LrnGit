@@ -51,14 +51,14 @@ pub fn init_index() {
     let mut index_file = match File::create(".lrngit/index") {
         Ok(f) => f,
         Err(e) => {
-            lrncore::logs::error_log(&format!("Error opening index file: {}", e));
+            lrncore::logs::error_log(&format!("Error opening index file: {e}"));
             exit(1)
         }
     };
     match index_file.write_all(&index_bytes) {
         Ok(_) => (),
         Err(e) => {
-            lrncore::logs::error_log(&format!("Failed to write in index file: {}", e));
+            lrncore::logs::error_log(&format!("Failed to write in index file: {e}"));
             exit(1)
         }
     }

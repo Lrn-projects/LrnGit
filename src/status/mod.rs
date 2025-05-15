@@ -1,7 +1,6 @@
 use std::{
     env::{self, current_dir},
     fs, io,
-    os::unix::fs::MetadataExt,
     path::{Path, PathBuf},
     process::exit,
 };
@@ -18,7 +17,7 @@ pub struct FileStatusSort {
 }
 
 #[derive(Debug)]
-enum FileStatus {
+pub enum FileStatus {
     Staged,
     Untracked,
     Tracked,
@@ -32,18 +31,18 @@ struct RepositoryStatus {
 }
 
 #[derive(Debug)]
-struct FileStatusEntry {
-    file: String,
-    status: FileStatus,
+pub struct FileStatusEntry {
+    pub file: String,
+    pub status: FileStatus,
 }
 
 use crate::{
     add::{
         self,
-        index::{self, IndexEntry},
+        index::{self, IndexEntry, parse_index},
     },
     branch,
-    commit::{parse_commit, parse_commit_by_hash},
+    commit::parse_commit_by_hash,
     utils, vec_of_path,
 };
 
@@ -75,17 +74,31 @@ fn workdir_status() {
     let _ = walkdir(&workdir, &mut file_vec);
     // Vector containing all files with their status
     let status = check_file_status(index_entries, file_vec.to_owned(), &workdir);
-
     // Sort all file path by status
     let sort_files_status = sort_file_status_vec(status.entries);
-    println!("Tracked file:");
-    for each in sort_files_status.tracked {
-        println!("\t{}", each.file);
+    println!("Changes to be committed:");
+    for each in sort_files_status.staged {
         let last_commit = branch::parse_current_branch();
         let parse_commit = parse_commit_by_hash(&last_commit);
-        let mut file_hash: [u8;20] = [0u8;20];
-        utils::walk_root_tree_to_file(&hex::encode(parse_commit.tree), &each.file, &mut String::new(), &mut file_hash);
-        println!("root tree hash: {file_hash:?}"); 
+        let mut file_hash: [u8; 20] = [0u8; 20];
+        // Get the hash of the file from last commit to check if there's change on disk
+        utils::walk_root_tree_to_file(
+            &hex::encode(parse_commit.tree),
+            &each.file,
+            &mut String::new(),
+            &mut file_hash,
+        );
+        let mut index = parse_index();
+        if let Some(pos) = index
+            .entries
+            .iter()
+            .position(|x| String::from_utf8_lossy(&x.path) == each.file)
+        {
+            let entry = index.entries.remove(pos);
+            if entry.hash != file_hash {
+                println!("\t{}", each.file)
+            }
+        }
     }
     println!("\nUntracked file:");
     println!("  (use 'git add <file>...' to update what will be committed)");
@@ -98,12 +111,12 @@ fn workdir_status() {
 
         println!("\t{}", split[1]);
     }
-    println!("\nModified file:");
+    println!("\nChanges not staged for commit:");
     for each in sort_files_status.modified {
-        println!("\t{:?} {}", each.status, each.file);
+        println!("\tmodified: {}", each.file);
     }
     for each in sort_files_status.deleted {
-        println!("\t{:?} {}", each.status, each.file);
+        println!("\tdeleted: {}", each.file);
     }
 }
 
@@ -125,7 +138,7 @@ fn walkdir(workdir: &PathBuf, file_vec: &mut Vec<PathBuf>) -> io::Result<()> {
             {
                 if path.is_dir() {
                     if let Err(e) = walkdir(&path, file_vec) {
-                        eprintln!("Error walking directory {:?}: {}", path, e);
+                        eprintln!("Error walking directory {path:?}: {e}");
                     }
                 } else if path.is_file() {
                     file_vec.push(path);
@@ -158,7 +171,7 @@ fn check_file_status(
             let files_path_concat = workdir_owned.to_owned() + "/" + entry_path_str;
             if files_path_concat == *files[i].to_str().unwrap() {
                 found_index_entries_vec.push(entries.clone());
-                let file_status: FileStatusEntry = check_modified_file(&entry_path_str);
+                let file_status: FileStatusEntry = utils::check_modified_file(entry_path_str);
                 files_status_vec.push(file_status);
                 files.remove(i);
             } else {
@@ -196,34 +209,4 @@ fn check_file_status(
     repo_status
 }
 
-fn check_modified_file(files_path: &str) -> FileStatusEntry {
-    let index = index::parse_index();
-    let mut index_entries = index.entries;
-    let mut file_status: FileStatusEntry = FileStatusEntry {
-        file: "".to_owned(),
-        status: FileStatus::Untracked,
-    };
 
-    let file_metadata = fs::metadata(files_path).expect("Failed to get file metadata");
-
-    if let Some(pos) = index_entries
-        .iter()
-        .position(|x| str::from_utf8(&x.path).unwrap() == files_path)
-    {
-        let entry = index_entries.remove(pos);
-        if file_metadata.mtime() as u32 != entry.mtime
-            || file_metadata.len() as u32 != entry.file_size
-        {
-            file_status = FileStatusEntry {
-                file: files_path.to_owned(),
-                status: FileStatus::Modify,
-            };
-        } else {
-            file_status = FileStatusEntry {
-                file: files_path.to_owned(),
-                status: FileStatus::Tracked,
-            };
-        }
-    }
-    file_status
-}

@@ -1,4 +1,4 @@
-use helpers::{DIR, RWO};
+use helpers::RWO;
 /*
 Module handling all the add command, creating new blob objects or tree and saving them
 in local repository
@@ -93,8 +93,7 @@ fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
         name: name.as_bytes().to_vec(),
         hash: child,
     };
-    let mut tree_entry_vec: Vec<TreeEntry> = Vec::new();
-    tree_entry_vec.push(new_tree_entry);
+    let tree_entry_vec: Vec<TreeEntry> = vec![new_tree_entry];
     // creation of tree object
     let new_tree: Tree = Tree {
         header: utils::git_object_header("tree", tree_entry_vec.len()),
@@ -112,7 +111,7 @@ fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
     match file_result {
         Ok(f) => file = f,
         Err(e) => {
-            lrncore::logs::error_log(&format!("Error writing to tree file: {}", e));
+            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
             return [0u8; 20];
         }
     }
@@ -121,7 +120,7 @@ fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
     match file_result {
         Ok(_) => (),
         Err(e) => {
-            lrncore::logs::error_log(&format!("Error writing to tree file: {}", e));
+            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
             return [0u8; 20];
         }
     }
@@ -150,7 +149,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
     let file: String = match read_file {
         Ok(file_as_string) => file_as_string,
         Err(e) => {
-            lrncore::logs::error_log(&format!("Failed to read the file: {}", e));
+            lrncore::logs::error_log(&format!("Failed to read the file: {e}"));
             return [0u8; 20];
         }
     };
@@ -174,7 +173,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
     match file_result {
         Ok(f) => file = f,
         Err(e) => {
-            lrncore::logs::error_log(&format!("Error writing to tree file: {}", e));
+            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
             return [0u8; 20];
         }
     }

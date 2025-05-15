@@ -1,12 +1,8 @@
 use std::{
-    env,
-    fs::{self, File},
-    io::{Read, Write},
-    path::Path,
-    process::Command,
+    env, fs::{self, File}, io::{Read, Write}, os::unix::fs::MetadataExt, path::Path, process::Command
 };
 
-use crate::{add, parser};
+use crate::{add::{self, index}, parser, status::{FileStatus, FileStatusEntry}};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
@@ -314,4 +310,42 @@ pub fn walk_root_tree_to_file(
            *hash = each.hash; 
         }
     }
+}
+
+// Check in the index file if a file has been modified since it has been added to the index
+//
+// Params:
+// files_path: path to the file we want to check
+//
+// Return a FileStatusEntry structure containing the file path and the status.
+pub fn check_modified_file(files_path: &str) -> FileStatusEntry {
+    let index = index::parse_index();
+    let mut index_entries = index.entries;
+    let mut file_status: FileStatusEntry = FileStatusEntry {
+        file: "".to_owned(),
+        status: FileStatus::Untracked,
+    };
+
+    let file_metadata = fs::metadata(files_path).expect("Failed to get file metadata");
+
+    if let Some(pos) = index_entries
+        .iter()
+        .position(|x| str::from_utf8(&x.path).unwrap() == files_path)
+    {
+        let entry = index_entries.remove(pos);
+        if file_metadata.mtime() as u32 != entry.mtime
+            || file_metadata.len() as u32 != entry.file_size
+        {
+            file_status = FileStatusEntry {
+                file: files_path.to_owned(),
+                status: FileStatus::Modify,
+            };
+        } else {
+            file_status = FileStatusEntry {
+                file: files_path.to_owned(),
+                status: FileStatus::Tracked,
+            };
+        }
+    }
+    file_status
 }

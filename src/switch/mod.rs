@@ -54,5 +54,5 @@ fn switch_ref(branch_name: &str) {
 fn update_workdir() {
    let last_commit = branch::parse_current_branch(); 
    let parse_commit = commit::parse_commit_by_hash(&last_commit);
-   let root_tree = parse_commit.tree;
+   // let root_tree = parse_commit.tree;
 }
