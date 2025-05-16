@@ -97,7 +97,7 @@ fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
         name: name.as_bytes().to_vec(),
         hash: child,
     };
-    let tree_entry_vec: Vec<TreeEntry> = vec![new_tree_entry];
+    let tree_entry_vec: Vec<TreeEntry> = vec![new_tree_entry.clone()];
     // creation of tree object
     let new_tree: Tree = Tree {
         header: utils::git_object_header("tree", tree_entry_vec.len()),
@@ -108,26 +108,12 @@ fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
     let compressed_bytes_vec = utils::compress_file(tree_vec);
     // hash tree content with SHA-1
     let (new_hash, split_hash_result_hex) = utils::hash_sha1(&compressed_bytes_vec);
-
-    // Create folder and file in local repository
-    let mut file: File;
-    let file_result = utils::new_file_dir(&split_hash_result_hex);
-    match file_result {
-        Ok(f) => file = f,
-        Err(e) => {
-            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
-            return [0u8; 20];
-        }
+    let object_path: String = utils::get_path_by_hash(&split_hash_result_hex);
+    match fs::exists(&object_path).unwrap() {
+        true => helpers::append_existing_tree(&object_path, &new_tree_entry),
+        false => helpers::create_new_tree(&split_hash_result_hex, compressed_bytes_vec),
     }
-    // write zlib compressed into file
-    let file_result = file.write_all(&compressed_bytes_vec);
-    match file_result {
-        Ok(_) => (),
-        Err(e) => {
-            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
-            return [0u8; 20];
-        }
-    }
+    // returned new created hash
     new_hash
 }
 

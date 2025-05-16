@@ -14,7 +14,7 @@ use crate::{
     },
     branch,
     commit::parse_commit_by_hash,
-     parser,
+    parser,
     status::{FileStatus, FileStatusEntry},
 };
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -63,7 +63,7 @@ pub fn change_wkdir(dir: &str) {
     env::set_current_dir(dir).expect("Failed to change directory");
 }
 
-// create a new folder in objects 
+// create a new folder in objects
 pub fn add_folder(dir: &str) {
     if dir.is_empty() {
         return;
@@ -241,6 +241,12 @@ pub fn get_file_by_hash(hash: &str) -> File {
     File::open(path).expect("Failed to open file")
 }
 
+pub fn get_path_by_hash(hash: &Vec<char>) -> String {
+    let folder_name: String = format!("{}{}", hash[0], hash[1]);
+    let file_name: String = hash[2..].iter().collect::<String>().to_string();
+    format!(".lrngit/objects/{folder_name}/{file_name}")
+}
+
 /// parse git object header and return two vectors
 /// first index of output vector is the header vector, second is the rest of the params buffer
 pub fn split_object_header(mut buf: Vec<u8>) -> Vec<Vec<u8>> {
@@ -310,15 +316,23 @@ pub fn walk_root_tree_to_file(
         .expect("Failed to read root tree content to buffer");
     let parse_root_tree =
         parser::parse_tree_entries_obj(file_buff).expect("Failed to parse tree entries");
+    let split_target_path: Vec<&str> = target_path.split("/").collect();
+    println!("debug: {:?}", parse_root_tree);
     for each in parse_root_tree {
+        println!("debug each: {:?}", str::from_utf8(&each.name));
+        if split_target_path[0]
+            != str::from_utf8(&each.name).expect("Failed to cast root tree index entry to str")
+        {
+            continue;
+        }
         match current_path.is_empty() {
             true => *current_path = str::from_utf8(&each.name).unwrap().to_string(),
             false => {
                 current_path.push('/');
                 current_path.push_str(str::from_utf8(&each.name).unwrap());
-                // current_path.push_str(str::from_utf8(&each.name).unwrap());
             }
         }
+
         let metadata = std::fs::metadata(&current_path).unwrap();
         if metadata.is_dir() {
             walk_root_tree_to_file(&hex::encode(each.hash), target_path, current_path, hash);
@@ -389,6 +403,12 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
             .expect("Failed to get hash from file path");
         // if entry.hash != file_hash && entry.hash == disk_hash
         if entry.hash != file_hash && entry.hash == disk_hash.hash {
+            println!(
+                "debug: {:?}     {:?}    {:?}",
+                hex::encode(entry.hash),
+                hex::encode(file_hash),
+                hex::encode(disk_hash.hash)
+            );
             FileStatusEntry {
                 file: file_path.to_owned(),
                 status: FileStatus::Staged,

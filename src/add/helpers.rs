@@ -2,13 +2,20 @@
 Helper module for the add module, contain useful pub function
 */
 #![allow(dead_code)]
-use std::{fs, os::unix::fs::PermissionsExt};
+use std::{
+    fs::{self, File, OpenOptions},
+    io::{Read, Write},
+    os::unix::fs::PermissionsExt,
+};
 
 use blob::{Blob, Standard};
 
-use crate::utils;
+use crate::{
+    parser,
+    utils::{self, add_folder},
+};
 
-use super::{BlobObject, FileHashBlob};
+use super::{BlobObject, FileHashBlob, TreeEntry};
 
 pub const SYM: u32 = 0o120000;
 pub const DIR: u32 = 0o040000;
@@ -76,4 +83,49 @@ pub fn calculate_file_hash_and_blob(file_path: &str) -> Result<FileHashBlob, std
         hash: new_hash,
         hash_split: split_hash_result_hex,
     })
+}
+
+pub fn check_objects_exist(path: &str) -> bool {
+    fs::exists(path).unwrap()
+}
+
+pub fn create_new_tree(path: &Vec<char>, buff: Vec<u8>) {
+    let mut file: File;
+    let file_result = utils::new_file_dir(path);
+    match file_result {
+        Ok(f) => file = f,
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
+            return ;
+        }
+    }
+    // write zlib compressed into file
+    let file_result = file.write_all(&buff);
+    match file_result {
+        Ok(_) => (),
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
+            return;
+        }
+    }
+}
+
+pub fn append_existing_tree(path: &str, new_entry: &TreeEntry) {
+    let mut tree_obj = File::open(path).expect("Failed to open root tree file");
+    let mut file_buff: Vec<u8> = Vec::new();
+    tree_obj
+        .read_to_end(&mut file_buff)
+        .expect("Failed to read root tree content to buffer");
+    let mut parse_tree =
+        parser::parse_tree_entries_obj(file_buff).expect("Failed to parse tree object");
+    parse_tree.push(new_entry.clone());
+    let buff = bincode::serialize(&parse_tree).expect("Failed to serialize tree object");
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(false)
+        .truncate(true)
+        .open(path)
+        .expect("Failed to open the tree object file");
+    file.write_all(&buff)
+        .expect("Failed to append to tree object file");
 }
