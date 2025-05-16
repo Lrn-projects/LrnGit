@@ -12,7 +12,6 @@ use helper::sort_file_status_vec;
 pub struct FileStatusSort {
     staged: Vec<FileStatusEntry>,
     untracked: Vec<FileStatusEntry>,
-    tracked: Vec<FileStatusEntry>,
     modified: Vec<FileStatusEntry>,
     deleted: Vec<FileStatusEntry>,
 }
@@ -40,10 +39,8 @@ pub struct FileStatusEntry {
 use crate::{
     add::{
         self,
-        index::{self, IndexEntry, parse_index},
+        index::IndexEntry,
     },
-    branch,
-    commit::parse_commit_by_hash,
     utils, vec_of_path,
 };
 

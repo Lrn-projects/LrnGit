@@ -14,7 +14,7 @@ use crate::{
     },
     branch,
     commit::parse_commit_by_hash,
-    log, parser,
+     parser,
     status::{FileStatus, FileStatusEntry},
 };
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -63,14 +63,15 @@ pub fn change_wkdir(dir: &str) {
     env::set_current_dir(dir).expect("Failed to change directory");
 }
 
+// create a new folder in objects 
 pub fn add_folder(dir: &str) {
     if dir.is_empty() {
         return;
     }
-    if Path::new(&format!(".lrngit/objects/{}", dir)).exists() {
+    if Path::new(&format!(".lrngit/objects/{dir}")).exists() {
         return;
     }
-    let new_dir_path = format!(".lrngit/objects/{}", dir);
+    let new_dir_path = format!(".lrngit/objects/{dir}");
     let mut mkdir = Command::new("mkdir")
         .arg(new_dir_path)
         .stdout(std::process::Stdio::null())
@@ -102,6 +103,7 @@ pub fn read_blob_file(hash: &str) {
     //TODO parse buffer to tree or blob struct to display
 }
 
+// Display the content of the index file
 pub fn ls_file() {
     let config = add::index::parse_index();
     for each in config.entries {
@@ -136,9 +138,9 @@ return a byte vector containing the header "tree
 */
 pub fn git_object_header(file_type: &str, content_length: usize) -> Vec<u8> {
     match file_type {
-        "blob" => format!("blob {}\0", content_length).as_bytes().to_vec(),
-        "tree" => format!("tree {}\0", content_length).as_bytes().to_vec(),
-        "commit" => format!("commit {}\0", content_length).as_bytes().to_vec(),
+        "blob" => format!("blob {content_length}\0").as_bytes().to_vec(),
+        "tree" => format!("tree {content_length}\0").as_bytes().to_vec(),
+        "commit" => format!("commit {content_length}\0").as_bytes().to_vec(),
         _ => vec![],
     }
 }
@@ -204,11 +206,11 @@ pub fn new_file_dir(hash_vec: &[char]) -> Result<File, std::io::Error> {
     let new_folder_name = format!("{}{}", hash_vec[0], hash_vec[1]);
     add_folder(&new_folder_name);
     let new_file_name = hash_vec[2..].iter().collect::<String>().to_string();
-    let new_tree_path = format!(".lrngit/objects/{}/{}", new_folder_name, new_file_name);
+    let new_tree_path = format!(".lrngit/objects/{new_folder_name}/{new_file_name}");
     let file: File = match File::create(&new_tree_path) {
         Ok(f) => f,
         Err(e) => {
-            lrncore::logs::error_log(&format!("Failed to create new tree file: {}", e));
+            lrncore::logs::error_log(&format!("Failed to create new tree file: {e}"));
             return Err(e);
         }
     };
@@ -226,7 +228,7 @@ pub fn hash_sha1(data: &Vec<u8>) -> ([u8; 20], Vec<char>) {
     let mut new_hash = Sha1::new();
     new_hash.update(data);
     let hash_result = new_hash.finalize();
-    let folder_hash = format!("{:#x}", hash_result);
+    let folder_hash = format!("{hash_result:#x}");
     let split_hash_result_hex = folder_hash.chars().collect::<Vec<char>>();
     (hash_result.into(), split_hash_result_hex)
 }
@@ -235,7 +237,7 @@ pub fn get_file_by_hash(hash: &str) -> File {
     let split_hash: Vec<char> = hash.chars().collect();
     let folder_name: String = format!("{}{}", split_hash[0], split_hash[1]);
     let file_name: String = split_hash[2..].iter().collect::<String>().to_string();
-    let path = format!(".lrngit/objects/{}/{}", folder_name, file_name);
+    let path = format!(".lrngit/objects/{folder_name}/{file_name}");
     File::open(path).expect("Failed to open file")
 }
 

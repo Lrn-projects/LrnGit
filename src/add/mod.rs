@@ -8,8 +8,6 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::os::unix::fs::MetadataExt;
 
-use blob::{Blob, Standard};
-
 use crate::utils;
 
 pub mod helpers;
