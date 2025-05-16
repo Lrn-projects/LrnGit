@@ -14,12 +14,13 @@ use crate::{
     },
     branch,
     commit::parse_commit_by_hash,
-    parser,
+    log, parser,
     status::{FileStatus, FileStatusEntry},
 };
 use chrono::{DateTime, NaiveDateTime, Utc};
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
+use lrncore::logs::error_log;
 use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
 
@@ -260,6 +261,7 @@ pub fn split_object_header(mut buf: Vec<u8>) -> Vec<Vec<u8>> {
     output_vec
 }
 
+// convert a timestamp to readable datetime
 pub fn timestamp_to_datetime(timestamp: i64) -> String {
     // Create a NaiveDateTime from the timestamp
     let naive = NaiveDateTime::from_timestamp(timestamp, 0);
@@ -350,17 +352,19 @@ pub fn check_modified_file(files_path: &str) -> FileStatusEntry {
         if file_metadata.mtime() as u32 != entry.mtime
             || file_metadata.len() as u32 != entry.file_size
         {
-            file_status = check_file_staged(files_path);
-        } else {
             file_status = FileStatusEntry {
                 file: files_path.to_owned(),
-                status: FileStatus::Tracked,
-            };
+                status: FileStatus::Modify,
+            }
+        } else {
+            file_status = check_file_staged(files_path);
         }
     }
     file_status
 }
 
+// Check if a file is staged or just modified by comparing hash from last commit with the one from
+// index
 fn check_file_staged(file_path: &str) -> FileStatusEntry {
     let last_commit = branch::parse_current_branch();
     let parse_commit = parse_commit_by_hash(&last_commit);
@@ -379,7 +383,10 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
         .position(|x| String::from_utf8_lossy(&x.path) == file_path)
     {
         let entry = index.entries.remove(pos);
-        if entry.hash != file_hash {
+        let disk_hash = add::helpers::calculate_file_hash_and_blob(file_path)
+            .expect("Failed to get hash from file path");
+        // if entry.hash != file_hash && entry.hash == disk_hash
+        if entry.hash != file_hash && entry.hash == disk_hash.hash {
             FileStatusEntry {
                 file: file_path.to_owned(),
                 status: FileStatus::Staged,
@@ -387,10 +394,11 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
         } else {
             FileStatusEntry {
                 file: file_path.to_owned(),
-                status: FileStatus::Modify,
+                status: FileStatus::Tracked,
             }
         }
     } else {
+        error_log("Error checking file status");
         exit(1)
     }
 }

@@ -1,4 +1,4 @@
-use helpers::RWO;
+use helpers::{RWO, calculate_file_hash_and_blob};
 /*
 Module handling all the add command, creating new blob objects or tree and saving them
 in local repository
@@ -12,7 +12,7 @@ use blob::{Blob, Standard};
 
 use crate::utils;
 
-mod helpers;
+pub mod helpers;
 pub mod index;
 /// The `TreeEntry` struct in Rust represents an entry in a tree object with mode, name, and SHA-1 hash.
 ///
@@ -41,6 +41,12 @@ pub struct TreeEntry {
 pub struct Tree {
     pub header: Vec<u8>,
     pub entries: Vec<TreeEntry>,
+}
+
+pub struct FileHashBlob {
+    pub blob: Vec<u8>,
+    pub hash: [u8; 20],
+    pub hash_split: Vec<char>,
 }
 
 struct BlobObject {
@@ -141,35 +147,13 @@ fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
 /// The function `add_blob` returns a `String` which is the hexadecimal representation of the SHA-1 hash
 /// of the file content that was read and added to the local repository.
 fn add_blob(arg: &str) -> [u8; 20] {
-    // read file content
-    let read_file = fs::read_to_string(arg);
+    let blob_hash = calculate_file_hash_and_blob(arg)
+        .expect("Failed to get the blob and the hash from the file path");
     // check index entry
     index::remove_index_entry(arg);
-
-    let file: String = match read_file {
-        Ok(file_as_string) => file_as_string,
-        Err(e) => {
-            lrncore::logs::error_log(&format!("Failed to read the file: {e}"));
-            return [0u8; 20];
-        }
-    };
-    // creation of blob object
-    let new_blob: Blob<Standard> = Blob::from(file.as_bytes());
-    let blob_object: BlobObject = BlobObject {
-        header: utils::git_object_header("blob", new_blob.len()),
-        content: new_blob.to_vec(),
-    };
-    // concat the blob object from struct
-    let mut blob_object_concat = blob_object.header.clone();
-    blob_object_concat.extend(blob_object.content.clone());
-    // hash file content with SHA-1
-    let new_hash: [u8; 20];
-    let split_hash_result_hex: Vec<char>;
-    (new_hash, split_hash_result_hex) = utils::hash_sha1(&blob_object_concat);
-
     // creation of file to local repo
     let mut file: File;
-    let file_result = utils::new_file_dir(&split_hash_result_hex);
+    let file_result = utils::new_file_dir(&blob_hash.hash_split);
     match file_result {
         Ok(f) => file = f,
         Err(e) => {
@@ -177,7 +161,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
             return [0u8; 20];
         }
     }
-    let compressed_bytes_vec = utils::compress_file(blob_object_concat);
+    let compressed_bytes_vec = utils::compress_file(blob_hash.blob);
     // write compress file with zlib to file
     file.write_all(&compressed_bytes_vec).unwrap();
     let added_file_metadata = fs::metadata(arg).expect("Failed to get added file metadata");
@@ -185,8 +169,8 @@ fn add_blob(arg: &str) -> [u8; 20] {
     let file_size: u32 = added_file_metadata.len().try_into().unwrap();
     let mode: u32 = RWO;
     let path = arg.to_string().into_bytes();
-    index::add_index_entry(mtime, file_size, mode, new_hash, path);
-    new_hash
+    index::add_index_entry(mtime, file_size, mode, blob_hash.hash, path);
+    blob_hash.hash
 }
 
 /// The `recursive_add` function in Rust recursively processes elements in a vector and performs
