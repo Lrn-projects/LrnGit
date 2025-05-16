@@ -8,6 +8,7 @@ use std::{
 mod helper;
 use helper::sort_file_status_vec;
 
+// Structure to sort file status
 pub struct FileStatusSort {
     staged: Vec<FileStatusEntry>,
     untracked: Vec<FileStatusEntry>,
@@ -78,27 +79,7 @@ fn workdir_status() {
     let sort_files_status = sort_file_status_vec(status.entries);
     println!("Changes to be committed:");
     for each in sort_files_status.staged {
-        let last_commit = branch::parse_current_branch();
-        let parse_commit = parse_commit_by_hash(&last_commit);
-        let mut file_hash: [u8; 20] = [0u8; 20];
-        // Get the hash of the file from last commit to check if there's change on disk
-        utils::walk_root_tree_to_file(
-            &hex::encode(parse_commit.tree),
-            &each.file,
-            &mut String::new(),
-            &mut file_hash,
-        );
-        let mut index = parse_index();
-        if let Some(pos) = index
-            .entries
-            .iter()
-            .position(|x| String::from_utf8_lossy(&x.path) == each.file)
-        {
-            let entry = index.entries.remove(pos);
-            if entry.hash != file_hash {
-                println!("\t{}", each.file)
-            }
-        }
+        println!("\t{}", each.file);
     }
     println!("\nUntracked file:");
     println!("  (use 'git add <file>...' to update what will be committed)");
@@ -208,5 +189,3 @@ fn check_file_status(
     };
     repo_status
 }
-
-

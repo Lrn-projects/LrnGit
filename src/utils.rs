@@ -1,8 +1,22 @@
 use std::{
-    env, fs::{self, File}, io::{Read, Write}, os::unix::fs::MetadataExt, path::Path, process::Command
+    env,
+    fs::{self, File},
+    io::{Read, Write},
+    os::unix::fs::MetadataExt,
+    path::Path,
+    process::{Command, exit},
 };
 
-use crate::{add::{self, index}, parser, status::{FileStatus, FileStatusEntry}};
+use crate::{
+    add::{
+        self,
+        index::{self, parse_index},
+    },
+    branch,
+    commit::parse_commit_by_hash,
+    parser,
+    status::{FileStatus, FileStatusEntry},
+};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
@@ -282,7 +296,7 @@ pub fn walk_root_tree_to_file(
     root_tree: &str,
     target_path: &str,
     current_path: &mut String,
-    hash: &mut [u8;20]
+    hash: &mut [u8; 20],
 ) {
     let root_tree_path = split_hash(root_tree);
     let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
@@ -307,7 +321,7 @@ pub fn walk_root_tree_to_file(
         };
         if metadata.is_file() {
             // Deferencing ptr to assign mut value
-           *hash = each.hash; 
+            *hash = each.hash;
         }
     }
 }
@@ -336,10 +350,7 @@ pub fn check_modified_file(files_path: &str) -> FileStatusEntry {
         if file_metadata.mtime() as u32 != entry.mtime
             || file_metadata.len() as u32 != entry.file_size
         {
-            file_status = FileStatusEntry {
-                file: files_path.to_owned(),
-                status: FileStatus::Modify,
-            };
+            file_status = check_file_staged(files_path);
         } else {
             file_status = FileStatusEntry {
                 file: files_path.to_owned(),
@@ -348,4 +359,38 @@ pub fn check_modified_file(files_path: &str) -> FileStatusEntry {
         }
     }
     file_status
+}
+
+fn check_file_staged(file_path: &str) -> FileStatusEntry {
+    let last_commit = branch::parse_current_branch();
+    let parse_commit = parse_commit_by_hash(&last_commit);
+    let mut file_hash: [u8; 20] = [0u8; 20];
+    // Get the hash of the file from last commit to check if there's change on disk
+    walk_root_tree_to_file(
+        &hex::encode(parse_commit.tree),
+        file_path,
+        &mut String::new(),
+        &mut file_hash,
+    );
+    let mut index = parse_index();
+    if let Some(pos) = index
+        .entries
+        .iter()
+        .position(|x| String::from_utf8_lossy(&x.path) == file_path)
+    {
+        let entry = index.entries.remove(pos);
+        if entry.hash != file_hash {
+            FileStatusEntry {
+                file: file_path.to_owned(),
+                status: FileStatus::Staged,
+            }
+        } else {
+            FileStatusEntry {
+                file: file_path.to_owned(),
+                status: FileStatus::Modify,
+            }
+        }
+    } else {
+        exit(1)
+    }
 }
