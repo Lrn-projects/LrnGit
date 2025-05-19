@@ -108,14 +108,13 @@ pub fn create_new_tree(path: &[char], buff: Vec<u8>) {
     }
 }
 
+//TODO don't push existing entry to avoid duplication
 pub fn append_existing_tree(path: &str, new_entry: &TreeEntry) {
     let mut tree_obj = File::open(path).expect("Failed to open root tree file");
     let mut file_buff: Vec<u8> = Vec::new();
     tree_obj
         .read_to_end(&mut file_buff)
         .expect("Failed to read root tree content to buffer");
-
-    println!("DEBUG: {:?}", file_buff);
     let mut parse_tree =
         parser::parse_tree_entries_obj(file_buff).expect("Failed to parse tree object");
     parse_tree.push(new_entry.clone());
@@ -123,15 +122,12 @@ pub fn append_existing_tree(path: &str, new_entry: &TreeEntry) {
         header: utils::git_object_header("tree", parse_tree.len()),
         entries: parse_tree.clone(),
     };
-    let parse_tree_vec: Vec<u8> = bincode::serialize(&parse_tree).expect("Failed to serialize updated tree entries");
-    let mut tree_vec: Vec<u8> = Vec::new(); 
-    tree_vec.extend_from_slice(&update_tree.header);
-    tree_vec.extend_from_slice(&parse_tree_vec);
+    let tree_vec: Vec<u8> = bincode::serialize(&update_tree).expect("Failed to serialize updated tree"); 
     let compressed_bytes_vec = utils::compress_file(tree_vec);
     let mut file = OpenOptions::new()
         .write(true)
         .create(false)
-        .truncate(true)
+        .truncate(false)
         .open(path)
         .expect("Failed to open the tree object file");
     file.write_all(&compressed_bytes_vec)

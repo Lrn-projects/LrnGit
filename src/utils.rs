@@ -14,7 +14,7 @@ use crate::{
     },
     branch,
     commit::parse_commit_by_hash,
-    parser,
+    parser::{self, parse_tree_entries_obj},
     status::{FileStatus, FileStatusEntry},
 };
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -99,8 +99,24 @@ pub fn read_blob_file(hash: &str) {
     let mut d = flate2::read::ZlibDecoder::new(buf.as_slice());
     let mut buffer = Vec::new();
     d.read_to_end(&mut buffer).unwrap();
-    println!("{}", String::from_utf8_lossy(&buffer));
+    let header = split_object_header(buffer);
+    let header_string = String::from_utf8_lossy(&header[0]);
+    let header_split: Vec<&str> = header_string.split(" ").collect();
+    let magic = header_split[0];
+    print_tree_content(&buf);
+    // match magic {
+    //     "tree" => print_tree_content(&buf),
+    //     _ => (),
+    // }
     //TODO parse buffer to tree or blob struct to display
+}
+
+fn print_tree_content(buff: &[u8]) {
+    let parse_tree =
+        parser::parse_tree_entries_obj(buff.to_vec()).expect("Failed to parse tree object");
+    for each in parse_tree {
+        println!("{each:?}");
+    }
 }
 
 // Display the content of the index file

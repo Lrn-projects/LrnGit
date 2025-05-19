@@ -103,10 +103,7 @@ fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
         header: utils::git_object_header("tree", tree_entry_vec.len()),
         entries: tree_entry_vec.clone(),
     };
-    let tree_entries_vec: Vec<u8> = bincode::serialize(&tree_entry_vec).expect("Failed to serialize tree entries");
-    let mut tree_vec: Vec<u8> = Vec::new();
-    tree_vec.extend_from_slice(&new_tree.header);
-    tree_vec.extend_from_slice(&tree_entries_vec);
+    let tree_vec: Vec<u8> = bincode::serialize(&new_tree).expect("Failed to serialize new tree");
     // Compress the new tree object with zlib
     let compressed_bytes_vec = utils::compress_file(tree_vec);
     // hash tree content with SHA-1
