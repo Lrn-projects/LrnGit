@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     env,
     error::Error,
     fs::File,
@@ -74,17 +75,24 @@ pub fn commit_command() {
 pub fn new_commit(commit_message: &str) {
     let config = index::parse_index();
     let mut root_tree: [u8; 20] = [0; 20];
+    // Store a string to avoid dropping value and dangling ref
+    let mut index_entry_map: HashMap<String, Vec<(String, [u8; 20])>> = HashMap::new();
     for each in config.entries {
-        let path = String::from_utf8_lossy(&each.path);
-        let mut folder_vec: Vec<&str> = if path.contains("/") {
-            let folder_split: Vec<&str> = path.split("/").collect();
+        let path = &each.path;
+        let path_string = String::from_utf8_lossy(&path).to_string();
+        let mut folder_vec: Vec<&str> = if path_string.contains("/") {
+            let folder_split: Vec<&str> = path_string.split("/").collect();
             folder_split
         } else {
-            vec![&path]
+            vec![&path_string]
         };
         let file = folder_vec.pop().unwrap();
+        let folder_path = folder_vec.last().unwrap().to_owned().to_string();
+        let hashmap_vec: Vec<(String, [u8; 20])> = vec![(file.to_string(), each.hash)];
+        index_entry_map.insert(folder_path, hashmap_vec);
         add::recursive_add(folder_vec, each.hash, file.to_string(), &mut root_tree);
     }
+    println!("DEBUG new_commit: {:?}", index_entry_map);
     create_commit_object(root_tree, commit_message);
 }
 
@@ -178,9 +186,7 @@ pub fn parse_commit_by_hash(hash: &str) -> CommitContent {
     d.read_to_end(&mut buffer).unwrap();
 
     match parse_commit(buffer) {
-        Ok(c) => {
-            c
-        },
+        Ok(c) => c,
         Err(e) => {
             lrncore::logs::error_log(&format!("Error parsing commit: {}", e));
             exit(1)
