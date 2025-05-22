@@ -86,30 +86,70 @@ pub fn new_commit(commit_message: &str) {
         } else {
             vec![&path_string]
         };
-        let file = folder_vec.pop().unwrap();
-        let folder_path = match folder_vec.last() {
-            Some(f) => f,
-            None => "",
-        };
-        let folder_path_owned: String = folder_path.to_owned();
-        // check if entry exist in hashmap
-        match index_entry_map.contains_key(&folder_path_owned) {
-            true => {
-                let entry_vec = index_entry_map.get_key_value(&folder_path_owned).unwrap().1;
-                let mut hashmap_vec: Vec<(String, [u8; 20])> = vec![(file.to_owned(), each.hash)];
-                hashmap_vec.extend(entry_vec.iter().cloned());
-                index_entry_map.insert(folder_path_owned.clone(), hashmap_vec);
-            }
-            false => {
-                let hashmap_vec: Vec<(String, [u8; 20])> = vec![(file.to_string(), each.hash)];
-                index_entry_map.insert(folder_path_owned.clone(), hashmap_vec);
+        folder_vec.reverse();
+        folder_vec.push("");
+        let mut folder_vec_clone = folder_vec.clone();
+        while !folder_vec_clone.is_empty() {
+            let last = folder_vec_clone.remove(0);
+            let key = if !folder_vec_clone.is_empty() {
+                folder_vec_clone[0]
+            } else {
+                ""
+            };
+            match index_entry_map.contains_key(key) {
+                true => {
+                    let entry_vec = index_entry_map.get_key_value(key).unwrap().1;
+                    let mut hashmap_vec: Vec<(String, [u8; 20])>;
+                    if !last.is_empty() {
+                        hashmap_vec = vec![(last.to_owned().to_string(), each.hash)];
+                    } else {
+                        hashmap_vec = Vec::new();
+                    }
+                    hashmap_vec.extend(entry_vec.iter().cloned());
+                    index_entry_map.insert(key.to_string(), hashmap_vec);
+                }
+                false => {
+                    index_entry_map
+                        .entry(key.to_string())
+                        .or_default()
+                        .push((last.to_owned().to_string(), each.hash));
+                }
             }
         }
-        if !folder_path_owned.is_empty() && !folder_vec.is_empty() {
-            folder_vec.pop();
-        }
-        println!("debug folder_vec: {:?}", folder_vec);
-        add::recursive_add(folder_vec, each.hash, file.to_string(), &mut root_tree);
+
+        // let path = &each.path;
+        // let path_string = String::from_utf8_lossy(&path).to_string();
+        // let mut folder_vec: Vec<&str> = if path_string.contains("/") {
+        //     let folder_split: Vec<&str> = path_string.split("/").collect();
+        //     folder_split
+        // } else {
+        //     vec![&path_string]
+        // };
+        // let file = folder_vec.pop().unwrap();
+        // let folder_path = match folder_vec.last() {
+        //     Some(f) => f,
+        //     None => "",
+        // };
+        // let folder_path_owned: String = folder_path.to_owned();
+        // // Check if entry exist in hashmap
+        // // fix hashmap to handle src in value of key
+        // match index_entry_map.contains_key(&folder_path_owned) {
+        //     true => {
+        //         let entry_vec = index_entry_map.get_key_value(&folder_path_owned).unwrap().1;
+        //         let mut hashmap_vec: Vec<(String, [u8; 20])> = vec![(file.to_owned(), each.hash)];
+        //         hashmap_vec.extend(entry_vec.iter().cloned());
+        //         index_entry_map.insert(folder_path_owned.clone(), hashmap_vec);
+        //     }
+        //     false => {
+        //         let hashmap_vec: Vec<(String, [u8; 20])> = vec![(file.to_string(), each.hash)];
+        //         index_entry_map.insert(folder_path_owned.clone(), hashmap_vec);
+        //     }
+        // }
+        // if !folder_path_owned.is_empty() && !folder_vec.is_empty() {
+        //     folder_vec.pop();
+        // }
+        // println!("debug folder_vec: {:?}", folder_vec);
+        // add::recursive_add(folder_vec, each.hash, file.to_string(), &mut root_tree);
     }
     println!("DEBUG new_commit: {:?}", index_entry_map);
     create_commit_object(root_tree, commit_message);
