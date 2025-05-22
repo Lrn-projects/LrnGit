@@ -88,8 +88,19 @@ pub fn new_commit(commit_message: &str) {
         };
         let file = folder_vec.pop().unwrap();
         let folder_path = folder_vec.last().unwrap().to_owned().to_string();
-        let hashmap_vec: Vec<(String, [u8; 20])> = vec![(file.to_string(), each.hash)];
-        index_entry_map.insert(folder_path, hashmap_vec);
+        // check if entry exist in hashmap
+        match index_entry_map.contains_key(&folder_path) {
+            true => {
+                let entry_vec = index_entry_map.get_key_value(&folder_path).unwrap().1;
+                let mut hashmap_vec: Vec<(String, [u8; 20])> = vec![(file.to_owned(), each.hash)];
+                hashmap_vec.extend(entry_vec.iter().cloned());
+                index_entry_map.insert(folder_path, hashmap_vec);
+            }
+            false => {
+                    let hashmap_vec: Vec<(String, [u8; 20])> = vec![(file.to_string(), each.hash)];
+                    index_entry_map.insert(folder_path, hashmap_vec);
+                }
+        }
         add::recursive_add(folder_vec, each.hash, file.to_string(), &mut root_tree);
     }
     println!("DEBUG new_commit: {:?}", index_entry_map);
