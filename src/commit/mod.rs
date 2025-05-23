@@ -89,6 +89,7 @@ pub fn new_commit(commit_message: &str) {
         folder_vec.reverse();
         folder_vec.push("");
         let mut folder_vec_clone = folder_vec.clone();
+        let mut i: usize = 0;
         while !folder_vec_clone.is_empty() {
             let last = folder_vec_clone.remove(0);
             let key = if !folder_vec_clone.is_empty() {
@@ -98,9 +99,16 @@ pub fn new_commit(commit_message: &str) {
             };
             match index_entry_map.contains_key(key) {
                 true => {
+                    // when store a tree, store empty buff
                     let entry_vec = index_entry_map.get_key_value(key).unwrap().1;
                     let mut hashmap_vec: Vec<(String, [u8; 20])>;
                     if !last.is_empty() {
+                        if entry_vec
+                            .iter()
+                            .any(|(name, _)| name == &last.to_owned().to_string())
+                        {
+                            continue;
+                        }
                         hashmap_vec = vec![(last.to_owned().to_string(), each.hash)];
                     } else {
                         hashmap_vec = Vec::new();
@@ -115,6 +123,7 @@ pub fn new_commit(commit_message: &str) {
                         .push((last.to_owned().to_string(), each.hash));
                 }
             }
+            i += 1;
         }
 
         // let path = &each.path;
@@ -151,7 +160,10 @@ pub fn new_commit(commit_message: &str) {
         // println!("debug folder_vec: {:?}", folder_vec);
         // add::recursive_add(folder_vec, each.hash, file.to_string(), &mut root_tree);
     }
-    println!("DEBUG new_commit: {:?}", index_entry_map);
+    for each in index_entry_map {
+        println!("{:?}", each);
+        println!()
+    }
     create_commit_object(root_tree, commit_message);
 }
 
