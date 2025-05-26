@@ -4,6 +4,7 @@ Module handling all the add command, creating new blob objects or tree and savin
 in local repository
 */
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::Write;
 use std::os::unix::fs::MetadataExt;
@@ -26,7 +27,7 @@ pub mod index;
 /// * `hash`: The `hash` property in the `TreeEntry` struct is an array of 20 unsigned 8-bit integers
 ///   (bytes). This array is used to store the SHA-1 hash value of the file or directory represented by
 ///   the `TreeEntry`. The SHA-1 hash is typically used to
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[allow(dead_code)]
 pub struct TreeEntry {
     pub mode: u32,
@@ -108,10 +109,23 @@ fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
     let compressed_bytes_vec = utils::compress_file(tree_vec);
     // hash tree content with SHA-1
     let (new_hash, split_hash_result_hex) = utils::hash_sha1(&compressed_bytes_vec);
-    let object_path: String = utils::get_path_by_hash(&split_hash_result_hex);
-    match fs::exists(&object_path).unwrap() {
-        true => helpers::append_existing_tree(&object_path, &new_tree_entry),
-        false => helpers::create_new_tree(&split_hash_result_hex, compressed_bytes_vec),
+    // File creation
+    let mut file: File;
+    let file_result = utils::new_file_dir(&split_hash_result_hex);
+    match file_result {
+        Ok(f) => file = f,
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
+            return [0u8; 20];
+        }
+    }
+    // write zlib compressed into file
+    let file_result = file.write_all(&compressed_bytes_vec);
+    match file_result {
+        Ok(_) => (),
+        Err(e) => {
+            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
+        }
     }
     // returned new created hash
     new_hash
@@ -164,34 +178,38 @@ fn add_blob(arg: &str) -> [u8; 20] {
 ///
 /// * `arg_vec`: arg_vec is a vector of string references that contains the elements being processed
 ///   recursively in the function.
-/// * `child`: The `child` parameter in the `recursive_add` function seems to represent a string value
-///   that is either empty or contains some data. It is used as an argument in the function calls to
-///   `add_tree` and `recursive_add`.
+/// * `hash`: The `hash` parameter represent the hash of the object contained in the new tree
+///   object
 pub fn recursive_add(
-    mut arg_vec: Vec<&str>,
-    mut child: [u8; 20],
-    mut name: String,
-    root_tree_ptr: &mut [u8; 20],
+    entity_hashmap: HashMap<(String, usize), Vec<(String, [u8; 20])>>,
+    _root_tree_ptr: &mut [u8; 20],
 ) {
-    // add root folder tree object and break recursive
-    if arg_vec.is_empty() {
-        let root_tree = add_tree(child, &name);
-        root_tree_ptr.copy_from_slice(&root_tree);
-        return;
-    }
-    let last = arg_vec
-        .last()
-        .expect("Failed to get last element of file path");
-    let file_child_path = arg_vec.join("/");
-    match fs::symlink_metadata(&file_child_path) {
-        Ok(_) => (),
-        Err(_) => panic!("Failed to read path metadata"),
-    }
-    let new_tree = add_tree(child, &name);
-    root_tree_ptr.copy_from_slice(&new_tree);
-    child = new_tree;
-    root_tree_ptr.copy_from_slice(&new_tree);
-    name = last.to_string();
-    arg_vec.pop();
-    recursive_add(arg_vec, child, name, root_tree_ptr);
+    let mut entity_vec: Vec<((String, usize), Vec<(String, [u8; 20])>)> = entity_hashmap
+        .iter()
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .collect();
+    // Sorts the vector by the depth value of each tuple using default comparison 
+    entity_vec.sort_by(|x,y| x.0.1.cmp(&y.0.1));
+    println!("debug: {:?}", entity_vec); 
+    // // add root folder tree object and break recursive
+    // if arg_vec.is_empty() {
+    //     let root_tree = add_tree(hash, &name);
+    //     root_tree_ptr.copy_from_slice(&root_tree);
+    //     return;
+    // }
+    // let last = arg_vec
+    //     .last()
+    //     .expect("Failed to get last element of file path");
+    // let file_child_path = arg_vec.join("/");
+    // match fs::symlink_metadata(&file_child_path) {
+    //     Ok(_) => (),
+    //     Err(_) => panic!("Failed to read path metadata"),
+    // }
+    // let new_tree = add_tree(hash, &name);
+    // root_tree_ptr.copy_from_slice(&new_tree);
+    // hash = new_tree;
+    // root_tree_ptr.copy_from_slice(&new_tree);
+    // name = last.to_string();
+    // arg_vec.pop();
+    // recursive_add(arg_vec, hash, name, root_tree_ptr);
 }
