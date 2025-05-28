@@ -90,12 +90,13 @@ The function `add_tree` returns a `[u8; 20]` array, which represents the hash of
 tree object.
 */
 //TODO fix tree structure to make compatible with git
-fn add_tree(entries: Vec<(String, [u8; 20])>, name: &str) -> [u8; 20] {
+fn add_tree(entries: Vec<(String, [u8; 20])>) -> [u8; 20] {
     // creation of tree entries
 
     // suck
     let mode = helpers::DIR;
     let mut new_tree_entry_vec: Vec<TreeEntry> = Vec::new();
+    println!("debug add_tree: {:?}", entries);
     for each in entries {
         let new_tree_entry: TreeEntry = TreeEntry {
             mode,
@@ -199,9 +200,10 @@ pub fn recursive_add(
     entity_vec.reverse();
     let mut tree_hash_vec: Vec<(String, [u8; 20])> = Vec::new();
     for each in entity_vec {
-        let (tree_name, hash) = sort_hashmap_entry_and_create_tree(each, &tree_hash_vec);
+        let (tree_name, hash) = sort_hashmap_entry_and_create_tree(each, tree_hash_vec.clone());
         tree_hash_vec.push((tree_name, hash));
     }
+    println!("debug tree_hash_vec: {:?}", tree_hash_vec);
     // // add root folder tree object and break recursive
     // if arg_vec.is_empty() {
     //     let root_tree = add_tree(hash, &name);
@@ -227,11 +229,11 @@ pub fn recursive_add(
 
 fn sort_hashmap_entry_and_create_tree(
     entry: ((String, usize), Vec<(String, [u8; 20])>),
-    tree_vec: &Vec<(String, [u8; 20])>,
+    tree_vec: Vec<(String, [u8; 20])>,
 ) -> (String, [u8; 20]) {
     let mut tree_entry_vec: Vec<(String, [u8; 20])> = Vec::new();
     for each in entry.1 {
-        if !each.1.is_empty() {
+        if each.1 != [0u8;20] {
             tree_entry_vec.push(each);
         } else {
             let mut existing_tree_hash: [u8; 20] = [0u8; 20];
@@ -243,6 +245,6 @@ fn sort_hashmap_entry_and_create_tree(
             }
         }
     }
-    let hash = add_tree(tree_entry_vec, &entry.0.0);
-    (String::new(), [0u8; 20])
+    let hash = add_tree(tree_entry_vec);
+    (entry.0.0, hash)
 }
