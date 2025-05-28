@@ -14,7 +14,7 @@ use crate::{
     },
     branch,
     commit::parse_commit_by_hash,
-    parser::{self, parse_tree_entries_obj},
+    parser::{self},
     status::{FileStatus, FileStatusEntry},
 };
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -99,14 +99,14 @@ pub fn read_blob_file(hash: &str) {
     let mut d = flate2::read::ZlibDecoder::new(buf.as_slice());
     let mut buffer = Vec::new();
     d.read_to_end(&mut buffer).unwrap();
-    let header = split_object_header(buffer);
-    let header_string = String::from_utf8_lossy(&header[0]);
-    let header_split: Vec<&str> = header_string.split(" ").collect();
-    let magic = header_split[0];
+    // let header = split_object_header(buffer);
+    // let header_string = String::from_utf8_lossy(&header[0]);
+    // let header_split: Vec<&str> = header_string.split(" ").collect();
+    // let magic = header_split[0];
     print_tree_content(&buf);
     // match magic {
-    //     "tree" => print_tree_content(&buf),
-    //     _ => (),
+        // "tree" => print_tree_content(&buf),
+        // _ => (),
     // }
     //TODO parse buffer to tree or blob struct to display
 }
@@ -115,7 +115,8 @@ fn print_tree_content(buff: &[u8]) {
     let parse_tree =
         parser::parse_tree_entries_obj(buff.to_vec()).expect("Failed to parse tree object");
     for each in parse_tree {
-        println!("{each:?}");
+        println!("{:?}", str::from_utf8(&each.name).unwrap());
+        println!("{:?}", hex::encode(&each.hash));
     }
 }
 
@@ -257,7 +258,7 @@ pub fn get_file_by_hash(hash: &str) -> File {
     File::open(path).expect("Failed to open file")
 }
 
-pub fn get_path_by_hash(hash: &Vec<char>) -> String {
+pub fn get_path_by_hash(hash: &[char]) -> String {
     let folder_name: String = format!("{}{}", hash[0], hash[1]);
     let file_name: String = hash[2..].iter().collect::<String>().to_string();
     format!(".lrngit/objects/{folder_name}/{file_name}")
@@ -288,6 +289,7 @@ pub fn split_object_header(mut buf: Vec<u8>) -> Vec<Vec<u8>> {
 // convert a timestamp to readable datetime
 pub fn timestamp_to_datetime(timestamp: i64) -> String {
     // Create a NaiveDateTime from the timestamp
+    #[allow(deprecated)]
     let naive = NaiveDateTime::from_timestamp(timestamp, 0);
 
     // Create a normal DateTime from the NaiveDateTime
@@ -321,8 +323,8 @@ pub fn split_hash(hash: &str) -> String {
 pub fn walk_root_tree_to_file(
     root_tree: &str,
     target_path: &str,
-    current_path: &mut String,
-    hash: &mut [u8; 20],
+    _current_path: &mut String,
+    _hash: &mut [u8; 20],
 ) {
     let root_tree_path = split_hash(root_tree);
     let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
@@ -330,34 +332,48 @@ pub fn walk_root_tree_to_file(
     root_tree_obj
         .read_to_end(&mut file_buff)
         .expect("Failed to read root tree content to buffer");
-    let parse_root_tree =
+    let mut parse_root_tree =
         parser::parse_tree_entries_obj(file_buff).expect("Failed to parse tree entries");
     let split_target_path: Vec<&str> = target_path.split("/").collect();
-    println!("debug: {:?}", parse_root_tree);
-    for each in parse_root_tree {
-        println!("debug each: {:?}", str::from_utf8(&each.name));
-        if split_target_path[0]
-            != str::from_utf8(&each.name).expect("Failed to cast root tree index entry to str")
-        {
-            continue;
-        }
-        match current_path.is_empty() {
-            true => *current_path = str::from_utf8(&each.name).unwrap().to_string(),
-            false => {
-                current_path.push('/');
-                current_path.push_str(str::from_utf8(&each.name).unwrap());
-            }
-        }
-
-        let metadata = std::fs::metadata(&current_path).unwrap();
-        if metadata.is_dir() {
-            walk_root_tree_to_file(&hex::encode(each.hash), target_path, current_path, hash);
-        };
-        if metadata.is_file() {
-            // Deferencing ptr to assign mut value
-            *hash = each.hash;
-        }
+    let i: usize = 0;
+    if let Some(pos) = parse_root_tree.iter().position(|x| str::from_utf8(&x.name).unwrap() == split_target_path[i]) {
+        let entry = parse_root_tree.remove(pos);
+        println!("entry: {:?}", entry);
+        println!("split target path: {:?}", split_target_path[i])
     }
+    // for each in parse_root_tree {
+    //     println!("debug each: {:?}", str::from_utf8(&each.name));
+    //     println!("debug each split: {:?}", split_target_path[iterator]);
+    //     if split_target_path[iterator]
+    //         != str::from_utf8(&each.name).expect("Failed to cast root tree index entry to str")
+    //     {
+    //         // iterator += 1;
+    //         continue;
+    //     }
+    //     match current_path.is_empty() {
+    //         true => *current_path = str::from_utf8(&each.name).unwrap().to_string(),
+    //         false => {
+    //             current_path.push('/');
+    //             current_path.push_str(str::from_utf8(&each.name).unwrap());
+    //         }
+    //     }
+    //
+    //     let metadata = std::fs::metadata(&current_path).unwrap();
+    //     if metadata.is_dir() {
+    //         iterator += 1;
+    //         walk_root_tree_to_file(
+    //             &hex::encode(each.hash),
+    //             target_path,
+    //             current_path,
+    //             hash,
+    //             iterator,
+    //         );
+    //     };
+    //     if metadata.is_file() {
+    //         // Deferencing ptr to assign mut value
+    //         *hash = each.hash;
+    //     }
+    // }
 }
 
 // Check in the index file if a file has been modified since it has been added to the index
@@ -420,7 +436,7 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
         // if entry.hash != file_hash && entry.hash == disk_hash
         if entry.hash != file_hash && entry.hash == disk_hash.hash {
             println!(
-                "debug: {:?}     {:?}    {:?}",
+                "debug prout: {:?}     {:?}    {:?}",
                 hex::encode(entry.hash),
                 hex::encode(file_hash),
                 hex::encode(disk_hash.hash)
