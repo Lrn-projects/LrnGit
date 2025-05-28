@@ -75,8 +75,9 @@ pub fn commit_command() {
 pub fn new_commit(commit_message: &str) {
     let config = index::parse_index();
     let mut root_tree: [u8; 20] = [0; 20];
-    // Store a string to avoid dropping value and dangling ref
-    let mut index_entry_map: HashMap<String, Vec<(String, [u8; 20])>> = HashMap::new();
+    // HashMap to store all index entry with blob and tree for batch tree creation
+    // Use strings to avoid dropping value and dangling ref
+    let mut index_entry_map: HashMap<(String, usize), Vec<(String, [u8; 20])>> = HashMap::new();
     // Iterate over the index, each entry contain file path and blob hash
     for each in config.entries {
         let path = &each.path;
@@ -99,10 +100,14 @@ pub fn new_commit(commit_message: &str) {
             } else {
                 ""
             };
-            // Only insert if 'last' is not empty to avoid empty keys
+            // Only insert if last is not empty to avoid empty keys
             if !last.is_empty() {
-                let entry_vec = index_entry_map.entry(key.to_string()).or_default();
-                // Avoid duplicate entries
+                // Use reverse index to represent folder hierarchy correctly
+                let folder_index = folder_vec.len() - i - 1;
+                let entry_vec = index_entry_map
+                    .entry((key.to_string(), folder_index))
+                    .or_default();
+                // Avoid duplicate entries, by checking if entry doesn't exist
                 if !entry_vec.iter().any(|(name, _)| name == last) {
                     if i != 0 {
                         entry_vec.push((last.to_owned().to_string(), [0u8; 20]));
@@ -114,7 +119,7 @@ pub fn new_commit(commit_message: &str) {
             i += 1;
         }
     }
-    // add::recursive_add(folder_vec, each.hash, file.to_string(), &mut root_tree);
+    add::recursive_add(index_entry_map, &mut root_tree);
     create_commit_object(root_tree, commit_message);
 }
 
