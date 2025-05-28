@@ -90,19 +90,25 @@ The function `add_tree` returns a `[u8; 20]` array, which represents the hash of
 tree object.
 */
 //TODO fix tree structure to make compatible with git
-fn add_tree(child: [u8; 20], name: &str) -> [u8; 20] {
+fn add_tree(entries: Vec<(String, [u8; 20])>, name: &str) -> [u8; 20] {
     // creation of tree entries
+
+    // suck
     let mode = helpers::DIR;
-    let new_tree_entry: TreeEntry = TreeEntry {
-        mode,
-        name: name.as_bytes().to_vec(),
-        hash: child,
-    };
-    let tree_entry_vec: Vec<TreeEntry> = vec![new_tree_entry.clone()];
+    let mut new_tree_entry_vec: Vec<TreeEntry> = Vec::new();
+    for each in entries {
+        let new_tree_entry: TreeEntry = TreeEntry {
+            mode,
+            name: each.0.as_bytes().to_vec(),
+            hash: each.1,
+        };
+        new_tree_entry_vec.push(new_tree_entry);
+    }
+
     // creation of tree object
     let new_tree: Tree = Tree {
-        header: utils::git_object_header("tree", tree_entry_vec.len()),
-        entries: tree_entry_vec.clone(),
+        header: utils::git_object_header("tree", new_tree_entry_vec.len()),
+        entries: new_tree_entry_vec.clone(),
     };
     let tree_vec: Vec<u8> = bincode::serialize(&new_tree).expect("Failed to serialize new tree");
     // Compress the new tree object with zlib
@@ -176,8 +182,8 @@ fn add_blob(arg: &str) -> [u8; 20] {
 ///
 /// Arguments:
 ///
-/// * `arg_vec`: arg_vec is a vector of string references that contains the elements being processed
-///   recursively in the function.
+/// * `entity_hashmap`: entity_hashmap is a hashmap containing all entries from index file split
+/// and sort in separate tree's.
 /// * `hash`: The `hash` parameter represent the hash of the object contained in the new tree
 ///   object
 pub fn recursive_add(
@@ -188,9 +194,14 @@ pub fn recursive_add(
         .iter()
         .map(|(k, v)| (k.clone(), v.clone()))
         .collect();
-    // Sorts the vector by the depth value of each tuple using default comparison 
-    entity_vec.sort_by(|x,y| x.0.1.cmp(&y.0.1));
-    println!("debug: {:?}", entity_vec); 
+    // Sorts the vector by the depth value of each tuple using default comparison
+    entity_vec.sort_by(|x, y| x.0.1.cmp(&y.0.1));
+    entity_vec.reverse();
+    let mut tree_hash_vec: Vec<(String, [u8; 20])> = Vec::new();
+    for each in entity_vec {
+        let (tree_name, hash) = sort_hashmap_entry_and_create_tree(each, &tree_hash_vec);
+        tree_hash_vec.push((tree_name, hash));
+    }
     // // add root folder tree object and break recursive
     // if arg_vec.is_empty() {
     //     let root_tree = add_tree(hash, &name);
@@ -212,4 +223,26 @@ pub fn recursive_add(
     // name = last.to_string();
     // arg_vec.pop();
     // recursive_add(arg_vec, hash, name, root_tree_ptr);
+}
+
+fn sort_hashmap_entry_and_create_tree(
+    entry: ((String, usize), Vec<(String, [u8; 20])>),
+    tree_vec: &Vec<(String, [u8; 20])>,
+) -> (String, [u8; 20]) {
+    let mut tree_entry_vec: Vec<(String, [u8; 20])> = Vec::new();
+    for each in entry.1 {
+        if !each.1.is_empty() {
+            tree_entry_vec.push(each);
+        } else {
+            let mut existing_tree_hash: [u8; 20] = [0u8; 20];
+            if let Some(i) = tree_vec.iter().position(|x| x.0 == each.0) {
+                existing_tree_hash = tree_vec.get(i).unwrap().1;
+            }
+            if !existing_tree_hash.is_empty() {
+                tree_entry_vec.push((each.0, existing_tree_hash));
+            }
+        }
+    }
+    let hash = add_tree(tree_entry_vec, &entry.0.0);
+    (String::new(), [0u8; 20])
 }
