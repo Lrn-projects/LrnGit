@@ -19,7 +19,7 @@ pub struct IndexObject {
     pub entries: Vec<IndexEntry>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Eq, PartialOrd, Ord)]
 pub struct IndexEntry {
     pub mtime: u32,
     pub file_size: u32,
@@ -66,9 +66,9 @@ pub fn init_index() {
 
 /// add a new indew entry to the index content
 pub fn add_index_entry(mtime: u32, file_size: u32, mode: u32, hash: [u8; 20], path: Vec<u8>) {
-    let config = parse_index();
-    let mut header = config.header;
-    let mut entries = config.entries;
+    let index = parse_index();
+    let mut header = index.header;
+    let mut entries = index.entries;
     let new_entry: IndexEntry = IndexEntry {
         mtime,
         file_size,
@@ -78,6 +78,7 @@ pub fn add_index_entry(mtime: u32, file_size: u32, mode: u32, hash: [u8; 20], pa
         path,
     };
     entries.push(new_entry);
+    entries.sort();
     header.entry_count += 1;
     let updated_index: IndexObject = IndexObject { header, entries };
     update_index(updated_index);

@@ -3,18 +3,15 @@ Helper module for the add module, contain useful pub function
 */
 #![allow(dead_code)]
 use std::{
-    fs::{self, File, OpenOptions},
-    io::{Read, Write},
+    fs::{self},
     os::unix::fs::PermissionsExt,
 };
 
 use blob::{Blob, Standard};
 
-use crate::{
-    add::Tree, parser, utils::{self}
-};
+use crate::utils::{self};
 
-use super::{BlobObject, FileHashBlob, TreeEntry};
+use super::{BlobObject, FileHashBlob};
 
 pub const SYM: u32 = 0o120000;
 pub const DIR: u32 = 0o040000;
@@ -86,50 +83,4 @@ pub fn calculate_file_hash_and_blob(file_path: &str) -> Result<FileHashBlob, std
 
 pub fn check_objects_exist(path: &str) -> bool {
     fs::exists(path).unwrap()
-}
-
-pub fn create_new_tree(path: &[char], buff: Vec<u8>) {
-    let mut file: File;
-    let file_result = utils::new_file_dir(path);
-    match file_result {
-        Ok(f) => file = f,
-        Err(e) => {
-            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
-            return;
-        }
-    }
-    // write zlib compressed into file
-    let file_result = file.write_all(&buff);
-    match file_result {
-        Ok(_) => (),
-        Err(e) => {
-            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
-        }
-    }
-}
-
-//TODO don't push existing entry to avoid duplication
-pub fn append_existing_tree(path: &str, new_entry: &TreeEntry) {
-    let mut tree_obj = File::open(path).expect("Failed to open root tree file");
-    let mut file_buff: Vec<u8> = Vec::new();
-    tree_obj
-        .read_to_end(&mut file_buff)
-        .expect("Failed to read root tree content to buffer");
-    let mut parse_tree =
-        parser::parse_tree_entries_obj(file_buff).expect("Failed to parse tree object");
-    parse_tree.push(new_entry.clone());
-    let update_tree: Tree = Tree {
-        header: utils::git_object_header("tree", parse_tree.len()),
-        entries: parse_tree.clone(),
-    };
-    let tree_vec: Vec<u8> = bincode::serialize(&update_tree).expect("Failed to serialize updated tree"); 
-    let compressed_bytes_vec = utils::compress_file(tree_vec);
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create(false)
-        .truncate(false)
-        .open(path)
-        .expect("Failed to open the tree object file");
-    file.write_all(&compressed_bytes_vec)
-        .expect("Failed to append to tree object file");
 }
