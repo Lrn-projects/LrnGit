@@ -96,7 +96,6 @@ fn add_tree(entries: Vec<(String, [u8; 20])>) -> [u8; 20] {
     // suck
     let mode = helpers::DIR;
     let mut new_tree_entry_vec: Vec<TreeEntry> = Vec::new();
-    println!("debug add_tree: {:?}", entries);
     for each in entries {
         let new_tree_entry: TreeEntry = TreeEntry {
             mode,
@@ -187,9 +186,9 @@ fn add_blob(arg: &str) -> [u8; 20] {
 /// and sort in separate tree's.
 /// * `hash`: The `hash` parameter represent the hash of the object contained in the new tree
 ///   object
-pub fn recursive_add(
+pub fn batch_tree_add(
     entity_hashmap: HashMap<(String, usize), Vec<(String, [u8; 20])>>,
-    _root_tree_ptr: &mut [u8; 20],
+    root_tree_ptr: &mut [u8; 20],
 ) {
     let mut entity_vec: Vec<((String, usize), Vec<(String, [u8; 20])>)> = entity_hashmap
         .iter()
@@ -203,28 +202,11 @@ pub fn recursive_add(
         let (tree_name, hash) = sort_hashmap_entry_and_create_tree(each, tree_hash_vec.clone());
         tree_hash_vec.push((tree_name, hash));
     }
-    println!("debug tree_hash_vec: {:?}", tree_hash_vec);
-    // // add root folder tree object and break recursive
-    // if arg_vec.is_empty() {
-    //     let root_tree = add_tree(hash, &name);
-    //     root_tree_ptr.copy_from_slice(&root_tree);
-    //     return;
-    // }
-    // let last = arg_vec
-    //     .last()
-    //     .expect("Failed to get last element of file path");
-    // let file_child_path = arg_vec.join("/");
-    // match fs::symlink_metadata(&file_child_path) {
-    //     Ok(_) => (),
-    //     Err(_) => panic!("Failed to read path metadata"),
-    // }
-    // let new_tree = add_tree(hash, &name);
-    // root_tree_ptr.copy_from_slice(&new_tree);
-    // hash = new_tree;
-    // root_tree_ptr.copy_from_slice(&new_tree);
-    // name = last.to_string();
-    // arg_vec.pop();
-    // recursive_add(arg_vec, hash, name, root_tree_ptr);
+    let mut root_tree = (String::new(), [0u8;20]);
+    if let Some(i) = tree_hash_vec.iter().position(|x| x.0.is_empty()) {
+        root_tree = tree_hash_vec.remove(i);
+    }
+    *root_tree_ptr = root_tree.1; 
 }
 
 fn sort_hashmap_entry_and_create_tree(
@@ -233,7 +215,7 @@ fn sort_hashmap_entry_and_create_tree(
 ) -> (String, [u8; 20]) {
     let mut tree_entry_vec: Vec<(String, [u8; 20])> = Vec::new();
     for each in entry.1 {
-        if each.1 != [0u8;20] {
+        if each.1 != [0u8; 20] {
             tree_entry_vec.push(each);
         } else {
             let mut existing_tree_hash: [u8; 20] = [0u8; 20];
