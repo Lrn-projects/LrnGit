@@ -105,8 +105,8 @@ pub fn read_blob_file(hash: &str) {
     // let magic = header_split[0];
     print_tree_content(&buf);
     // match magic {
-        // "tree" => print_tree_content(&buf),
-        // _ => (),
+    // "tree" => print_tree_content(&buf),
+    // _ => (),
     // }
     //TODO parse buffer to tree or blob struct to display
 }
@@ -323,8 +323,8 @@ pub fn split_hash(hash: &str) -> String {
 pub fn walk_root_tree_to_file(
     root_tree: &str,
     target_path: &str,
-    _current_path: &mut &str,
-    _hash: &mut [u8; 20],
+    current_path: &mut String,
+    hash: &mut [u8; 20],
 ) {
     let root_tree_path = split_hash(root_tree);
     let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
@@ -334,24 +334,32 @@ pub fn walk_root_tree_to_file(
         .expect("Failed to read root tree content to buffer");
     let mut parse_root_tree =
         parser::parse_tree_entries_obj(file_buff).expect("Failed to parse tree entries");
-    let split_target_path: Vec<&str> = target_path.split("/").collect();
+    let mut split_target_path: Vec<&str> = target_path.split("/").collect();
     let i: usize = 0;
-    if let Some(pos) = parse_root_tree.iter().position(|x| str::from_utf8(&x.name).unwrap() == split_target_path[i]) {
+    println!("debug split_target_path: {}", split_target_path[i]);
+    if let Some(pos) = parse_root_tree
+        .iter()
+        .position(|x| str::from_utf8(&x.name).unwrap() == split_target_path[i])
+    {
         let entry = parse_root_tree.remove(pos);
-        println!("entry: {entry:?}");
-        println!("split target path: {:?}", split_target_path[i])
+        if str::from_utf8(&entry.name).unwrap() != *split_target_path.last().unwrap() {
+            println!(
+                "debug: {:?} {:?}",
+                str::from_utf8(&entry.name).unwrap(),
+                *split_target_path.last().unwrap()
+            );
+            split_target_path.remove(i);
+            let path_joinded = split_target_path.join("/");
+            println!("double tree: {:?}{:?}", root_tree, &hex::encode(entry.hash));
+            println!("entry: {entry:?}");
+            // not correct hash
+            walk_root_tree_to_file(&hex::encode(entry.hash), &path_joinded, current_path, hash);
+        }
     }
     // for each in parse_root_tree {
     //     println!("debug each: {:?}", str::from_utf8(&each.name));
-    //     println!("debug each split: {:?}", split_target_path[iterator]);
-    //     if split_target_path[iterator]
-    //         != str::from_utf8(&each.name).expect("Failed to cast root tree index entry to str")
-    //     {
-    //         // iterator += 1;
-    //         continue;
-    //     }
     //     match current_path.is_empty() {
-    //         true => *current_path = str::from_utf8(&each.name).unwrap().to_string(),
+    //         true => *current_path = str::from_utf8(&each.name).unwrap().to_owned(),
     //         false => {
     //             current_path.push('/');
     //             current_path.push_str(str::from_utf8(&each.name).unwrap());
@@ -360,13 +368,11 @@ pub fn walk_root_tree_to_file(
     //
     //     let metadata = std::fs::metadata(&current_path).unwrap();
     //     if metadata.is_dir() {
-    //         iterator += 1;
     //         walk_root_tree_to_file(
     //             &hex::encode(each.hash),
     //             target_path,
     //             current_path,
     //             hash,
-    //             iterator,
     //         );
     //     };
     //     if metadata.is_file() {
@@ -421,7 +427,7 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
     walk_root_tree_to_file(
         &hex::encode(parse_commit.tree),
         file_path,
-        &mut "",
+        &mut String::new(),
         &mut file_hash,
     );
     let mut index = parse_index();
