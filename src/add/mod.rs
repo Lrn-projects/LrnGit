@@ -183,7 +183,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
 /// Arguments:
 ///
 /// * `entity_hashmap`: entity_hashmap is a hashmap containing all entries from index file split
-/// and sort in separate tree's.
+///   and sort in separate tree's.
 /// * `hash`: The `hash` parameter represent the hash of the object contained in the new tree
 ///   object
 pub fn batch_tree_add(

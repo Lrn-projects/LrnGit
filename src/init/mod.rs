@@ -16,20 +16,18 @@ pub fn init_local_repo() {
     let current_repo: PathBuf = match current_dir {
         Ok(dir) => dir.join(".lrngit"),
         Err(e) => {
-            lrncore::logs::error_log(&format!("Failed to get current directory: {}", e));
+            lrncore::logs::error_log(&format!("Failed to get current directory: {e}"));
             return;
         }
     };
     if Path::new(".lrngit").exists() {
         lrncore::logs::info_log(&format!(
-            "Reinitialized existing Git repository in {:?}",
-            current_repo
+            "Reinitialized existing Git repository in {current_repo:?}"
         ));
         let remove_dir = fs::remove_dir_all(".lrngit");
         if let Err(e) = remove_dir {
             lrncore::logs::error_log(&format!(
-                "Failed to remove existing .lrngit directory: {}",
-                e
+                "Failed to remove existing .lrngit directory: {e}"
             ));
         }
     }

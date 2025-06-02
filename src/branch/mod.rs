@@ -26,7 +26,7 @@ pub fn branch_command() {
 }
 
 fn create_new_branch(branch_name: &str) {
-    let mut file = File::create(format!(".lrngit/refs/heads/{}", branch_name))
+    let mut file = File::create(format!(".lrngit/refs/heads/{branch_name}"))
         .expect("Failed to create new branch");
     let last_commit = parse_current_branch();
     file.write_all(last_commit.as_bytes())
@@ -42,9 +42,9 @@ fn show_all_branch() {
         let branch_name = path.unwrap().file_name();
         let branch_name_str = branch_name.to_str().unwrap();
         if branch_name_str == split_current_branch[split_current_branch.len() - 1] {
-            println!("*{}", branch_name_str);
+            println!("*{branch_name_str}");
         } else {
-            println!("{}", branch_name_str);
+            println!("{branch_name_str}");
         }
     }
 }
@@ -74,7 +74,7 @@ pub fn parse_current_branch() -> String {
         return "".to_string();
     }
     let mut parse_branch = File::open(".lrngit/".to_string() + &head)
-        .unwrap_or_else(|_| panic!("Failed to open {} file", head));
+        .unwrap_or_else(|_| panic!("Failed to open {head} file"));
     let mut content: String = String::new();
     parse_branch
         .read_to_string(&mut content)

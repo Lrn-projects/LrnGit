@@ -119,7 +119,7 @@ pub fn new_commit(commit_message: &str) {
             i += 1;
         }
     }
-    add::recursive_add(index_entry_map, &mut root_tree);
+    add::batch_tree_add(index_entry_map, &mut root_tree);
     create_commit_object(root_tree, commit_message);
 }
 
@@ -129,7 +129,7 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     let sign = if offset >= 0 { "+" } else { "-" };
     let hours = offset.abs() / 3600;
     let minutes = (offset.abs() % 3600) / 60;
-    let tz_str = format!("{}{:02}{:02}", sign, hours, minutes);
+    let tz_str = format!("{sign}{hours:02}{minutes:02}");
     let commiter: CommitUser = CommitUser {
         name: global_config.user.name.as_bytes().to_vec(),
         email: global_config.user.email.as_bytes().to_vec(),
@@ -142,16 +142,14 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     let commiter_bytes: Vec<u8> =
         bincode::serialize(&commiter).expect("Failed to serialize CommitUser struct");
     let parent_commit = branch::parse_current_branch();
-    let commit_content_bytes: Vec<u8>;
-    if parent_commit.is_empty() {
+    let commit_content_bytes: Vec<u8> = if parent_commit.is_empty() {
         let init_commit_content: InitCommitContent = InitCommitContent {
             tree: root_tree_hash,
             author: commiter_bytes.clone(),
             commiter: commiter_bytes.clone(),
             message: commit_message.as_bytes().to_vec(),
         };
-        commit_content_bytes =
-            bincode::serialize(&init_commit_content).expect("Failed to serialize commit content");
+        bincode::serialize(&init_commit_content).expect("Failed to serialize commit content")
     } else {
         let commit_content: CommitContent = CommitContent {
             tree: root_tree_hash,
@@ -161,9 +159,8 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
             commiter: commiter_bytes,
             message: commit_message.as_bytes().to_vec(),
         };
-        commit_content_bytes =
-            bincode::serialize(&commit_content).expect("Failed to serialize commit content");
-    }
+        bincode::serialize(&commit_content).expect("Failed to serialize commit content")
+    };
     let mut commit_bytes: Vec<u8> = Vec::new();
     commit_bytes.extend_from_slice(&utils::git_object_header(
         "commit",
@@ -181,7 +178,7 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     match file_result {
         Ok(f) => file = f,
         Err(e) => {
-            lrncore::logs::error_log(&format!("Error writing to tree file: {}", e));
+            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
             return;
         }
     }
@@ -190,7 +187,7 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     match file_result {
         Ok(_) => (),
         Err(e) => {
-            lrncore::logs::error_log(&format!("Error writing to tree file: {}", e));
+            lrncore::logs::error_log(&format!("Error writing to tree file: {e}"));
             exit(1)
         }
     }
@@ -201,7 +198,7 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
 
 #[allow(dead_code)]
 pub fn parse_commit_by_hash(hash: &str) -> CommitContent {
-    let mut commit_object = utils::get_file_by_hash(&hash);
+    let mut commit_object = utils::get_file_by_hash(hash);
     let mut content_buf: Vec<u8> = Vec::new();
     commit_object
         .read_to_end(&mut content_buf)
@@ -209,13 +206,13 @@ pub fn parse_commit_by_hash(hash: &str) -> CommitContent {
     // decode buffer using zlib
     let mut d = flate2::read::ZlibDecoder::new(content_buf.as_slice());
     let mut buffer = Vec::new();
-    // read decoded file and populate buffer
+    // Read decoded file and populate buffer
     d.read_to_end(&mut buffer).unwrap();
 
     match parse_commit(buffer) {
         Ok(c) => c,
         Err(e) => {
-            lrncore::logs::error_log(&format!("Error parsing commit: {}", e));
+            lrncore::logs::error_log(&format!("Error parsing commit: {e}"));
             exit(1)
         }
     }

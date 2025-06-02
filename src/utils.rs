@@ -116,7 +116,7 @@ fn print_tree_content(buff: &[u8]) {
         parser::parse_tree_entries_obj(buff.to_vec()).expect("Failed to parse tree object");
     for each in parse_tree {
         println!("{:?}", str::from_utf8(&each.name).unwrap());
-        println!("{:?}", hex::encode(&each.hash));
+        println!("{:?}", hex::encode(each.hash));
     }
 }
 
@@ -323,7 +323,7 @@ pub fn split_hash(hash: &str) -> String {
 pub fn walk_root_tree_to_file(
     root_tree: &str,
     target_path: &str,
-    _current_path: &mut String,
+    _current_path: &mut &str,
     _hash: &mut [u8; 20],
 ) {
     let root_tree_path = split_hash(root_tree);
@@ -338,7 +338,7 @@ pub fn walk_root_tree_to_file(
     let i: usize = 0;
     if let Some(pos) = parse_root_tree.iter().position(|x| str::from_utf8(&x.name).unwrap() == split_target_path[i]) {
         let entry = parse_root_tree.remove(pos);
-        println!("entry: {:?}", entry);
+        println!("entry: {entry:?}");
         println!("split target path: {:?}", split_target_path[i])
     }
     // for each in parse_root_tree {
@@ -421,7 +421,7 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
     walk_root_tree_to_file(
         &hex::encode(parse_commit.tree),
         file_path,
-        &mut String::new(),
+        &mut "",
         &mut file_hash,
     );
     let mut index = parse_index();

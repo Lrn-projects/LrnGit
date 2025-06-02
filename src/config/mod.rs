@@ -39,7 +39,7 @@ fn init_global_config() {
     let mut config_file = match File::create(config_path) {
         Ok(f) => f,
         Err(e) => {
-            lrncore::logs::error_log(&format!("Failed to create the config file: {}", e));
+            lrncore::logs::error_log(&format!("Failed to create the config file: {e}"));
             exit(1);
         }
     };
@@ -48,7 +48,7 @@ fn init_global_config() {
     match config_file.write_all(template_bytes) {
         Ok(_) => (),
         Err(e) => {
-            lrncore::logs::error_log(&format!("Failed to write the config file: {}", e));
+            lrncore::logs::error_log(&format!("Failed to write the config file: {e}"));
             exit(1);
         }
     };
