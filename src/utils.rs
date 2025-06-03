@@ -316,16 +316,9 @@ pub fn split_hash(hash: &str) -> String {
 /// root_tree: the root tree hash as &str
 /// target_path: the path we want to have as tree and blob object, consider we want to get the
 /// files at the end of the path.
-/// current_path: mutable reference to a string to keep track of the path across recursively. It's
-/// used to compare with the target_path and to get the metadata of the path.
 /// hash: mutable reference to a buffer to return through a pointer the hash of the blob at the end
 /// of the recursive
-pub fn walk_root_tree_to_file(
-    root_tree: &str,
-    target_path: &str,
-    current_path: &mut String,
-    hash: &mut [u8; 20],
-) {
+pub fn walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8; 20]) {
     let root_tree_path = split_hash(root_tree);
     let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
     let mut file_buff: Vec<u8> = Vec::new();
@@ -344,7 +337,7 @@ pub fn walk_root_tree_to_file(
         if str::from_utf8(&entry.name).unwrap() != *split_target_path.last().unwrap() {
             split_target_path.remove(i);
             let path_joinded = split_target_path.join("/");
-            walk_root_tree_to_file(&hex::encode(entry.hash), &path_joinded, current_path, hash);
+            walk_root_tree(&hex::encode(entry.hash), &path_joinded, hash);
         } else {
             *hash = entry.hash;
         }
@@ -393,12 +386,7 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
     let parse_commit = parse_commit_by_hash(&last_commit);
     let mut file_hash: [u8; 20] = [0u8; 20];
     // Get the hash of the file from last commit to check if there's change on disk
-    walk_root_tree_to_file(
-        &hex::encode(parse_commit.tree),
-        file_path,
-        &mut String::new(),
-        &mut file_hash,
-    );
+    walk_root_tree(&hex::encode(parse_commit.tree), file_path, &mut file_hash);
     let mut index = parse_index();
     if let Some(pos) = index
         .entries
@@ -410,12 +398,6 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
             .expect("Failed to get hash from file path");
         // if entry.hash != file_hash && entry.hash == disk_hash
         if entry.hash != file_hash && entry.hash == disk_hash.hash {
-            println!(
-                "debug prout: {:?}     {:?}    {:?}",
-                hex::encode(entry.hash),
-                hex::encode(file_hash),
-                hex::encode(disk_hash.hash)
-            );
             FileStatusEntry {
                 file: file_path.to_owned(),
                 status: FileStatus::Staged,
