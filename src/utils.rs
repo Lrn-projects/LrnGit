@@ -336,50 +336,19 @@ pub fn walk_root_tree_to_file(
         parser::parse_tree_entries_obj(file_buff).expect("Failed to parse tree entries");
     let mut split_target_path: Vec<&str> = target_path.split("/").collect();
     let i: usize = 0;
-    println!("debug split_target_path: {}", split_target_path[i]);
     if let Some(pos) = parse_root_tree
         .iter()
         .position(|x| str::from_utf8(&x.name).unwrap() == split_target_path[i])
     {
         let entry = parse_root_tree.remove(pos);
         if str::from_utf8(&entry.name).unwrap() != *split_target_path.last().unwrap() {
-            println!(
-                "debug: {:?} {:?}",
-                str::from_utf8(&entry.name).unwrap(),
-                *split_target_path.last().unwrap()
-            );
             split_target_path.remove(i);
             let path_joinded = split_target_path.join("/");
-            println!("double tree: {:?}{:?}", root_tree, &hex::encode(entry.hash));
-            println!("entry: {entry:?}");
-            // not correct hash
             walk_root_tree_to_file(&hex::encode(entry.hash), &path_joinded, current_path, hash);
+        } else {
+            *hash = entry.hash;
         }
     }
-    // for each in parse_root_tree {
-    //     println!("debug each: {:?}", str::from_utf8(&each.name));
-    //     match current_path.is_empty() {
-    //         true => *current_path = str::from_utf8(&each.name).unwrap().to_owned(),
-    //         false => {
-    //             current_path.push('/');
-    //             current_path.push_str(str::from_utf8(&each.name).unwrap());
-    //         }
-    //     }
-    //
-    //     let metadata = std::fs::metadata(&current_path).unwrap();
-    //     if metadata.is_dir() {
-    //         walk_root_tree_to_file(
-    //             &hex::encode(each.hash),
-    //             target_path,
-    //             current_path,
-    //             hash,
-    //         );
-    //     };
-    //     if metadata.is_file() {
-    //         // Deferencing ptr to assign mut value
-    //         *hash = each.hash;
-    //     }
-    // }
 }
 
 // Check in the index file if a file has been modified since it has been added to the index
