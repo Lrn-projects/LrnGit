@@ -7,7 +7,7 @@ use std::{
 
 use lrncore::logs::error_log;
 
-use crate::{branch, commit};
+use crate::{branch, commit, status};
 
 pub fn switch_command() {
     let args: Vec<String> = env::args().collect();
@@ -29,6 +29,11 @@ pub fn switch_command() {
 }
 
 fn switch_ref(branch_name: &str) {
+    // check modified and unstaged files
+    let files_status = status::get_files_status();
+    if !files_status.modified.is_empty() || !files_status.staged.is_empty() {
+        println!("")
+    }
     if !fs::exists(format!(".lrngit/refs/heads/{branch_name}")).unwrap() {
         error_log("Branch does not exist");
         exit(1)

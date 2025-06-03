@@ -10,10 +10,10 @@ use helper::sort_file_status_vec;
 
 // Structure to sort file status
 pub struct FileStatusSort {
-    staged: Vec<FileStatusEntry>,
-    untracked: Vec<FileStatusEntry>,
-    modified: Vec<FileStatusEntry>,
-    deleted: Vec<FileStatusEntry>,
+    pub staged: Vec<FileStatusEntry>,
+    pub untracked: Vec<FileStatusEntry>,
+    pub modified: Vec<FileStatusEntry>,
+    pub deleted: Vec<FileStatusEntry>,
 }
 
 #[derive(Debug)]
@@ -37,10 +37,7 @@ pub struct FileStatusEntry {
 }
 
 use crate::{
-    add::{
-        self,
-        index::IndexEntry,
-    },
+    add::{self, index::IndexEntry},
     utils, vec_of_path,
 };
 
@@ -61,8 +58,7 @@ pub fn status_command() {
     }
 }
 
-// print the repository status, files tracked, untracked and modified
-fn workdir_status() {
+pub fn get_files_status() -> FileStatusSort {
     let index = add::index::parse_index();
     let index_entries = index.entries;
     let workdir = current_dir().expect("Failed to get the current working directory");
@@ -73,7 +69,13 @@ fn workdir_status() {
     // Vector containing all files with their status
     let status = check_file_status(index_entries, file_vec.to_owned(), &workdir);
     // Sort all file path by status
-    let sort_files_status = sort_file_status_vec(status.entries);
+    sort_file_status_vec(status.entries)
+}
+
+// print the repository status, files tracked, untracked and modified
+fn workdir_status() {
+    let workdir = current_dir().expect("Failed to get the current working directory");
+    let sort_files_status = get_files_status();
     println!("Changes to be committed:");
     for each in sort_files_status.staged {
         println!("\t{}", each.file);
