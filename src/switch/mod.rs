@@ -28,11 +28,23 @@ pub fn switch_command() {
     }
 }
 
+/// Switch current head to specified branch
 fn switch_ref(branch_name: &str) {
-    // check modified and unstaged files
+    // Check modified and staged files that are not commit yet
     let files_status = status::get_files_status();
     if !files_status.modified.is_empty() || !files_status.staged.is_empty() {
-        println!("")
+        println!(
+            "error: Your local changes to the following files would be overwritten by checkout:"
+        );
+        for each in files_status.modified {
+            println!("\t{}", each.file);
+        }
+        for each in files_status.staged {
+            println!("\t{}", each.file);
+        }
+        println!("Please commit your changes or stash them before you switch branches.");
+        println!("Aborting");
+        exit(1);
     }
     if !fs::exists(format!(".lrngit/refs/heads/{branch_name}")).unwrap() {
         error_log("Branch does not exist");
@@ -57,7 +69,7 @@ fn switch_ref(branch_name: &str) {
 /// Return an error if there's changes not commited (if the root trees are different) and print the
 /// modified files not commited (by getting the sorted vector from status)
 fn update_workdir() {
-   let last_commit = branch::parse_current_branch(); 
-   let _parse_commit = commit::parse_commit_by_hash(&last_commit);
-   // let root_tree = parse_commit.tree;
+    let last_commit = branch::parse_current_branch();
+    let _parse_commit = commit::parse_commit_by_hash(&last_commit);
+    // let root_tree = parse_commit.tree;
 }
