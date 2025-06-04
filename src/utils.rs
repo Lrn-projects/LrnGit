@@ -10,7 +10,7 @@ use std::{
 use crate::{
     add::{
         self,
-        index::{self, parse_index},
+        index::{self, parse_index}, TreeEntry,
     },
     branch,
     commit::parse_commit_by_hash,
@@ -318,7 +318,8 @@ pub fn split_hash(hash: &str) -> String {
 /// files at the end of the path.
 /// hash: mutable reference to a buffer to return through a pointer the hash of the blob at the end
 /// of the recursive
-pub fn walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8; 20]) {
+/// content: mutable reference to all the content inside the root tree. 
+pub fn target_walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8; 20]) {
     let root_tree_path = split_hash(root_tree);
     let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
     let mut file_buff: Vec<u8> = Vec::new();
@@ -337,11 +338,21 @@ pub fn walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8; 20]) {
         if str::from_utf8(&entry.name).unwrap() != *split_target_path.last().unwrap() {
             split_target_path.remove(i);
             let path_joinded = split_target_path.join("/");
-            walk_root_tree(&hex::encode(entry.hash), &path_joinded, hash);
+            target_walk_root_tree(&hex::encode(entry.hash), &path_joinded, hash);
         } else {
+            // Deferencing hash and write entry.hash to hash adr
             *hash = entry.hash;
         }
     }
+}
+/// Walkdir trough the tree object from the root tree and fill the content mutable reference in
+/// params to get the entire content of the root tree
+///
+/// Params:
+/// root_tree: the root tree hash as &str
+/// content: mutable reference to all the content inside the root tree. 
+pub fn walk_root_tree_content(root_tree: &str, content: &mut Vec<TreeEntry>) {
+    println!("prout")
 }
 
 // Check in the index file if a file has been modified since it has been added to the index
@@ -386,7 +397,8 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
     let parse_commit = parse_commit_by_hash(&last_commit);
     let mut file_hash: [u8; 20] = [0u8; 20];
     // Get the hash of the file from last commit to check if there's change on disk
-    walk_root_tree(&hex::encode(parse_commit.tree), file_path, &mut file_hash);
+    // Don't use the root tree content, passing a simple empty vector without keeping ref to it
+    target_walk_root_tree(&hex::encode(parse_commit.tree), file_path, &mut file_hash);
     let mut index = parse_index();
     if let Some(pos) = index
         .entries

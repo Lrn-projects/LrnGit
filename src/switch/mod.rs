@@ -7,7 +7,7 @@ use std::{
 
 use lrncore::logs::error_log;
 
-use crate::{branch, commit, status};
+use crate::{add::TreeEntry, branch, commit, status, utils::walk_root_tree_content};
 
 pub fn switch_command() {
     let args: Vec<String> = env::args().collect();
@@ -60,7 +60,17 @@ fn switch_ref(branch_name: &str) {
     let update_head = format!("ref: refs/heads/{branch_name}");
     head.write_all(update_head.as_bytes())
         .expect("Failed to write buffer in HEAD");
+    update_index();
     update_workdir();
+}
+
+/// Update the index file depending on the new ref head
+fn update_index() {
+    let last_commit = branch::parse_current_branch();
+    let parse_commit = commit::parse_commit_by_hash(&last_commit);
+    let root_tree = hex::encode(&parse_commit.tree);
+    let mut root_tree_content: Vec<TreeEntry> = Vec::new();
+    walk_root_tree_content(&root_tree, &mut root_tree_content);
 }
 
 /// Update the working directory depending on the ref head
