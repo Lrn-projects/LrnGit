@@ -77,7 +77,8 @@ pub fn new_commit(commit_message: &str) {
     let mut root_tree: [u8; 20] = [0; 20];
     // HashMap to store all index entry with blob and tree for batch tree creation
     // Use strings to avoid dropping value and dangling ref
-    let mut index_entry_map: HashMap<(String, usize), Vec<(String, [u8; 20])>> = HashMap::new();
+    let mut index_entry_map: HashMap<(String, usize), Vec<(String, u32, [u8; 20])>> =
+        HashMap::new();
     // Iterate over the index, each entry contain file path and blob hash
     for each in config.entries {
         let path = &each.path;
@@ -108,11 +109,11 @@ pub fn new_commit(commit_message: &str) {
                     .entry((key.to_string(), folder_index))
                     .or_default();
                 // Avoid duplicate entries, by checking if entry doesn't exist
-                if !entry_vec.iter().any(|(name, _)| name == last) {
+                if !entry_vec.iter().any(|(name, _, _)| name == last) {
                     if i != 0 {
-                        entry_vec.push((last.to_owned().to_string(), [0u8; 20]));
+                        entry_vec.push((last.to_owned().to_string(), 0o040000, [0u8; 20]));
                     } else {
-                        entry_vec.push((last.to_owned().to_string(), each.hash));
+                        entry_vec.push((last.to_owned().to_string(), 0o100644, each.hash));
                     }
                 }
             }

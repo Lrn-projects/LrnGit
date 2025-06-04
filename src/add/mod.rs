@@ -90,17 +90,14 @@ The function `add_tree` returns a `[u8; 20]` array, which represents the hash of
 tree object.
 */
 //TODO fix tree structure to make compatible with git
-fn add_tree(entries: Vec<(String, [u8; 20])>) -> [u8; 20] {
+fn add_tree(entries: Vec<(String, u32, [u8; 20])>) -> [u8; 20] {
     // creation of tree entries
-
-    // suck
-    let mode = helpers::DIR;
     let mut new_tree_entry_vec: Vec<TreeEntry> = Vec::new();
     for each in entries {
         let new_tree_entry: TreeEntry = TreeEntry {
-            mode,
+            mode: each.1,
             name: each.0.as_bytes().to_vec(),
-            hash: each.1,
+            hash: each.2,
         };
         new_tree_entry_vec.push(new_tree_entry);
     }
@@ -177,8 +174,7 @@ fn add_blob(arg: &str) -> [u8; 20] {
     blob_hash.hash
 }
 
-/// The `recursive_add` function in Rust recursively processes elements in a vector and performs
-/// different actions based on whether the last element contains a period or not.
+/// The `batch_tree_add` function batch create all needed tree from the hashmap 
 ///
 /// Arguments:
 ///
@@ -187,43 +183,49 @@ fn add_blob(arg: &str) -> [u8; 20] {
 /// * `hash`: The `hash` parameter represent the hash of the object contained in the new tree
 ///   object
 pub fn batch_tree_add(
-    entity_hashmap: HashMap<(String, usize), Vec<(String, [u8; 20])>>,
+    entity_hashmap: HashMap<(String, usize), Vec<(String, u32, [u8; 20])>>,
     root_tree_ptr: &mut [u8; 20],
 ) {
-    let mut entity_vec: Vec<((String, usize), Vec<(String, [u8; 20])>)> = entity_hashmap
+    let mut entity_vec: Vec<((String, usize), Vec<(String, u32, [u8; 20])>)> = entity_hashmap
         .iter()
         .map(|(k, v)| (k.clone(), v.clone()))
         .collect();
     // Sorts the vector by the depth value of each tuple using default comparison
     entity_vec.sort_by(|x, y| x.0.1.cmp(&y.0.1));
     entity_vec.reverse();
-    let mut tree_hash_vec: Vec<(String, [u8; 20])> = Vec::new();
+    let mut tree_hash_vec: Vec<(String, u32, [u8; 20])> = Vec::new();
     for each in entity_vec {
         let (tree_name, hash) = sort_hashmap_entry_and_create_tree(each, tree_hash_vec.clone());
-        tree_hash_vec.push((tree_name, hash));
+        tree_hash_vec.push((tree_name, 1, hash));
     }
-    let mut root_tree = (String::new(), [0u8;20]);
+    let mut root_tree = (String::new(), 0, [0u8;20]);
     if let Some(i) = tree_hash_vec.iter().position(|x| x.0.is_empty()) {
         root_tree = tree_hash_vec.remove(i);
     }
-    *root_tree_ptr = root_tree.1; 
+    *root_tree_ptr = root_tree.2; 
 }
 
+/// Sort the hashmap depending on the buffer content and create the specific tree
+///
+/// Arguments:
+///
+/// * `entry`: the hashmap with all entry inside
+/// * `tree_vec`: vector containing all tree that need to be created
 fn sort_hashmap_entry_and_create_tree(
-    entry: ((String, usize), Vec<(String, [u8; 20])>),
-    tree_vec: Vec<(String, [u8; 20])>,
+    entry: ((String, usize), Vec<(String, u32, [u8; 20])>),
+    tree_vec: Vec<(String, u32, [u8; 20])>,
 ) -> (String, [u8; 20]) {
-    let mut tree_entry_vec: Vec<(String, [u8; 20])> = Vec::new();
+    let mut tree_entry_vec: Vec<(String, u32, [u8; 20])> = Vec::new();
     for each in entry.1 {
-        if each.1 != [0u8; 20] {
+        if each.2 != [0u8; 20] {
             tree_entry_vec.push(each);
         } else {
             let mut existing_tree_hash: [u8; 20] = [0u8; 20];
             if let Some(i) = tree_vec.iter().position(|x| x.0 == each.0) {
-                existing_tree_hash = tree_vec.get(i).unwrap().1;
+                existing_tree_hash = tree_vec.get(i).unwrap().2;
             }
             if !existing_tree_hash.is_empty() {
-                tree_entry_vec.push((each.0, existing_tree_hash));
+                tree_entry_vec.push((each.0, each.1, existing_tree_hash));
             }
         }
     }

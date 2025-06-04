@@ -340,7 +340,7 @@ pub fn target_walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8;
             let path_joinded = split_target_path.join("/");
             target_walk_root_tree(&hex::encode(entry.hash), &path_joinded, hash);
         } else {
-            // Deferencing hash and write entry.hash to hash adr
+            // Deferencing hash
             *hash = entry.hash;
         }
     }
@@ -352,7 +352,14 @@ pub fn target_walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8;
 /// root_tree: the root tree hash as &str
 /// content: mutable reference to all the content inside the root tree. 
 pub fn walk_root_tree_content(root_tree: &str, content: &mut Vec<TreeEntry>) {
-    println!("prout")
+    let root_tree_path = split_hash(root_tree);
+    let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
+    let mut file_buff: Vec<u8> = Vec::new();
+    root_tree_obj.read_to_end(&mut file_buff).expect("Failed to read root tree content to buffer");
+    let mut parse_root_tree = parser::parse_tree_entries_obj(file_buff).expect("Failed to parse root tree entries");
+    for each in parse_root_tree {
+        println!("debug: {:?}", &each.mode);
+    }
 }
 
 // Check in the index file if a file has been modified since it has been added to the index
