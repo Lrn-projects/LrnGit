@@ -8,6 +8,7 @@ use chrono::{Local, Offset};
 use serde::{Deserialize, Serialize};
 
 use crate::{config, utils};
+use crate::object::utils::{git_object_header, compress_file};
 use crate::refs::{init_refs, parse_current_branch};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -91,12 +92,12 @@ pub fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
         bincode::serialize(&commit_content).expect("Failed to serialize commit content")
     };
     let mut commit_bytes: Vec<u8> = Vec::new();
-    commit_bytes.extend_from_slice(&utils::git_object_header(
+    commit_bytes.extend_from_slice(&git_object_header(
         "commit",
         commit_content_bytes.len(),
     ));
     commit_bytes.extend_from_slice(&commit_content_bytes);
-    let commit_bytes_compressed = utils::compress_file(commit_bytes.clone());
+    let commit_bytes_compressed = compress_file(commit_bytes.clone());
     // hash tree content with SHA-1
     let split_hash_result_hex: Vec<char>;
     (_, split_hash_result_hex) = utils::hash_sha1(&commit_bytes_compressed);

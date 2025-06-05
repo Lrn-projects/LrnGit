@@ -2,6 +2,7 @@ use std::{collections::HashMap, fs::{self, File}, io::Write, os::unix::fs::Permi
 
 use crate::utils;
 use serde::{Deserialize, Serialize};
+use crate::object::utils::{git_object_header, compress_file};
 
 /// The `TreeEntry` struct in Rust represents an entry in a tree object with mode, name, and SHA-1 hash.
 ///
@@ -106,12 +107,12 @@ fn add_tree(entries: Vec<(String, u32, [u8; 20])>) -> [u8; 20] {
 
     // creation of tree object
     let new_tree: Tree = Tree {
-        header: utils::git_object_header("tree", new_tree_entry_vec.len()),
+        header: git_object_header("tree", new_tree_entry_vec.len()),
         entries: new_tree_entry_vec.clone(),
     };
     let tree_vec: Vec<u8> = bincode::serialize(&new_tree).expect("Failed to serialize new tree");
     // Compress the new tree object with zlib
-    let compressed_bytes_vec = utils::compress_file(tree_vec);
+    let compressed_bytes_vec = compress_file(tree_vec);
     // hash tree content with SHA-1
     let (new_hash, split_hash_result_hex) = utils::hash_sha1(&compressed_bytes_vec);
     // File creation

@@ -6,6 +6,7 @@ use std::fs;
 use std::fs::File;
 use std::os::unix::fs::MetadataExt;
 use std::io::Write;
+use crate::object::utils::{git_object_header, compress_file};
 
 pub struct FileHashBlob {
     pub blob: Vec<u8>,
@@ -47,7 +48,7 @@ pub fn add_blob(arg: &str) -> [u8; 20] {
             return [0u8; 20];
         }
     }
-    let compressed_bytes_vec = utils::compress_file(blob_hash.blob);
+    let compressed_bytes_vec = compress_file(blob_hash.blob);
     // write compress file with zlib to file
     file.write_all(&compressed_bytes_vec).unwrap();
     let added_file_metadata = fs::metadata(arg).expect("Failed to get added file metadata");
@@ -73,7 +74,7 @@ pub fn calculate_file_hash_and_blob(file_path: &str) -> Result<FileHashBlob, std
     // creation of blob object
     let new_blob: Blob<Standard> = Blob::from(file.as_bytes());
     let blob_object: BlobObject = BlobObject {
-        header: utils::git_object_header("blob", new_blob.len()),
+        header: git_object_header("blob", new_blob.len()),
         content: new_blob.to_vec(),
     };
     // concat the blob object from struct
