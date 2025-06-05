@@ -352,7 +352,11 @@ pub fn target_walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8;
 /// Params:
 /// root_tree: the root tree hash as &str
 /// content: mutable reference to all the content inside the root tree.
-pub fn walk_root_tree_content(root_tree: &str, current_path: &PathBuf, content: &mut Vec<(PathBuf, [u8; 20])>) {
+pub fn walk_root_tree_content(
+    root_tree: &str,
+    current_path: &mut PathBuf,
+    content: &mut Vec<(PathBuf, [u8; 20])>,
+) {
     let root_tree_path = split_hash(root_tree);
     let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
     let mut file_buff: Vec<u8> = Vec::new();
@@ -365,9 +369,12 @@ pub fn walk_root_tree_content(root_tree: &str, current_path: &PathBuf, content: 
     for each in parse_root_tree {
         new_path.push(str::from_utf8(&each.name).unwrap());
         if each.mode == 16384 {
-            walk_root_tree_content(&hex::encode(&each.hash), &new_path, content);
+            walk_root_tree_content(&hex::encode(&each.hash), &mut new_path, content);
+        } else {
+            current_path.pop();
+            content.push((new_path.clone(), each.hash));
+            new_path.pop();
         }
-        content.push((new_path.clone(), each.hash));
     }
 }
 
