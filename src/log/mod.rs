@@ -1,7 +1,7 @@
 use std::{env, io::Read, process::exit};
 
 use crate::{
-    commit::{self, CommitObject, CommitUser, InitCommitContent},
+    object::commit::{self, CommitObject, CommitUser, InitCommitContent},
     utils,
     refs::parse_current_branch
 };

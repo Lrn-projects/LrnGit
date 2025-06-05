@@ -11,7 +11,7 @@ use crate::refs::parse_current_branch;
 use crate::object::blob::calculate_file_hash_and_blob;
 use crate::object::index::parse_index;
 use crate::{
-    commit::parse_commit_by_hash,
+    object::commit::parse_commit_by_hash,
     object::index,
     parser::{self},
     status::{FileStatus, FileStatusEntry},
