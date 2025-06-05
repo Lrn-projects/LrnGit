@@ -21,6 +21,36 @@ use std::process::exit;
 // your current lrngit installation with the newer version
 const VERSION: &str = "0.1.0";
 
+pub fn lrngit_usage() -> &'static str {
+    (r"
+lrngit's cli.
+
+
+Usage: lrngit command [options]
+
+
+Commands:
+    init            Init a local repository
+    add             Add file to local repository
+    commit          Commit to the local repository
+    branch          Create a new branch or list all branches
+    switch          Switch branch to the given one
+    cat-file        Cat content of a given hash
+    ls-file         Print content of the index file
+    status          Show the status of the local repository
+    log             Show the commit historic
+    config          Manage config
+    help            Show this help message
+    version         Show the version
+
+Options:
+
+    -h, --help      Show command usage
+    -v, --version   Show the current version of LrnGit
+") as _
+}
+
+
 // enum of all lrngit command
 #[derive(Debug, Clone)]
 enum Commands {
@@ -85,7 +115,7 @@ fn main() {
         Some("version") => Commands::Version,
         Some("help") => Commands::Help,
         _ => {
-            lrncore::usage_exit::usage_and_exit("Invalid command", utils::lrngit_usage());
+            lrncore::usage_exit::usage_and_exit("Invalid command", lrngit_usage());
             return;
         }
     };
@@ -102,7 +132,7 @@ fn main() {
         Commands::Log => log::log_command(),
         Commands::Config => config::config_commands(),
         Commands::Version => lrncore::usage_exit::command_usage(&lrngit_version()),
-        Commands::Help => lrncore::usage_exit::command_usage(utils::lrngit_usage()),
+        Commands::Help => lrncore::usage_exit::command_usage(lrngit_usage()),
     }
 }
 

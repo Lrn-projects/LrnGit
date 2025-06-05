@@ -3,8 +3,8 @@ use std::{
     fs::{self, File},
     io::{Read, Write},
     os::unix::fs::MetadataExt,
-    path::{Path, PathBuf},
-    process::{Command, exit},
+    path::PathBuf,
+    process::exit,
 };
 
 use crate::refs::parse_current_branch;
@@ -13,6 +13,7 @@ use crate::object::index::parse_index;
 use crate::{
     object::commit::parse_commit_by_hash,
     object::index,
+    object::utils::add_folder,
     parser::{self},
     status::{FileStatus, FileStatusEntry},
 };
@@ -29,60 +30,9 @@ pub struct ObjectHeader {
     pub size: usize,
 }
 
-pub fn lrngit_usage() -> &'static str {
-    (r"
-lrngit's cli.
-
-
-Usage: lrngit command [options]
-
-
-Commands:
-    init            Init a local repository
-    add             Add file to local repository
-    commit          Commit to the local repository
-    branch          Create a new branch or list all branches
-    switch          Switch branch to the given one
-    cat-file        Cat content of a given hash
-    ls-file         Print content of the index file
-    status          Show the status of the local repository
-    log             Show the commit historic
-    config          Manage config
-    help            Show this help message
-    version         Show the version
-
-Options:
-
-    -h, --help      Show command usage
-    -v, --version   Show the current version of LrnGit
-") as _
-}
-
 pub fn change_wkdir(dir: &str) {
     env::set_current_dir(dir).expect("Failed to change directory");
 }
-
-// create a new folder in objects
-pub fn add_folder(dir: &str) {
-    if dir.is_empty() {
-        return;
-    }
-    if Path::new(&format!(".lrngit/objects/{dir}")).exists() {
-        return;
-    }
-    let new_dir_path = format!(".lrngit/objects/{dir}");
-    let mut mkdir = Command::new("mkdir")
-        .arg(new_dir_path)
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn()
-        .expect("Failed to create all directories");
-    let wait_mkdir = mkdir.wait().expect("Failed to wait the mkdir command");
-    if !wait_mkdir.success() {
-        panic!("Failed to execute the mkdir command");
-    }
-}
-
 /// The function `read_blob_file` reads a compressed file, decompresses it, and prints its contents as a
 /// string.
 pub fn read_blob_file(hash: &str) {
