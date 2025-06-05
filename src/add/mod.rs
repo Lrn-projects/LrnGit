@@ -27,7 +27,7 @@ pub mod index;
 /// * `hash`: The `hash` property in the `TreeEntry` struct is an array of 20 unsigned 8-bit integers
 ///   (bytes). This array is used to store the SHA-1 hash value of the file or directory represented by
 ///   the `TreeEntry`. The SHA-1 hash is typically used to
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, PartialOrd, Ord, Eq)]
 #[allow(dead_code)]
 pub struct TreeEntry {
     pub mode: u32,

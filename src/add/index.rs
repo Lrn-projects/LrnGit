@@ -6,6 +6,10 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+use crate::{branch, commit, utils::walk_root_tree_content};
+
+use super::TreeEntry;
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IndexHeader {
     pub magic_number: [u8; 4],
@@ -143,3 +147,18 @@ pub fn remove_index_entry(entry_path: &str) {
         update_index(updated_index);
     }
 }
+
+/// Update the index file depending on the new ref head
+pub fn recreate_index() {
+    let last_commit = branch::parse_current_branch();
+    let parse_commit = commit::parse_commit_by_hash(&last_commit);
+    let root_tree = hex::encode(&parse_commit.tree);
+    let mut root_tree_content: Vec<TreeEntry> = Vec::new();
+    walk_root_tree_content(&root_tree, &mut root_tree_content);
+    root_tree_content.sort();
+    root_tree_content.dedup();
+    for each in root_tree_content {
+        println!("name: {}\thash: {:?}", str::from_utf8(&each.name).unwrap(), hex::encode(&each.hash));
+    }
+}
+

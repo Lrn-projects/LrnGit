@@ -9,8 +9,8 @@ use std::{
 
 use crate::{
     add::{
-        self,
-        index::{self, parse_index}, TreeEntry,
+        self, TreeEntry,
+        index::{self, parse_index},
     },
     branch,
     commit::parse_commit_by_hash,
@@ -318,7 +318,7 @@ pub fn split_hash(hash: &str) -> String {
 /// files at the end of the path.
 /// hash: mutable reference to a buffer to return through a pointer the hash of the blob at the end
 /// of the recursive
-/// content: mutable reference to all the content inside the root tree. 
+/// content: mutable reference to all the content inside the root tree.
 pub fn target_walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8; 20]) {
     let root_tree_path = split_hash(root_tree);
     let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
@@ -345,20 +345,28 @@ pub fn target_walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8;
         }
     }
 }
+
 /// Walkdir trough the tree object from the root tree and fill the content mutable reference in
 /// params to get the entire content of the root tree
 ///
 /// Params:
 /// root_tree: the root tree hash as &str
-/// content: mutable reference to all the content inside the root tree. 
+/// content: mutable reference to all the content inside the root tree.
 pub fn walk_root_tree_content(root_tree: &str, content: &mut Vec<TreeEntry>) {
     let root_tree_path = split_hash(root_tree);
     let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
     let mut file_buff: Vec<u8> = Vec::new();
-    root_tree_obj.read_to_end(&mut file_buff).expect("Failed to read root tree content to buffer");
-    let mut parse_root_tree = parser::parse_tree_entries_obj(file_buff).expect("Failed to parse root tree entries");
+    root_tree_obj
+        .read_to_end(&mut file_buff)
+        .expect("Failed to read root tree content to buffer");
+    let parse_root_tree =
+        parser::parse_tree_entries_obj(file_buff).expect("Failed to parse root tree entries");
     for each in parse_root_tree {
-        println!("debug: {:?}", &each.mode);
+        if each.mode == 16384 {
+            content.push(each.clone());
+            walk_root_tree_content(&hex::encode(&each.hash), content);
+        }
+        content.push(each.clone());
     }
 }
 
@@ -432,3 +440,4 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
         exit(1)
     }
 }
+
