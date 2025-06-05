@@ -127,7 +127,7 @@ fn main() {
         Commands::Branch => branch::branch_command(),
         Commands::Switch => switch::switch_command(),
         Commands::CatFile { arg } => utils::read_blob_file(&arg),
-        Commands::LsFile => utils::ls_file(),
+        Commands::LsFile => object::index::ls_file(),
         Commands::Status => status::status_command(),
         Commands::Log => log::log_command(),
         Commands::Config => config::config_commands(),

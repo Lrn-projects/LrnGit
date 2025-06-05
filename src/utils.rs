@@ -21,14 +21,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
 use lrncore::logs::error_log;
-use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectHeader {
-    pub types: Vec<u8>,
-    pub size: usize,
-}
 
 pub fn change_wkdir(dir: &str) {
     env::set_current_dir(dir).expect("Failed to change directory");
@@ -66,20 +59,6 @@ fn print_tree_content(buff: &[u8]) {
     for each in parse_tree {
         println!("{:?}", str::from_utf8(&each.name).unwrap());
         println!("{:?}", hex::encode(each.hash));
-    }
-}
-
-// Display the content of the index file
-pub fn ls_file() {
-    let config = index::parse_index();
-    for each in config.entries {
-        println!(
-            "{:o} {} {} {}\n",
-            each.mode,
-            hex::encode(each.hash),
-            each.flag,
-            String::from_utf8_lossy(&each.path)
-        );
     }
 }
 
@@ -398,6 +377,3 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
     }
 }
 
-pub fn delete_path(path: &PathBuf) {
-    fs::remove_dir_all(path).expect("Failed to remove path from disk");
-}

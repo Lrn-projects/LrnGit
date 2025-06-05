@@ -1,5 +1,13 @@
 use std::{path::Path, process::Command};
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ObjectHeader {
+    pub types: Vec<u8>,
+    pub size: usize,
+}
+
 // create a new folder in objects
 pub fn add_folder(dir: &str) {
     if dir.is_empty() {

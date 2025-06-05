@@ -160,3 +160,19 @@ pub fn recreate_index() {
         println!("name: {:?}\thash: {:?}", &each.0, hex::encode(&each.1));
     }
 }
+
+// Display the content of the index file
+pub fn ls_file() {
+    let config = parse_index();
+    for each in config.entries {
+        println!(
+            "{:o} {} {} {}\n",
+            each.mode,
+            hex::encode(each.hash),
+            each.flag,
+            String::from_utf8_lossy(&each.path)
+        );
+    }
+}
+
+
