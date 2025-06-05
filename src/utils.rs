@@ -7,7 +7,7 @@ use std::{
     process::{Command, exit},
 };
 
-use crate::add::{self};
+use crate::{add::{self}, object::blob::calculate_file_hash_and_blob};
 use crate::object::index::parse_index;
 use crate::{
     branch,
@@ -428,7 +428,7 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
         .position(|x| String::from_utf8_lossy(&x.path) == file_path)
     {
         let entry = index.entries.remove(pos);
-        let disk_hash = add::helpers::calculate_file_hash_and_blob(file_path)
+        let disk_hash = calculate_file_hash_and_blob(file_path)
             .expect("Failed to get hash from file path");
         // if entry.hash != file_hash && entry.hash == disk_hash
         if entry.hash != file_hash && entry.hash == disk_hash.hash {
