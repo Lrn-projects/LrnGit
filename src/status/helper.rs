@@ -1,9 +1,7 @@
 use crate::status::{FileStatus, FileStatusEntry, FileStatusSort};
 
 /// Sort the file status vector and return a FileStatusSort struct
-pub fn sort_file_status_vec(
-    files: Vec<FileStatusEntry>,
-) -> FileStatusSort {
+pub fn sort_file_status_vec(files: Vec<FileStatusEntry>) -> FileStatusSort {
     let mut staged: Vec<FileStatusEntry> = Vec::new();
     let mut untracked: Vec<FileStatusEntry> = Vec::new();
     let mut modified: Vec<FileStatusEntry> = Vec::new();
@@ -17,7 +15,11 @@ pub fn sort_file_status_vec(
             FileStatus::Deleted => deleted.push(each),
         }
     }
-    let file_status_sort: FileStatusSort = FileStatusSort { staged, untracked, modified, deleted };
+    let file_status_sort: FileStatusSort = FileStatusSort {
+        staged,
+        untracked,
+        modified,
+        deleted,
+    };
     file_status_sort
 }
-

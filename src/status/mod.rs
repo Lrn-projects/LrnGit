@@ -36,10 +36,9 @@ pub struct FileStatusEntry {
     pub status: FileStatus,
 }
 
-use crate::{
-    add::{self, index::IndexEntry},
-    utils, vec_of_path,
-};
+use crate::{fs::index::IndexEntry, utils, vec_of_path};
+
+use crate::fs::index;
 
 pub fn status_command() {
     let args: Vec<String> = env::args().collect();
@@ -59,7 +58,7 @@ pub fn status_command() {
 }
 
 pub fn get_files_status() -> FileStatusSort {
-    let index = add::index::parse_index();
+    let index = index::parse_index();
     let index_entries = index.entries;
     let workdir = current_dir().expect("Failed to get the current working directory");
     // Vec containing all files path

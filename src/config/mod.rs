@@ -1,6 +1,5 @@
 use std::{env, fs::File, io::Write, process::exit};
 
-
 pub struct GlobalConfig {
     pub user: GlobalConfigUser,
 }
@@ -17,7 +16,7 @@ pub fn config_commands() {
     }
     match args[2].as_str() {
         "init" => init_global_config(),
-        "cat" => cat_global_config(), 
+        "cat" => cat_global_config(),
 
         _ => {
             eprintln!("enter a config commands")
@@ -99,5 +98,8 @@ pub fn parse_global_config() -> GlobalConfig {
 
 fn cat_global_config() {
     let config = parse_global_config();
-    println!("[user]\nname = {}\nemail = {}\n", config.user.name, config.user.email);
+    println!(
+        "[user]\nname = {}\nemail = {}\n",
+        config.user.name, config.user.email
+    );
 }

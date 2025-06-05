@@ -12,8 +12,10 @@ use chrono::{Local, Offset};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    add::{self, index},
+    add::{self},
     branch, config,
+    fs::index,
+    fs::tree::batch_tree_add,
     utils::{self},
 };
 
@@ -120,7 +122,7 @@ pub fn new_commit(commit_message: &str) {
             i += 1;
         }
     }
-    add::batch_tree_add(index_entry_map, &mut root_tree);
+    batch_tree_add(index_entry_map, &mut root_tree);
     create_commit_object(root_tree, commit_message);
 }
 

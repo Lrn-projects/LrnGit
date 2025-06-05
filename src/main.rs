@@ -1,18 +1,18 @@
 mod add;
-mod commit;
-mod init;
-pub mod utils;
-mod config;
 pub mod branch;
+mod commit;
+mod config;
+pub mod fs;
+mod init;
 mod log;
-mod status;
 pub mod macros;
-mod switch;
 pub mod parser;
+mod status;
+mod switch;
+pub mod utils;
 
 use std::env;
 use std::process::exit;
-
 
 // Current version of lrngit
 // if modified and then running update command it will replace
@@ -27,7 +27,7 @@ enum Commands {
     Commit,
     Branch,
     Switch,
-    CatFile{ arg: String },
+    CatFile { arg: String },
     LsFile,
     Status,
     Log,
@@ -74,12 +74,12 @@ fn main() {
                     eprintln!("Please provide a file to add.");
                     exit(1);
                 })
-            .to_string(),
+                .to_string(),
         },
         Some("ls-file") => Commands::LsFile,
         Some("status") => Commands::Status,
         Some("log") => Commands::Log,
-        Some("config") => Commands::Config, 
+        Some("config") => Commands::Config,
         Some("version") => Commands::Version,
         Some("help") => Commands::Help,
         _ => {
@@ -91,10 +91,10 @@ fn main() {
     match command {
         Commands::Init => init::init_local_repo(),
         Commands::Add { arg } => add::add_to_local_repo(arg),
-        Commands::Commit =>  commit::commit_command(),
+        Commands::Commit => commit::commit_command(),
         Commands::Branch => branch::branch_command(),
         Commands::Switch => switch::switch_command(),
-        Commands::CatFile { arg } => utils::read_blob_file(&arg), 
+        Commands::CatFile { arg } => utils::read_blob_file(&arg),
         Commands::LsFile => utils::ls_file(),
         Commands::Status => status::status_command(),
         Commands::Log => log::log_command(),

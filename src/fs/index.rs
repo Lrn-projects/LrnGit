@@ -1,5 +1,8 @@
 use std::{
-    fs::{File, OpenOptions}, io::{BufReader, BufWriter, Read, Write}, path::PathBuf, process::exit
+    fs::{File, OpenOptions},
+    io::{BufReader, BufWriter, Read, Write},
+    path::PathBuf,
+    process::exit,
 };
 
 use serde::{Deserialize, Serialize};
@@ -149,7 +152,7 @@ pub fn recreate_index() {
     let last_commit = branch::parse_current_branch();
     let parse_commit = commit::parse_commit_by_hash(&last_commit);
     let root_tree = hex::encode(&parse_commit.tree);
-    let mut root_tree_content: Vec<(PathBuf, [u8;20])> = Vec::new();
+    let mut root_tree_content: Vec<(PathBuf, [u8; 20])> = Vec::new();
     walk_root_tree_content(&root_tree, &mut PathBuf::new(), &mut root_tree_content);
     root_tree_content.sort();
     root_tree_content.dedup();
@@ -157,4 +160,3 @@ pub fn recreate_index() {
         println!("name: {:?}\thash: {:?}", &each.0, hex::encode(&each.1));
     }
 }
-

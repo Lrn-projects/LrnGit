@@ -7,8 +7,8 @@ use std::{
 
 use lrncore::logs::error_log;
 
+use crate::fs::index;
 use crate::{branch, commit, status};
-use crate::add::index;
 
 pub fn switch_command() {
     let args: Vec<String> = env::args().collect();

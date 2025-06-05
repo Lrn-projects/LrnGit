@@ -8,7 +8,7 @@ use std::{
     process::Command,
 };
 
-use crate::{add::index, branch};
+use crate::{branch, fs::index};
 
 pub fn init_local_repo() {
     // create local repository directory
@@ -26,9 +26,7 @@ pub fn init_local_repo() {
         ));
         let remove_dir = fs::remove_dir_all(".lrngit");
         if let Err(e) = remove_dir {
-            lrncore::logs::error_log(&format!(
-                "Failed to remove existing .lrngit directory: {e}"
-            ));
+            lrncore::logs::error_log(&format!("Failed to remove existing .lrngit directory: {e}"));
         }
     }
     let mut mkdir = Command::new("mkdir")

@@ -1,14 +1,19 @@
 use std::{
-    env, error::Error, fs::{self, File}, io::{Read, Write}, os::unix::fs::MetadataExt, path::{Path, PathBuf}, process::{exit, Command}
+    env,
+    error::Error,
+    fs::{self, File},
+    io::{Read, Write},
+    os::unix::fs::MetadataExt,
+    path::{Path, PathBuf},
+    process::{Command, exit},
 };
 
+use crate::add::{self};
+use crate::fs::index::parse_index;
 use crate::{
-    add::{
-        self,
-        index::{self, parse_index},
-    },
     branch,
     commit::parse_commit_by_hash,
+    fs::index,
     parser::{self},
     status::{FileStatus, FileStatusEntry},
 };
@@ -117,7 +122,7 @@ fn print_tree_content(buff: &[u8]) {
 
 // Display the content of the index file
 pub fn ls_file() {
-    let config = add::index::parse_index();
+    let config = index::parse_index();
     for each in config.entries {
         println!(
             "{:o} {} {} {}\n",
@@ -445,5 +450,5 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
 }
 
 pub fn delete_path(path: &PathBuf) {
-    fs::remove_dir_all(path).expect("Failed to remove path from disk"); 
+    fs::remove_dir_all(path).expect("Failed to remove path from disk");
 }

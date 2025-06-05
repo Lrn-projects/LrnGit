@@ -1,6 +1,6 @@
 use std::{error::Error, io::Read};
 
-use crate::add::{Tree, TreeEntry};
+use crate::fs::tree::{Tree, TreeEntry};
 
 pub fn parse_tree_entries_obj(buff: Vec<u8>) -> Result<Vec<TreeEntry>, Box<dyn Error>> {
     let mut d = flate2::read::ZlibDecoder::new(buff.as_slice());
