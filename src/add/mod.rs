@@ -18,7 +18,7 @@ pub mod index;
 /// Properties:
 ///
 /// * `mode`: The `mode` property in the `TreeEntry` struct represents the file mode or permissions of
-///   the entry. It is typically a 32-bit unsigned integer that specifies the file type and permissions,
+///   the entry. It is typically a 32-bit unsigned integer that specifies the filetype and permissions,
 ///   such as whether the entry is a file, directory, or symbolic link, and the read, write,
 ///   example: if the mode is `40000` it's a folder, else if it's `100644` it's a blob,
 ///   160000 would be a commit

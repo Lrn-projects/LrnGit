@@ -3,13 +3,13 @@ use std::{
     fs::{self, File},
     io::{Read, Write},
     os::unix::fs::MetadataExt,
-    path::Path,
+    path::{Path, PathBuf},
     process::{Command, exit},
 };
 
 use crate::{
     add::{
-        self, TreeEntry,
+        self,
         index::{self, parse_index},
     },
     branch,
@@ -352,7 +352,7 @@ pub fn target_walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8;
 /// Params:
 /// root_tree: the root tree hash as &str
 /// content: mutable reference to all the content inside the root tree.
-pub fn walk_root_tree_content(root_tree: &str, content: &mut Vec<TreeEntry>) {
+pub fn walk_root_tree_content(root_tree: &str, current_path: &PathBuf, content: &mut Vec<(PathBuf, [u8; 20])>) {
     let root_tree_path = split_hash(root_tree);
     let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
     let mut file_buff: Vec<u8> = Vec::new();
@@ -361,12 +361,13 @@ pub fn walk_root_tree_content(root_tree: &str, content: &mut Vec<TreeEntry>) {
         .expect("Failed to read root tree content to buffer");
     let parse_root_tree =
         parser::parse_tree_entries_obj(file_buff).expect("Failed to parse root tree entries");
+    let mut new_path = current_path.clone();
     for each in parse_root_tree {
+        new_path.push(str::from_utf8(&each.name).unwrap());
         if each.mode == 16384 {
-            content.push(each.clone());
-            walk_root_tree_content(&hex::encode(&each.hash), content);
+            walk_root_tree_content(&hex::encode(&each.hash), &new_path, content);
         }
-        content.push(each.clone());
+        content.push((new_path.clone(), each.hash));
     }
 }
 
@@ -440,4 +441,3 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
         exit(1)
     }
 }
-
