@@ -7,7 +7,7 @@ use std::{
     process::{Command, exit},
 };
 
-use crate::{add::{self}, object::blob::calculate_file_hash_and_blob};
+use crate::object::blob::calculate_file_hash_and_blob;
 use crate::object::index::parse_index;
 use crate::{
     branch,
