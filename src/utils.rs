@@ -7,10 +7,10 @@ use std::{
     process::{Command, exit},
 };
 
+use crate::refs::parse_current_branch;
 use crate::object::blob::calculate_file_hash_and_blob;
 use crate::object::index::parse_index;
 use crate::{
-    branch,
     commit::parse_commit_by_hash,
     object::index,
     parser::{self},
@@ -415,7 +415,7 @@ pub fn check_modified_file(files_path: &str) -> FileStatusEntry {
 // Check if a file is staged or just modified by comparing hash from last commit with the one from
 // index
 fn check_file_staged(file_path: &str) -> FileStatusEntry {
-    let last_commit = branch::parse_current_branch();
+    let last_commit = parse_current_branch();
     let parse_commit = parse_commit_by_hash(&last_commit);
     let mut file_hash: [u8; 20] = [0u8; 20];
     // Get the hash of the file from last commit to check if there's change on disk

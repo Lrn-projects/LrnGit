@@ -8,7 +8,7 @@ use std::{
 use lrncore::logs::error_log;
 
 use crate::object::index;
-use crate::{branch, commit, status};
+use crate::{commit, status, refs::parse_current_branch};
 
 pub fn switch_command() {
     let args: Vec<String> = env::args().collect();
@@ -71,7 +71,7 @@ fn switch_ref(branch_name: &str) {
 /// Return an error if there's changes not commited (if the root trees are different) and print the
 /// modified files not commited (by getting the sorted vector from status)
 fn update_workdir() {
-    let last_commit = branch::parse_current_branch();
+    let last_commit = parse_current_branch();
     let _parse_commit = commit::parse_commit_by_hash(&last_commit);
     // let root_tree = parse_commit.tree;
 }

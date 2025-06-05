@@ -7,7 +7,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{branch, commit, utils::walk_root_tree_content};
+use crate::{commit, utils::walk_root_tree_content, refs::parse_current_branch};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IndexHeader {
@@ -149,7 +149,7 @@ pub fn remove_index_entry(entry_path: &str) {
 
 /// Update the index file depending on the new ref head
 pub fn recreate_index() {
-    let last_commit = branch::parse_current_branch();
+    let last_commit = parse_current_branch();
     let parse_commit = commit::parse_commit_by_hash(&last_commit);
     let root_tree = hex::encode(&parse_commit.tree);
     let mut root_tree_content: Vec<(PathBuf, [u8; 20])> = Vec::new();

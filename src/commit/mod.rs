@@ -12,10 +12,11 @@ use chrono::{Local, Offset};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    branch, config,
+    config,
     object::index,
     object::tree::batch_tree_add,
     utils::{self},
+    refs::{parse_current_branch, init_refs}
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -143,7 +144,7 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     };
     let commiter_bytes: Vec<u8> =
         bincode::serialize(&commiter).expect("Failed to serialize CommitUser struct");
-    let parent_commit = branch::parse_current_branch();
+    let parent_commit = parse_current_branch();
     let commit_content_bytes: Vec<u8> = if parent_commit.is_empty() {
         let init_commit_content: InitCommitContent = InitCommitContent {
             tree: root_tree_hash,
@@ -195,7 +196,7 @@ fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     }
     let commit_hash_string: String = split_hash_result_hex.iter().collect();
     let commit_hash_bytes = commit_hash_string.as_bytes();
-    branch::init_refs(commit_hash_bytes);
+    init_refs(commit_hash_bytes);
 }
 
 #[allow(dead_code)]

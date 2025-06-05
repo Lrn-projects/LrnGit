@@ -1,9 +1,9 @@
 use std::{env, io::Read, process::exit};
 
 use crate::{
-    branch,
     commit::{self, CommitObject, CommitUser, InitCommitContent},
     utils,
+    refs::parse_current_branch
 };
 
 pub fn log_command() {
@@ -25,7 +25,7 @@ pub fn log_command() {
 
 /// log all commits
 fn log_commits() {
-    let last_commit = branch::parse_current_branch();
+    let last_commit = parse_current_branch();
     let last_commit_buf = last_commit.as_bytes().to_vec();
     let commit_vec: Vec<CommitObject> = Vec::new();
     let mut commits_vec: (Vec<CommitObject>, InitCommitContent) = (

@@ -8,7 +8,7 @@ use std::{
     process::Command,
 };
 
-use crate::{branch, object::index};
+use crate::{object::index, refs::init_head};
 
 pub fn init_local_repo() {
     // create local repository directory
@@ -45,6 +45,6 @@ pub fn init_local_repo() {
     if !wait_mkdir.success() {
         panic!("Failed to execute mkdir command");
     }
-    branch::init_head();
+    init_head();
     index::init_index();
 }
