@@ -1,0 +1,9 @@
+[alias]     # command aliases
+b = "build"
+w = "clippy -- -D warnings"
+c = "check"
+t = "test"
+r = "run"
+rr = "run --release"
+recursive_example = "rr --example recursions"
+space_example = ["run", "--release", "--", "\"command list\""]
