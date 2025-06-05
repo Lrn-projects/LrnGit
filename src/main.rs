@@ -2,7 +2,7 @@ mod add;
 pub mod branch;
 mod commit;
 mod config;
-pub mod fs;
+pub mod object;
 mod init;
 mod log;
 pub mod macros;

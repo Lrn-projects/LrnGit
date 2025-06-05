@@ -12,10 +12,9 @@ use chrono::{Local, Offset};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    add::{self},
     branch, config,
-    fs::index,
-    fs::tree::batch_tree_add,
+    object::index,
+    object::tree::batch_tree_add,
     utils::{self},
 };
 

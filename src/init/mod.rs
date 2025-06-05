@@ -8,7 +8,7 @@ use std::{
     process::Command,
 };
 
-use crate::{branch, fs::index};
+use crate::{branch, object::index};
 
 pub fn init_local_repo() {
     // create local repository directory

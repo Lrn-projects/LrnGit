@@ -1,18 +1,17 @@
-use helpers::{RWO, calculate_file_hash_and_blob};
+use helpers::calculate_file_hash_and_blob;
 /*
 Module handling all the add command, creating new blob objects or tree and saving them
 in local repository
 */
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::Write;
 use std::os::unix::fs::MetadataExt;
 
 use crate::utils;
+use crate::object::tree::RWO;
 
 pub mod helpers;
-use crate::fs::{index, tree};
+use crate::object::index;
 
 pub struct FileHashBlob {
     pub blob: Vec<u8>,

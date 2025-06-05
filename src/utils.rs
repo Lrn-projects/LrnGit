@@ -1,6 +1,5 @@
 use std::{
     env,
-    error::Error,
     fs::{self, File},
     io::{Read, Write},
     os::unix::fs::MetadataExt,
@@ -9,11 +8,11 @@ use std::{
 };
 
 use crate::add::{self};
-use crate::fs::index::parse_index;
+use crate::object::index::parse_index;
 use crate::{
     branch,
     commit::parse_commit_by_hash,
-    fs::index,
+    object::index,
     parser::{self},
     status::{FileStatus, FileStatusEntry},
 };

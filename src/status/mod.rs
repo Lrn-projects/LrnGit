@@ -8,6 +8,10 @@ use std::{
 mod helper;
 use helper::sort_file_status_vec;
 
+use crate::{object::index::IndexEntry, utils, vec_of_path};
+
+use crate::object::index;
+
 // Structure to sort file status
 pub struct FileStatusSort {
     pub staged: Vec<FileStatusEntry>,
@@ -35,10 +39,6 @@ pub struct FileStatusEntry {
     pub file: String,
     pub status: FileStatus,
 }
-
-use crate::{fs::index::IndexEntry, utils, vec_of_path};
-
-use crate::fs::index;
 
 pub fn status_command() {
     let args: Vec<String> = env::args().collect();

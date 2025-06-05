@@ -7,7 +7,7 @@ use std::{
 
 use lrncore::logs::error_log;
 
-use crate::fs::index;
+use crate::object::index;
 use crate::{branch, commit, status};
 
 pub fn switch_command() {
