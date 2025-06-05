@@ -1,10 +1,5 @@
 use std::{
-    env,
-    fs::{self, File},
-    io::{Read, Write},
-    os::unix::fs::MetadataExt,
-    path::{Path, PathBuf},
-    process::{Command, exit},
+    env, error::Error, fs::{self, File}, io::{Read, Write}, os::unix::fs::MetadataExt, path::{Path, PathBuf}, process::{exit, Command}
 };
 
 use crate::{
@@ -447,4 +442,8 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
         error_log("Error checking file status");
         exit(1)
     }
+}
+
+pub fn delete_path(path: &PathBuf) {
+    fs::remove_dir_all(path).expect("Failed to remove path from disk"); 
 }
