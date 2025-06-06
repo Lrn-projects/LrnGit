@@ -7,7 +7,9 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{object::commit, utils::walk_root_tree_content, refs::parse_current_branch};
+use crate::{object::commit, refs::parse_current_branch};
+
+use super::utils::walk_root_tree_content;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IndexHeader {

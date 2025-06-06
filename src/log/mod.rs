@@ -1,9 +1,7 @@
 use std::{env, io::Read, process::exit};
 
 use crate::{
-    object::commit::{self, CommitObject, CommitUser, InitCommitContent},
-    utils,
-    refs::parse_current_branch
+    object::{commit::{self, CommitObject, CommitUser, InitCommitContent}, utils::get_file_by_hash}, refs::parse_current_branch, utils
 };
 
 pub fn log_command() {
@@ -78,7 +76,7 @@ fn unwind_commits(
     commit_hash: Vec<u8>,
     mut commits: (Vec<CommitObject>, InitCommitContent),
 ) -> (Vec<CommitObject>, InitCommitContent) {
-    let mut commit_object = utils::get_file_by_hash(
+    let mut commit_object = get_file_by_hash(
         str::from_utf8(&commit_hash).expect("Failed to convert buffer to str"),
     );
     let mut content_buf: Vec<u8> = Vec::new();

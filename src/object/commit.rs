@@ -8,9 +8,11 @@ use chrono::{Local, Offset};
 use serde::{Deserialize, Serialize};
 
 use crate::fs::new_file_dir;
-use crate::{config, utils};
+use crate::config;
 use crate::object::utils::{git_object_header, compress_file};
 use crate::refs::{init_refs, parse_current_branch};
+
+use super::utils::{get_file_by_hash, hash_sha1, split_object_header};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Commit {
@@ -101,7 +103,7 @@ pub fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     let commit_bytes_compressed = compress_file(commit_bytes.clone());
     // hash tree content with SHA-1
     let split_hash_result_hex: Vec<char>;
-    (_, split_hash_result_hex) = utils::hash_sha1(&commit_bytes_compressed);
+    (_, split_hash_result_hex) = hash_sha1(&commit_bytes_compressed);
 
     // Create folder and file in local repository
     let mut file: File;
@@ -130,7 +132,7 @@ pub fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
 /// Parse the commit object from is hash and return a readable commit object
 #[allow(dead_code)]
 pub fn parse_commit_by_hash(hash: &str) -> CommitContent {
-    let mut commit_object = utils::get_file_by_hash(hash);
+    let mut commit_object = get_file_by_hash(hash);
     let mut content_buf: Vec<u8> = Vec::new();
     commit_object
         .read_to_end(&mut content_buf)
@@ -152,7 +154,7 @@ pub fn parse_commit_by_hash(hash: &str) -> CommitContent {
 
 /// Parse commit from a buffer
 pub fn parse_commit(buf: Vec<u8>) -> Result<CommitContent, Box<dyn Error>> {
-    let content = utils::split_object_header(buf);
+    let content = split_object_header(buf);
     let commit: CommitContent = match bincode::deserialize(&content[1]) {
         Ok(c) => c,
         Err(e) => {
@@ -164,7 +166,7 @@ pub fn parse_commit(buf: Vec<u8>) -> Result<CommitContent, Box<dyn Error>> {
 
 /// Parse the init commit from buffer
 pub fn parse_init_commit(buf: Vec<u8>) -> Result<InitCommitContent, Box<dyn Error>> {
-    let content = utils::split_object_header(buf);
+    let content = split_object_header(buf);
     let init_commit: InitCommitContent =
         bincode::deserialize(&content[1]).expect("Failed to deserialize init commit");
     Ok(init_commit)

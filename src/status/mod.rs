@@ -8,7 +8,7 @@ use std::{
 mod helper;
 use helper::sort_file_status_vec;
 
-use crate::{object::index::IndexEntry, utils, vec_of_path};
+use crate::{object::{index::IndexEntry, utils::check_modified_file}, vec_of_path};
 
 use crate::object::index;
 
@@ -150,7 +150,7 @@ fn check_file_status(
             let files_path_concat = workdir_owned.to_owned() + "/" + entry_path_str;
             if files_path_concat == *files[i].to_str().unwrap() {
                 found_index_entries_vec.push(entries.clone());
-                let file_status: FileStatusEntry = utils::check_modified_file(entry_path_str);
+                let file_status: FileStatusEntry = check_modified_file(entry_path_str);
                 files_status_vec.push(file_status);
                 files.remove(i);
             } else {

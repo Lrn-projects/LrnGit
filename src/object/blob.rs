@@ -1,7 +1,7 @@
 use blob::{Blob, Standard};
 
-use super::index;
-use crate::{fs::new_file_dir, object::tree::RWO, utils};
+use super::{index, utils::hash_sha1};
+use crate::{fs::new_file_dir, object::tree::RWO};
 use std::fs;
 use std::fs::File;
 use std::os::unix::fs::MetadataExt;
@@ -83,7 +83,7 @@ pub fn calculate_file_hash_and_blob(file_path: &str) -> Result<FileHashBlob, std
     // hash file content with SHA-1
     let new_hash: [u8; 20];
     let split_hash_result_hex: Vec<char>;
-    (new_hash, split_hash_result_hex) = utils::hash_sha1(&blob_object_concat);
+    (new_hash, split_hash_result_hex) = hash_sha1(&blob_object_concat);
     Ok(FileHashBlob {
         blob: blob_object_concat,
         hash: new_hash,
