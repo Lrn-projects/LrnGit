@@ -126,7 +126,7 @@ fn main() {
         Commands::Commit => commit::commit_command(),
         Commands::Branch => branch::branch_command(),
         Commands::Switch => switch::switch_command(),
-        Commands::CatFile { arg } => utils::read_blob_file(&arg),
+        Commands::CatFile { arg } => object::utils::read_blob_file(&arg),
         Commands::LsFile => object::index::ls_file(),
         Commands::Status => status::status_command(),
         Commands::Log => log::log_command(),

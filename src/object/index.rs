@@ -151,13 +151,13 @@ pub fn remove_index_entry(entry_path: &str) {
 pub fn recreate_index() {
     let last_commit = parse_current_branch();
     let parse_commit = commit::parse_commit_by_hash(&last_commit);
-    let root_tree = hex::encode(&parse_commit.tree);
+    let root_tree = hex::encode(parse_commit.tree);
     let mut root_tree_content: Vec<(PathBuf, [u8; 20])> = Vec::new();
     walk_root_tree_content(&root_tree, &mut PathBuf::new(), &mut root_tree_content);
     root_tree_content.sort();
     root_tree_content.dedup();
     for each in root_tree_content {
-        println!("name: {:?}\thash: {:?}", &each.0, hex::encode(&each.1));
+        println!("name: {:?}\thash: {:?}", &each.0, hex::encode(each.1));
     }
 }
 

@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs::{self, File}, io::Write, os::unix::fs::PermissionsExt};
 
-use crate::utils;
+use crate::{fs::new_file_dir, parser, utils};
 use serde::{Deserialize, Serialize};
 use crate::object::utils::{git_object_header, compress_file};
 
@@ -59,13 +59,13 @@ pub fn define_tree_mode(path: &str) -> u32 {
     if metadata.file_type().is_symlink() {
         SYM // Symlink
     } else if metadata.file_type().is_dir() {
-        return DIR; // Tree (directory)
+        DIR// Tree (directory)
     } else {
         let perm = metadata.permissions().mode();
         if perm & 0o111 != 0 {
-            return EXE; // executable
+            EXE// executable
         } else {
-            return RWO; // RW
+            RWO// RW
         }
     }
 }
@@ -117,7 +117,7 @@ fn add_tree(entries: Vec<(String, u32, [u8; 20])>) -> [u8; 20] {
     let (new_hash, split_hash_result_hex) = utils::hash_sha1(&compressed_bytes_vec);
     // File creation
     let mut file: File;
-    let file_result = utils::new_file_dir(&split_hash_result_hex);
+    let file_result = new_file_dir(&split_hash_result_hex);
     match file_result {
         Ok(f) => file = f,
         Err(e) => {
@@ -195,3 +195,15 @@ fn sort_hashmap_entry_and_create_tree(
     let hash = add_tree(tree_entry_vec);
     (entry.0.0, hash)
 }
+
+/// Display the content of a tree file
+pub fn print_tree_content(buff: &[u8]) {
+    let parse_tree =
+        parser::parse_tree_entries_obj(buff.to_vec()).expect("Failed to parse tree object");
+    for each in parse_tree {
+        println!("{:?}", str::from_utf8(&each.name).unwrap());
+        println!("{:?}", hex::encode(each.hash));
+    }
+}
+
+

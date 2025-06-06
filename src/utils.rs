@@ -13,7 +13,6 @@ use crate::object::index::parse_index;
 use crate::{
     object::commit::parse_commit_by_hash,
     object::index,
-    object::utils::add_folder,
     parser::{self},
     status::{FileStatus, FileStatusEntry},
 };
@@ -23,70 +22,6 @@ use sha1::{Digest, Sha1};
 
 pub fn change_wkdir(dir: &str) {
     env::set_current_dir(dir).expect("Failed to change directory");
-}
-/// The function `read_blob_file` reads a compressed file, decompresses it, and prints its contents as a
-/// string.
-pub fn read_blob_file(hash: &str) {
-    let hash_char: Vec<char> = hash.chars().collect();
-    let folder: String = format!("{}{}", hash_char[0], hash_char[1]);
-    let object: String = hash_char[2..].iter().collect();
-    let object_path = format!(".lrngit/objects/{}/{}", &folder, &object);
-    let mut read_file = fs::File::open(object_path).expect("Failed to open file");
-    let mut buf = Vec::new();
-    read_file
-        .read_to_end(&mut buf)
-        .expect("Failed to read file");
-    let mut d = flate2::read::ZlibDecoder::new(buf.as_slice());
-    let mut buffer = Vec::new();
-    d.read_to_end(&mut buffer).unwrap();
-    // let header = split_object_header(buffer);
-    // let header_string = String::from_utf8_lossy(&header[0]);
-    // let header_split: Vec<&str> = header_string.split(" ").collect();
-    // let magic = header_split[0];
-    print_tree_content(&buf);
-    // match magic {
-    // "tree" => print_tree_content(&buf),
-    // _ => (),
-    // }
-    //TODO parse buffer to tree or blob struct to display
-}
-
-fn print_tree_content(buff: &[u8]) {
-    let parse_tree =
-        parser::parse_tree_entries_obj(buff.to_vec()).expect("Failed to parse tree object");
-    for each in parse_tree {
-        println!("{:?}", str::from_utf8(&each.name).unwrap());
-        println!("{:?}", hex::encode(each.hash));
-    }
-}
-
-/**
-The function `new_file_dir` creates a new file in a specified directory based on input characters.
-
-Arguments:
-
-* `hash_vec`: The `hash_vec` parameter is a reference to a vector of characters. The function
-  new_file_dir` takes this vector as input and performs the following operations:
-
-Returns:
-
-The function `new_file_dir` is returning a `Result` enum with the success variant containing a
-`File` if the file creation is successful, and the error variant containing a `std::io::Error` if
-there is an error during the file creation process.
-*/
-pub fn new_file_dir(hash_vec: &[char]) -> Result<File, std::io::Error> {
-    let new_folder_name = format!("{}{}", hash_vec[0], hash_vec[1]);
-    add_folder(&new_folder_name);
-    let new_file_name = hash_vec[2..].iter().collect::<String>().to_string();
-    let new_tree_path = format!(".lrngit/objects/{new_folder_name}/{new_file_name}");
-    let file: File = match File::create(&new_tree_path) {
-        Ok(f) => f,
-        Err(e) => {
-            lrncore::logs::error_log(&format!("Failed to create new tree file: {e}"));
-            return Err(e);
-        }
-    };
-    Ok(file)
 }
 
 // The function `hash_sha1` calculates the SHA-1 hash of a given vector of bytes and returns the hash
@@ -224,7 +159,7 @@ pub fn walk_root_tree_content(
     for each in parse_root_tree {
         new_path.push(str::from_utf8(&each.name).unwrap());
         if each.mode == 16384 {
-            walk_root_tree_content(&hex::encode(&each.hash), &mut new_path, content);
+            walk_root_tree_content(&hex::encode(each.hash), &mut new_path, content);
         } else {
             current_path.pop();
             content.push((new_path.clone(), each.hash));

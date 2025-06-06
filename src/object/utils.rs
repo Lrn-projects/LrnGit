@@ -1,8 +1,10 @@
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
-use std::{io::Write, path::Path, process::Command};
+use std::{fs, io::{Read, Write}, path::Path, process::Command};
 
 use serde::{Deserialize, Serialize};
+
+use super::tree::print_tree_content;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ObjectHeader {
@@ -10,7 +12,7 @@ pub struct ObjectHeader {
     pub size: usize,
 }
 
-// create a new folder in objects
+/// Create a new folder in objects
 pub fn add_folder(dir: &str) {
     if dir.is_empty() {
         return;
@@ -101,3 +103,31 @@ pub fn compress_file(vec: Vec<u8>) -> Vec<u8> {
     };
     compressed_bytes_vec
 }
+
+/// The function `read_blob_file` reads a compressed file, decompresses it, and prints its contents as a
+/// string.
+pub fn read_blob_file(hash: &str) {
+    let hash_char: Vec<char> = hash.chars().collect();
+    let folder: String = format!("{}{}", hash_char[0], hash_char[1]);
+    let object: String = hash_char[2..].iter().collect();
+    let object_path = format!(".lrngit/objects/{}/{}", &folder, &object);
+    let mut read_file = fs::File::open(object_path).expect("Failed to open file");
+    let mut buf = Vec::new();
+    read_file
+        .read_to_end(&mut buf)
+        .expect("Failed to read file");
+    let mut d = flate2::read::ZlibDecoder::new(buf.as_slice());
+    let mut buffer = Vec::new();
+    d.read_to_end(&mut buffer).unwrap();
+    // let header = split_object_header(buffer);
+    // let header_string = String::from_utf8_lossy(&header[0]);
+    // let header_split: Vec<&str> = header_string.split(" ").collect();
+    // let magic = header_split[0];
+    print_tree_content(&buf);
+    // match magic {
+    // "tree" => print_tree_content(&buf),
+    // _ => (),
+    // }
+    //TODO parse buffer to tree or blob struct to display
+}
+

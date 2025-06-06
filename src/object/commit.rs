@@ -7,6 +7,7 @@ use std::time::SystemTime;
 use chrono::{Local, Offset};
 use serde::{Deserialize, Serialize};
 
+use crate::fs::new_file_dir;
 use crate::{config, utils};
 use crate::object::utils::{git_object_header, compress_file};
 use crate::refs::{init_refs, parse_current_branch};
@@ -104,7 +105,7 @@ pub fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
 
     // Create folder and file in local repository
     let mut file: File;
-    let file_result = utils::new_file_dir(&split_hash_result_hex);
+    let file_result = new_file_dir(&split_hash_result_hex);
     match file_result {
         Ok(f) => file = f,
         Err(e) => {

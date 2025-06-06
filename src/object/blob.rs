@@ -1,7 +1,7 @@
 use blob::{Blob, Standard};
 
 use super::index;
-use crate::{object::tree::RWO, utils};
+use crate::{fs::new_file_dir, object::tree::RWO, utils};
 use std::fs;
 use std::fs::File;
 use std::os::unix::fs::MetadataExt;
@@ -40,7 +40,7 @@ pub fn add_blob(arg: &str) -> [u8; 20] {
     index::remove_index_entry(arg);
     // creation of file to local repo
     let mut file: File;
-    let file_result = utils::new_file_dir(&blob_hash.hash_split);
+    let file_result = new_file_dir(&blob_hash.hash_split);
     match file_result {
         Ok(f) => file = f,
         Err(e) => {
