@@ -1,6 +1,6 @@
 use std::{fs::{self, File}, path::{Path, PathBuf}, process::Command};
 
-use crate::{object::commit::parse_commit_by_hash, refs::parse_current_branch};
+use crate::{object::{commit::parse_commit_by_hash, index::TempIndex}, refs::parse_current_branch};
 
 pub fn delete_path(path: &PathBuf) {
     fs::remove_dir_all(path).expect("Failed to remove path from disk");
@@ -59,8 +59,6 @@ pub fn add_folder(dir: &str) {
 ///
 /// Return an error if there's changes not committed (if the root trees are different) and print the
 /// modified files not committed (by getting the sorted vector from status)
-pub fn update_workdir() {
-    let last_commit = parse_current_branch();
-    let _parse_commit = parse_commit_by_hash(&last_commit);
-    // let root_tree = parse_commit.tree;
+pub fn update_workdir(temp_index: TempIndex) {
+
 }

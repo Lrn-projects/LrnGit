@@ -8,7 +8,7 @@ use std::{
 use lrncore::logs::error_log;
 
 use crate::object::index::{self, parse_index};
-use crate::{object::commit::parse_commit_by_hash, status, refs::parse_current_branch};
+use crate::status;
 
 pub fn switch_command() {
     let args: Vec<String> = env::args().collect();
@@ -51,9 +51,6 @@ fn switch_ref(branch_name: &str) {
         error_log("Branch does not exist");
         exit(1)
     }
-    // ==========================================
-    // FOR TESTING PURPOSE WE DON'T CHANGE BRANCH 
-    // ==========================================
     let mut head = OpenOptions::new()
         .write(true)
         .create(true)
@@ -64,6 +61,7 @@ fn switch_ref(branch_name: &str) {
     let update_head = format!("ref: refs/heads/{branch_name}");
     head.write_all(update_head.as_bytes())
         .expect("Failed to write buffer in HEAD");
-    index::recreate_index(current_index);
+    let temp_index = index::build_temp_index(current_index);
+    
 }
 

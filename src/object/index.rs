@@ -7,7 +7,10 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{fs::update_workdir, object::{commit, utils::walk_root_tree_content}, refs::parse_current_branch};
+use crate::{
+    object::{commit, utils::walk_root_tree_content},
+    refs::parse_current_branch,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IndexHeader {
@@ -30,6 +33,15 @@ pub struct IndexEntry {
     pub hash: [u8; 20],
     pub flag: u16,
     pub path: Vec<u8>,
+}
+
+/// Structure used to store the temporary index and the entries sorted in different vectors
+/// Use when recreating a temporary index when switching branch
+pub struct TempIndex {
+    temp_index: Vec<(PathBuf, [u8;20])>,
+    unchanged_files: Vec<IndexEntry>,
+    changed_files: Vec<IndexEntry>,
+    to_delete_files: Vec<PathBuf>,
 }
 
 pub fn init_index() {
@@ -147,8 +159,11 @@ pub fn remove_index_entry(entry_path: &str) {
     }
 }
 
-/// Update the index file depending on the new ref head
-pub fn recreate_index(current_index: IndexObject) {
+/// Recreate an index base on the specified branch.
+/// Parse the last commit and recreate a temporary index and compare it with the current index.
+///
+///
+pub fn build_temp_index(current_index: IndexObject) -> TempIndex {
     let last_commit = parse_current_branch();
     let parse_commit = commit::parse_commit_by_hash(&last_commit);
     let root_tree = hex::encode(parse_commit.tree);
@@ -157,8 +172,11 @@ pub fn recreate_index(current_index: IndexObject) {
     temp_index.sort();
     temp_index.dedup();
 
+    // Entries that doesn't change while switching branch
     let mut same_entries: Vec<IndexEntry> = Vec::new();
+    // Entries that has been modified between branches
     let mut modified_entries: Vec<IndexEntry> = Vec::new();
+    // Entries that doesn't exist on the branch switch to
     let mut deleted_entries: Vec<PathBuf> = Vec::new();
     // Compare current index entries with temp index entries
     // find occurrence with different hash -> store in modified_entries vector
@@ -170,23 +188,15 @@ pub fn recreate_index(current_index: IndexObject) {
             .find(|x| x.0 == PathBuf::from(str::from_utf8(&each.path).unwrap()))
         {
             if entry.1 != each.hash {
-                println!("to modify: {:?}", str::from_utf8(&each.path).unwrap());
                 modified_entries.push(each.clone());
             } else {
                 same_entries.push(each.clone());
             }
         } else {
-            println!("to delete: {:?}", str::from_utf8(&each.path).unwrap());
             deleted_entries.push(PathBuf::from(str::from_utf8(&each.path).unwrap()));
         }
     }
-    println!(
-        "same entries: {:?}\t modified: {:?}\t deleted: {:?}",
-        same_entries.len(),
-        modified_entries.len(),
-        deleted_entries.len()
-    );
-    // update_workdir();
+    TempIndex { temp_index, unchanged_files: same_entries, changed_files: modified_entries, to_delete_files: deleted_entries }
 }
 
 /// Display the content of the index file
