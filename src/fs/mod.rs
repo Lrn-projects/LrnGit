@@ -52,4 +52,3 @@ pub fn add_folder(dir: &str) {
     }
 }
 
-

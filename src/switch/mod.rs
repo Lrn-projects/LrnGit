@@ -7,7 +7,7 @@ use std::{
 
 use lrncore::logs::error_log;
 
-use crate::object::index;
+use crate::object::index::{self, parse_index};
 use crate::{object::commit::parse_commit_by_hash, status, refs::parse_current_branch};
 
 pub fn switch_command() {
@@ -51,27 +51,19 @@ fn switch_ref(branch_name: &str) {
         error_log("Branch does not exist");
         exit(1)
     }
+    // ==========================================
+    // FOR TESTING PURPOSE WE DON'T CHANGE BRANCH 
+    // ==========================================
     let mut head = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
         .open(".lrngit/HEAD")
         .expect("Unable to open file");
-
+    let current_index = parse_index();
     let update_head = format!("ref: refs/heads/{branch_name}");
     head.write_all(update_head.as_bytes())
         .expect("Failed to write buffer in HEAD");
-    index::recreate_index();
-    update_workdir();
+    index::recreate_index(current_index);
 }
 
-/// Update the working directory depending on the ref head
-/// Check the root tree from the index and compare with the root tree from the workdir
-///
-/// Return an error if there's changes not commited (if the root trees are different) and print the
-/// modified files not commited (by getting the sorted vector from status)
-fn update_workdir() {
-    let last_commit = parse_current_branch();
-    let _parse_commit = parse_commit_by_hash(&last_commit);
-    // let root_tree = parse_commit.tree;
-}

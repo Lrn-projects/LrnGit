@@ -7,9 +7,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{object::commit, refs::parse_current_branch};
-
-use super::utils::walk_root_tree_content;
+use crate::{fs::update_workdir, object::{commit, utils::walk_root_tree_content}, refs::parse_current_branch};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IndexHeader {
@@ -129,8 +127,8 @@ pub fn parse_index() -> IndexObject {
     index
 }
 
-// Remove index entry by entry path
-// used when adding a tracked file to avoid entry duplication
+/// Remove index entry by entry path
+/// used when adding a tracked file to avoid entry duplication
 pub fn remove_index_entry(entry_path: &str) {
     let mut entries = parse_index().entries;
     if let Some(pos) = entries
@@ -150,20 +148,48 @@ pub fn remove_index_entry(entry_path: &str) {
 }
 
 /// Update the index file depending on the new ref head
-pub fn recreate_index() {
+pub fn recreate_index(current_index: IndexObject) {
     let last_commit = parse_current_branch();
     let parse_commit = commit::parse_commit_by_hash(&last_commit);
     let root_tree = hex::encode(parse_commit.tree);
-    let mut root_tree_content: Vec<(PathBuf, [u8; 20])> = Vec::new();
-    walk_root_tree_content(&root_tree, &mut PathBuf::new(), &mut root_tree_content);
-    root_tree_content.sort();
-    root_tree_content.dedup();
-    for each in root_tree_content {
-        println!("name: {:?}\thash: {:?}", &each.0, hex::encode(each.1));
+    let mut temp_index: Vec<(PathBuf, [u8; 20])> = Vec::new();
+    walk_root_tree_content(&root_tree, &mut PathBuf::new(), &mut temp_index);
+    temp_index.sort();
+    temp_index.dedup();
+
+    let mut same_entries: Vec<IndexEntry> = Vec::new();
+    let mut modified_entries: Vec<IndexEntry> = Vec::new();
+    let mut deleted_entries: Vec<PathBuf> = Vec::new();
+    // Compare current index entries with temp index entries
+    // find occurrence with different hash -> store in modified_entries vector
+    // find occurrence with same hash -> store in same_entries vector
+    // don't find occurrence -> store path in deleted_entries vector
+    for each in current_index.entries {
+        if let Some(entry) = temp_index
+            .iter()
+            .find(|x| x.0 == PathBuf::from(str::from_utf8(&each.path).unwrap()))
+        {
+            if entry.1 != each.hash {
+                println!("to modify: {:?}", str::from_utf8(&each.path).unwrap());
+                modified_entries.push(each.clone());
+            } else {
+                same_entries.push(each.clone());
+            }
+        } else {
+            println!("to delete: {:?}", str::from_utf8(&each.path).unwrap());
+            deleted_entries.push(PathBuf::from(str::from_utf8(&each.path).unwrap()));
+        }
     }
+    println!(
+        "same entries: {:?}\t modified: {:?}\t deleted: {:?}",
+        same_entries.len(),
+        modified_entries.len(),
+        deleted_entries.len()
+    );
+    // update_workdir();
 }
 
-// Display the content of the index file
+/// Display the content of the index file
 pub fn ls_file() {
     let config = parse_index();
     for each in config.entries {
@@ -176,5 +202,3 @@ pub fn ls_file() {
         );
     }
 }
-
-
