@@ -1,5 +1,7 @@
 use std::{fs::{self, File}, path::{Path, PathBuf}, process::Command};
 
+use crate::{object::commit::parse_commit_by_hash, refs::parse_current_branch};
+
 pub fn delete_path(path: &PathBuf) {
     fs::remove_dir_all(path).expect("Failed to remove path from disk");
 }
@@ -31,7 +33,7 @@ pub fn new_file_dir(hash_vec: &[char]) -> Result<File, std::io::Error> {
     Ok(file)
 }
 
-// create a new folder in objects
+/// Create a new folder in objects
 pub fn add_folder(dir: &str) {
     if dir.is_empty() {
         return;
@@ -52,3 +54,13 @@ pub fn add_folder(dir: &str) {
     }
 }
 
+/// Update the working directory depending on the ref head
+/// Check the root tree from the index and compare with the root tree from the workdir
+///
+/// Return an error if there's changes not committed (if the root trees are different) and print the
+/// modified files not committed (by getting the sorted vector from status)
+pub fn update_workdir() {
+    let last_commit = parse_current_branch();
+    let _parse_commit = parse_commit_by_hash(&last_commit);
+    // let root_tree = parse_commit.tree;
+}
