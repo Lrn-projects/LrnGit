@@ -3,6 +3,9 @@ use std::{fs::{self, File}, path::{Path, PathBuf}, process::Command};
 use crate::object::index::TempIndex;
 
 pub fn delete_path(path: &PathBuf) {
+    if !fs::exists(path).unwrap() {
+        panic!("Error while removing path. Path does not exist.");
+    }
     fs::remove_dir_all(path).expect("Failed to remove path from disk");
 }
 
@@ -57,8 +60,7 @@ pub fn add_folder(dir: &str) {
 /// Update the working directory depending on the temporary index
 ///
 pub fn update_workdir(temp_index: TempIndex) {
-    println!("update wkd");
     for each in temp_index.to_delete_files {
-        println!("{:?}", each);
+        delete_path(&each);
     }
 }
