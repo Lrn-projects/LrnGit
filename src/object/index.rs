@@ -38,10 +38,10 @@ pub struct IndexEntry {
 /// Structure used to store the temporary index and the entries sorted in different vectors
 /// Use when recreating a temporary index when switching branch
 pub struct TempIndex {
-    temp_index: Vec<(PathBuf, [u8;20])>,
-    unchanged_files: Vec<IndexEntry>,
-    changed_files: Vec<IndexEntry>,
-    to_delete_files: Vec<PathBuf>,
+    pub temp_index: Vec<(PathBuf, [u8;20])>,
+    pub unchanged_files: Vec<IndexEntry>,
+    pub changed_files: Vec<IndexEntry>,
+    pub to_delete_files: Vec<PathBuf>,
 }
 
 pub fn init_index() {

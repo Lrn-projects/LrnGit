@@ -1,6 +1,6 @@
 use std::{fs::{self, File}, path::{Path, PathBuf}, process::Command};
 
-use crate::{object::{commit::parse_commit_by_hash, index::TempIndex}, refs::parse_current_branch};
+use crate::object::index::TempIndex;
 
 pub fn delete_path(path: &PathBuf) {
     fs::remove_dir_all(path).expect("Failed to remove path from disk");
@@ -54,11 +54,11 @@ pub fn add_folder(dir: &str) {
     }
 }
 
-/// Update the working directory depending on the ref head
-/// Check the root tree from the index and compare with the root tree from the workdir
+/// Update the working directory depending on the temporary index
 ///
-/// Return an error if there's changes not committed (if the root trees are different) and print the
-/// modified files not committed (by getting the sorted vector from status)
 pub fn update_workdir(temp_index: TempIndex) {
-
+    println!("update wkd");
+    for each in temp_index.to_delete_files {
+        println!("{:?}", each);
+    }
 }
