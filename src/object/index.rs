@@ -186,6 +186,8 @@ pub fn build_temp_index(current_index: IndexObject) -> TempIndex {
     // find occurrence with different hash -> store in modified_entries vector
     // find occurrence with same hash -> store in same_entries vector
     // don't find occurrence -> store path in deleted_entries vector
+    // TODO 
+    // find a way to fix and to catch when a file is not present in the temp index
     for each in current_index.entries {
         if let Some(entry) = temp_index
             .iter()
