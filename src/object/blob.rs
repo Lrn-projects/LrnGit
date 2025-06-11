@@ -1,12 +1,13 @@
 use blob::{Blob, Standard};
 
+use super::utils::split_object_header;
 use super::{index, utils::hash_sha1};
+use crate::object::utils::{compress_file, git_object_header};
 use crate::{fs::new_file_dir, object::tree::RWO};
 use std::fs;
 use std::fs::File;
+use std::io::{Read, Write};
 use std::os::unix::fs::MetadataExt;
-use std::io::Write;
-use crate::object::utils::{git_object_header, compress_file};
 
 pub struct FileHashBlob {
     pub blob: Vec<u8>,
@@ -89,4 +90,18 @@ pub fn calculate_file_hash_and_blob(file_path: &str) -> Result<FileHashBlob, std
         hash: new_hash,
         hash_split: split_hash_result_hex,
     })
+}
+
+/// Open a blob file and return it's content
+pub fn read_blob_content(path: &str) -> Vec<u8> {
+    let mut read_file = fs::File::open(path).expect("Failed to open file");
+    let mut buf = Vec::new();
+    read_file
+        .read_to_end(&mut buf)
+        .expect("Failed to read file");
+    let mut d = flate2::read::ZlibDecoder::new(buf.as_slice());
+    let mut buffer: Vec<u8> = Vec::new();
+    d.read_to_end(&mut buffer).unwrap();
+    let split_blob = split_object_header(buffer);
+    split_blob[1].to_owned()
 }

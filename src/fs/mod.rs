@@ -1,12 +1,15 @@
-use std::{fs::{self, File}, path::{Path, PathBuf}, process::Command};
+use std::{
+    fs::{self, File, OpenOptions}, io::Write, path::{Path, PathBuf}, process::Command
+};
 
-use crate::object::index::TempIndex;
+use crate::object::{blob, index::TempIndex, utils::get_path_by_hash};
 
+/// Remove file at the end of the path and try to remove directory if empty  
 pub fn delete_path(path: &PathBuf) {
     if !fs::exists(path).unwrap() {
         panic!("Error while removing path. Path does not exist.");
     }
-    fs::remove_dir_all(path).expect("Failed to remove path from disk");
+    fs::remove_file(path).expect("Failed to remove path from disk");
 }
 
 /// The function `new_file_dir` creates a new file in a specified directory based on input characters.
@@ -57,10 +60,27 @@ pub fn add_folder(dir: &str) {
     }
 }
 
+fn write_files(buff: &Vec<u8>, path: &str) {
+    let mut file = OpenOptions::new()
+        .read(false)
+        .write(true)
+        .create(true)
+        .open(path)
+        .expect("Failed to open/create file");
+    file.write_all(buff).expect("Failed to write in file");
+}
+
 /// Update the working directory depending on the temporary index
 ///
 pub fn update_workdir(temp_index: TempIndex) {
     for each in temp_index.to_delete_files {
         delete_path(&each);
+    }
+    for each in temp_index.changed_files {
+        let hash: &str = &hex::encode(each.hash);
+        let hash_char: Vec<char> = hash.chars().collect();
+        let hash_path = get_path_by_hash(&hash_char);
+        let blob_content = blob::read_blob_content(&hash_path);
+        write_files(&blob_content, str::from_utf8(&each.path).unwrap());
     }
 }
