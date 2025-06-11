@@ -1,6 +1,7 @@
 use std::{
-    fs::{File, OpenOptions},
+    fs::{self, File, OpenOptions},
     io::{BufReader, BufWriter, Read, Write},
+    os::unix::fs::MetadataExt,
     path::PathBuf,
     process::exit,
 };
@@ -11,6 +12,8 @@ use crate::{
     object::{commit, utils::walk_root_tree_content},
     refs::parse_current_branch,
 };
+
+use super::tree::RWO;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IndexHeader {
@@ -37,8 +40,9 @@ pub struct IndexEntry {
 
 /// Structure used to store the temporary index and the entries sorted in different vectors
 /// Use when recreating a temporary index when switching branch
+#[derive(Clone)]
 pub struct TempIndex {
-    pub temp_index: Vec<(PathBuf, [u8;20])>,
+    pub temp_index: Vec<(PathBuf, [u8; 20])>,
     pub unchanged_files: Vec<IndexEntry>,
     pub changed_files: Vec<IndexEntry>,
     pub to_delete_files: Vec<PathBuf>,
@@ -196,7 +200,72 @@ pub fn build_temp_index(current_index: IndexObject) -> TempIndex {
             deleted_entries.push(PathBuf::from(str::from_utf8(&each.path).unwrap()));
         }
     }
-    TempIndex { temp_index, unchanged_files: same_entries, changed_files: modified_entries, to_delete_files: deleted_entries }
+    TempIndex {
+        temp_index,
+        unchanged_files: same_entries,
+        changed_files: modified_entries,
+        to_delete_files: deleted_entries,
+    }
+}
+
+/// Rebuild index from temporary index contents
+/// Used when switching refs
+pub fn rebuild_index(index: Vec<(PathBuf, [u8; 20])>) {
+    let mut entry_vec: Vec<IndexEntry> = Vec::new();
+    // Create index entry for each in temporary index
+    for each in index {
+        let metadata = fs::metadata(&each.0).expect("Failed to get file metadata");
+        let mtime: u32 = metadata
+            .mtime()
+            .try_into()
+            .expect("Failed to get file mtime");
+        let file_size: u32 = metadata
+            .len()
+            .try_into()
+            .expect("Failed to get the len of file");
+        let mode: u32 = RWO;
+        let path: Vec<u8> = each
+            .0
+            .into_os_string()
+            .to_str()
+            .expect("Failed to cast pathbuf as os string")
+            .as_bytes()
+            .to_owned();
+        let entry: IndexEntry = IndexEntry {
+            mtime,
+            file_size,
+            mode,
+            hash: each.1,
+            flag: 0,
+            path,
+        };
+        entry_vec.push(entry);
+    }
+    // header
+    let magic_number = b"DIRC";
+    let header: IndexHeader = IndexHeader {
+        magic_number: *magic_number,
+        version: 1,
+        entry_count: entry_vec.len() as u8,
+    };
+    let mut header_bytes: Vec<u8> = Vec::new();
+    header_bytes.extend_from_slice(&header.magic_number);
+    header_bytes.push(header.version);
+    header_bytes.push(header.entry_count);
+    // index file
+    let index: IndexObject = IndexObject {
+        header,
+        entries: entry_vec,
+    };
+    let index_bytes: Vec<u8> =
+        bincode::serialize(&index).expect("Failed to serialize index struct into bytes");
+    // Write in index file
+    let mut file = OpenOptions::new()
+        .read(false)
+        .write(true).create(false)
+        .append(false)
+        .open(".lrngit/index").expect("Failed to open index file");
+   file.write_all(&index_bytes).expect("Failed to write in index file");
 }
 
 /// Display the content of the index file

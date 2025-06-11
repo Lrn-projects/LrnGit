@@ -7,7 +7,7 @@ use std::{
 
 use lrncore::logs::error_log;
 
-use crate::{fs::update_workdir, object::index::{self, parse_index}};
+use crate::{fs::update_workdir, object::index::{self, parse_index, rebuild_index}};
 use crate::status;
 
 pub fn switch_command() {
@@ -62,6 +62,9 @@ fn switch_ref(branch_name: &str) {
     head.write_all(update_head.as_bytes())
         .expect("Failed to write buffer in HEAD");
     let temp_index = index::build_temp_index(current_index);
-    update_workdir(temp_index);    
+    // Update the working directory on the disk
+    update_workdir(temp_index.clone());    
+    // Update the index file to match the HEAD
+    rebuild_index(temp_index.temp_index);
 }
 
