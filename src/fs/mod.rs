@@ -63,7 +63,7 @@ pub fn add_folder(dir: &str) {
     }
 }
 
-fn write_files(buff: &Vec<u8>, path: &str) {
+fn write_files(buff: &[u8], path: &str) {
     if !fs::exists(path).expect("Failed to check if the path exist") {
         File::create_new(path).expect("Failed to create the new file");
     }
@@ -71,6 +71,7 @@ fn write_files(buff: &Vec<u8>, path: &str) {
         .read(false)
         .write(true)
         .create(true)
+        .truncate(true)
         .open(path)
         .expect("Failed to open/create file");
     file.write_all(buff).expect("Failed to write in file");
