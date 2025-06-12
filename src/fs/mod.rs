@@ -83,7 +83,6 @@ pub fn update_workdir(temp_index: TempIndex) {
         delete_path(&each);
     }
     for each in temp_index.new_files {
-        println!("debug new file: {:?}", each.0);
         let hash: &str = &hex::encode(each.1);
         let hash_char: Vec<char> = hash.chars().collect();
         let hash_path = get_path_by_hash(&hash_char);

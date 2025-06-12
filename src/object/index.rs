@@ -200,16 +200,9 @@ pub fn build_temp_index(current_index: IndexObject) -> TempIndex {
         }
     }
     for each in &temp_index {
-        /*
-        If let None == if iter().find() return None -> there's no match so the path doesn't
-        exist
-        */
-        if let None = current_index
-            .entries
-            .iter()
-            .find(|x| PathBuf::from(str::from_utf8(&x.path).unwrap()) == each.0)
-        {
-            // File in temp_index is not in current_index, so it's new
+        if !current_index
+                    .entries
+                    .iter().any(|x| PathBuf::from(str::from_utf8(&x.path).unwrap()) == each.0) {
             new_entries.push(each.clone());
         }
     }
