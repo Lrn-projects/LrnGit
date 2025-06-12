@@ -1,6 +1,6 @@
-use std::{collections::HashMap, fs::{self, File}, io::Write, os::unix::fs::PermissionsExt};
+use std::{fs::{self, File}, io::Write, os::unix::fs::PermissionsExt};
 
-use crate::{fs::new_file_dir, parser};
+use crate::{fs::new_file_dir, parser, types::{BatchIndexEntriesMap, BatchIndexEntriesTuple, BatchIndexEntriesVec}};
 use serde::{Deserialize, Serialize};
 use crate::object::utils::{git_object_header, compress_file};
 
@@ -148,10 +148,10 @@ fn add_tree(entries: Vec<(String, u32, [u8; 20])>) -> [u8; 20] {
 /// * `hash`: The `hash` parameter represent the hash of the object contained in the new tree
 ///   object
 pub fn batch_tree_add(
-    entity_hashmap: HashMap<(String, usize), Vec<(String, u32, [u8; 20])>>,
+    entity_hashmap: BatchIndexEntriesMap,
     root_tree_ptr: &mut [u8; 20],
 ) {
-    let mut entity_vec: Vec<((String, usize), Vec<(String, u32, [u8; 20])>)> = entity_hashmap
+    let mut entity_vec: BatchIndexEntriesVec = entity_hashmap
         .iter()
         .map(|(k, v)| (k.clone(), v.clone()))
         .collect();
@@ -177,7 +177,7 @@ pub fn batch_tree_add(
 /// * `entry`: the hashmap with all entry inside
 /// * `tree_vec`: vector containing all tree that need to be created
 fn sort_hashmap_entry_and_create_tree(
-    entry: ((String, usize), Vec<(String, u32, [u8; 20])>),
+    entry: BatchIndexEntriesTuple,
     tree_vec: Vec<(String, u32, [u8; 20])>,
 ) -> (String, [u8; 20]) {
     let mut tree_entry_vec: Vec<(String, u32, [u8; 20])> = Vec::new();

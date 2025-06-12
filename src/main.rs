@@ -12,6 +12,7 @@ pub mod refs;
 mod status;
 mod switch;
 pub mod utils;
+pub mod types;
 
 use std::env;
 use std::process::exit;

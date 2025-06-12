@@ -5,9 +5,8 @@ use std::{
 };
 
 use crate::{
-    object::index,
-    object::commit::create_commit_object,
-    object::tree::batch_tree_add,
+    object::{commit::create_commit_object, index, tree::batch_tree_add},
+    types::BatchIndexEntriesMap,
 };
 
 pub fn commit_command() {
@@ -32,7 +31,7 @@ pub fn new_commit(commit_message: &str) {
     let mut root_tree: [u8; 20] = [0; 20];
     // HashMap to store all index entry with blob and tree for batch tree creation
     // Use strings to avoid dropping value and dangling ref
-    let mut index_entry_map: HashMap<(String, usize), Vec<(String, u32, [u8; 20])>> =
+    let mut index_entry_map: BatchIndexEntriesMap =
         HashMap::new();
     // Iterate over the index, each entry contain file path and blob hash
     for each in config.entries {
