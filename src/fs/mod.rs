@@ -1,5 +1,8 @@
 use std::{
-    fs::{self, File, OpenOptions}, io::Write, path::{Path, PathBuf}, process::Command
+    fs::{self, File, OpenOptions},
+    io::Write,
+    path::{Path, PathBuf},
+    process::Command,
 };
 
 use crate::object::{blob, index::TempIndex, utils::get_path_by_hash};
@@ -61,6 +64,9 @@ pub fn add_folder(dir: &str) {
 }
 
 fn write_files(buff: &Vec<u8>, path: &str) {
+    if !fs::exists(path).expect("Failed to check if the path exist") {
+        File::create_new(path).expect("Failed to create the new file");
+    }
     let mut file = OpenOptions::new()
         .read(false)
         .write(true)
@@ -75,6 +81,14 @@ fn write_files(buff: &Vec<u8>, path: &str) {
 pub fn update_workdir(temp_index: TempIndex) {
     for each in temp_index.to_delete_files {
         delete_path(&each);
+    }
+    for each in temp_index.new_files {
+        println!("debug new file: {:?}", each.0);
+        let hash: &str = &hex::encode(each.1);
+        let hash_char: Vec<char> = hash.chars().collect();
+        let hash_path = get_path_by_hash(&hash_char);
+        let blob_content = blob::read_blob_content(&hash_path);
+        write_files(&blob_content, each.0.to_str().unwrap());
     }
     for each in temp_index.changed_files {
         let hash: &str = &hex::encode(each.hash);

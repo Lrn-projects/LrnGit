@@ -43,7 +43,7 @@ pub struct IndexEntry {
 #[derive(Clone)]
 pub struct TempIndex {
     pub temp_index: Vec<(PathBuf, [u8; 20])>,
-    pub unchanged_files: Vec<IndexEntry>,
+    pub new_files: Vec<(PathBuf, [u8; 20])>,
     pub changed_files: Vec<IndexEntry>,
     pub to_delete_files: Vec<PathBuf>,
 }
@@ -176,8 +176,8 @@ pub fn build_temp_index(current_index: IndexObject) -> TempIndex {
     temp_index.sort();
     temp_index.dedup();
 
-    // Entries that doesn't change while switching branch
-    let mut same_entries: Vec<IndexEntry> = Vec::new();
+    // Entries that is new in the specified branch
+    let mut new_entries: Vec<(PathBuf, [u8; 20])> = Vec::new();
     // Entries that has been modified between branches
     let mut modified_entries: Vec<IndexEntry> = Vec::new();
     // Entries that doesn't exist on the branch switch to
@@ -186,25 +186,32 @@ pub fn build_temp_index(current_index: IndexObject) -> TempIndex {
     // find occurrence with different hash -> store in modified_entries vector
     // find occurrence with same hash -> store in same_entries vector
     // don't find occurrence -> store path in deleted_entries vector
-    // TODO 
-    // find a way to fix and to catch when a file is not present in the temp index
-    for each in current_index.entries {
+    // Loop to check if file has been modified or deleted
+    for each in &current_index.entries {
         if let Some(entry) = temp_index
             .iter()
             .find(|x| x.0 == PathBuf::from(str::from_utf8(&each.path).unwrap()))
         {
             if entry.1 != each.hash {
                 modified_entries.push(each.clone());
-            } else {
-                same_entries.push(each.clone());
             }
         } else {
             deleted_entries.push(PathBuf::from(str::from_utf8(&each.path).unwrap()));
         }
     }
+    for each in &temp_index {
+        if let None = current_index
+            .entries
+            .iter()
+            .find(|x| PathBuf::from(str::from_utf8(&x.path).unwrap()) == each.0)
+        {
+            // File in temp_index is not in current_index, so it's new
+            new_entries.push(each.clone());
+        }
+    }
     TempIndex {
         temp_index,
-        unchanged_files: same_entries,
+        new_files: new_entries,
         changed_files: modified_entries,
         to_delete_files: deleted_entries,
     }
@@ -264,10 +271,13 @@ pub fn rebuild_index(index: Vec<(PathBuf, [u8; 20])>) {
     // Write in index file
     let mut file = OpenOptions::new()
         .read(false)
-        .write(true).create(false)
+        .write(true)
+        .create(false)
         .append(false)
-        .open(".lrngit/index").expect("Failed to open index file");
-   file.write_all(&index_bytes).expect("Failed to write in index file");
+        .open(".lrngit/index")
+        .expect("Failed to open index file");
+    file.write_all(&index_bytes)
+        .expect("Failed to write in index file");
 }
 
 /// Display the content of the index file
