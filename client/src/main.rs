@@ -18,9 +18,7 @@ use std::env;
 use std::process::exit;
 
 // Current version of lrngit
-// if modified and then running update command it will replace
-// your current lrngit installation with the newer version
-const VERSION: &str = "0.1.0";
+const VERSION: &str = "0.9.0";
 
 pub fn lrngit_usage() -> &'static str {
     (r"
