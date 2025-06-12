@@ -200,6 +200,10 @@ pub fn build_temp_index(current_index: IndexObject) -> TempIndex {
         }
     }
     for each in &temp_index {
+        /*
+        If let None == if iter().find() return None -> there's no match so the path doesn't
+        exist
+        */
         if let None = current_index
             .entries
             .iter()
