@@ -13,6 +13,7 @@ mod status;
 mod switch;
 pub mod utils;
 pub mod types;
+mod push;
 
 use std::env;
 use std::process::exit;
@@ -32,6 +33,7 @@ Commands:
     init            Init a local repository
     add             Add file to local repository
     commit          Commit to the local repository
+    push            Push to remote repository
     branch          Create a new branch or list all branches
     switch          Switch branch to the given one
     cat-file        Cat content of a given hash
@@ -56,6 +58,7 @@ enum Commands {
     Init,
     Add { arg: String },
     Commit,
+    Push,
     Branch,
     Switch,
     CatFile { arg: String },
@@ -95,6 +98,7 @@ fn main() {
                 .to_string(),
         },
         Some("commit") => Commands::Commit,
+        Some("push") => Commands::Push,
         Some("branch") => Commands::Branch,
         Some("switch") => Commands::Switch,
         Some("cat-file") => Commands::CatFile {
@@ -123,6 +127,7 @@ fn main() {
         Commands::Init => init::init_local_repo(),
         Commands::Add { arg } => add::add_to_local_repo(arg),
         Commands::Commit => commit::commit_command(),
+        Commands::Push => push::push_command(),
         Commands::Branch => branch::branch_command(),
         Commands::Switch => switch::switch_command(),
         Commands::CatFile { arg } => object::utils::read_blob_file(&arg),
