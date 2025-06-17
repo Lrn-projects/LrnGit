@@ -9,7 +9,7 @@ pub fn handle_client(mut stream: TcpStream) {
             Ok(n) => {
                 let received = str::from_utf8(&buffer[..n]).unwrap();
                 println!("Packet: {received:#?}");
-                // Echo everything received back to the client
+                // Send response to client when packet received
                 if let Err(e) = stream.write_all("Packet received".as_bytes()) {
                     eprintln!("Failed to send response: {e}");
                     break;

@@ -6,7 +6,7 @@ use std::{
 mod client;
 
 fn main() -> std::io::Result<()> {
-    // Listening on port 7878
+    // Listening on port 9418
     let listener = TcpListener::bind("0.0.0.0:9418")?;
     println!("Server listening on port 9418");
 
