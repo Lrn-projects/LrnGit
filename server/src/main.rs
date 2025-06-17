@@ -1,4 +1,7 @@
-use std::net::TcpListener;
+use std::{
+    net::TcpListener,
+    thread::Builder,
+};
 
 mod client;
 
@@ -10,9 +13,13 @@ fn main() -> std::io::Result<()> {
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                std::thread::spawn(move || {
-                client::handle_client(stream);
-                });
+                Builder::new()
+                    .name(stream.local_addr().expect("Failed to get address from incoming connection").to_string())
+                    .spawn(move || {
+                        println!("New connection from: {:?}", stream.local_addr().expect("Failed to get stream address").to_string());
+                        client::handle_client(stream);
+                    })
+                    .expect("Failed to create new thread");
             }
             Err(e) => {
                 eprintln!("Connection failed: {e}");
