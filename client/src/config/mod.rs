@@ -103,3 +103,14 @@ fn cat_global_config() {
         config.user.name, config.user.email
     );
 }
+
+/// Create the config file for the local repository using a basic template
+pub fn init_config_repo() {
+    let mut config =
+        File::create_new(".lrngit/config").expect("Failed to create local repository config file");
+    let template = r"[remote 'origin']
+url = ''
+"
+    .to_string();
+    config.write_all(template.as_bytes()).expect("Failed to write template in config file");
+}

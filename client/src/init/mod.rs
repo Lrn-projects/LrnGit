@@ -3,12 +3,10 @@ Module handling all init command, init a local repository with all folder hierar
 */
 
 use std::{
-    env, fs,
-    path::{Path, PathBuf},
-    process::Command,
+    env, fs::{self}, path::{Path, PathBuf}, process::Command
 };
 
-use crate::{object::index, refs::init_head};
+use crate::{config, object::index, refs::init_head};
 
 pub fn init_local_repo() {
     // create local repository directory
@@ -46,5 +44,7 @@ pub fn init_local_repo() {
         panic!("Failed to execute mkdir command");
     }
     init_head();
+    config::init_config_repo();
     index::init_index();
 }
+
