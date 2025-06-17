@@ -87,6 +87,7 @@ fn write_global_config() {
         .expect("Failed to update global config file");
 }
 
+/// Parse the global configuration file in the home directory
 pub fn parse_global_config() -> GlobalConfig {
     let config_path = dirs::home_dir().unwrap().to_str().unwrap().to_string() + "/.lrngitconfig";
     let ini_file =
@@ -107,6 +108,7 @@ pub fn parse_global_config() -> GlobalConfig {
     }
 }
 
+/// Parse the configuration file in local repository
 pub fn parse_local_config() -> LocalConfig {
     let config_path = get_current_path() + ".lrngit/config";
     let ini_file = ini::Ini::load_from_file(&config_path).expect("Failed to load local config file");
