@@ -14,9 +14,9 @@ fn main() -> std::io::Result<()> {
         match stream {
             Ok(stream) => {
                 Builder::new()
-                    .name(stream.local_addr().expect("Failed to get address from incoming connection").to_string())
+                    .name(stream.peer_addr().expect("Failed to get address from incoming connection").to_string())
                     .spawn(move || {
-                        println!("New connection from: {:?}", stream.local_addr().expect("Failed to get stream address").to_string());
+                        println!("New connection from: {:?}", stream.peer_addr().expect("Failed to get stream address").to_string());
                         client::handle_client(stream);
                     })
                     .expect("Failed to create new thread");
