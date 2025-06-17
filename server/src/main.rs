@@ -4,8 +4,8 @@ mod client;
 
 fn main() -> std::io::Result<()> {
     // Listening on port 7878
-    let listener = TcpListener::bind("127.0.0.1:7878")?;
-    println!("Server listening on port 7878");
+    let listener = TcpListener::bind("0.0.0.0:9418")?;
+    println!("Server listening on port 9418");
 
     for stream in listener.incoming() {
         match stream {
