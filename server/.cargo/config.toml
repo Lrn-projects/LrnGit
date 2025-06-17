@@ -1,5 +1,5 @@
 [alias]     # command aliases
-b = "build"
+b = "build --target x86_64-unknown-linux-gnu"
 w = "clippy -- -D warnings"
 c = "check"
 t = "test"
@@ -7,6 +7,3 @@ r = "run"
 rr = "run --release"
 recursive_example = "rr --example recursions"
 space_example = ["run", "--release", "--", "\"command list\""]
-
-[build]
-target = "x86_64-unknown-linux-gnu" 
