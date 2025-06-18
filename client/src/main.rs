@@ -14,6 +14,7 @@ mod switch;
 pub mod utils;
 pub mod types;
 mod push;
+pub mod remote;
 
 use std::env;
 use std::process::exit;

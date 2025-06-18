@@ -110,7 +110,7 @@ pub fn parse_global_config() -> GlobalConfig {
 
 /// Parse the configuration file in local repository
 pub fn parse_local_config() -> LocalConfig {
-    let config_path = get_current_path() + ".lrngit/config";
+    let config_path = get_current_path() + "/.lrngit/config";
     let ini_file = ini::Ini::load_from_file(&config_path).expect("Failed to load local config file");
     let remote_section = ini_file.section(Some("remote")).expect("Missing [remote] section in local config file");
     let url = remote_section.get("url").expect("Missing 'url' in [remote] section").to_owned();
