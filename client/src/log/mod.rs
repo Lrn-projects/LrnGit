@@ -1,8 +1,12 @@
 use std::{env, io::Read, process::exit};
 
+use lrngitcore::objects::commit::{CommitObject, CommitUser, InitCommitContent};
+
 use crate::{
-    object::{commit::{self, CommitObject, CommitUser, InitCommitContent}, utils::get_file_by_hash}, refs::parse_current_branch, utils
+    object::utils::get_file_by_hash, refs::parse_current_branch, utils
 };
+
+use crate::object::commit;
 
 pub fn log_command() {
     let args: Vec<String> = env::args().collect();

@@ -9,7 +9,7 @@ authors = ["Elouan Da-Costa Peixoto <elouandacostapeixoto@gmail.com>"]
 include = ["/src"]
 
 [lib]
-name = "lrngit"
+name = "lrngitcore"
 path = "src/lib.rs"
 
 [dependencies]

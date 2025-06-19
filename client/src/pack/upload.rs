@@ -5,7 +5,7 @@ use serde::Serialize;
 use crate::{
     object::{
         commit,
-        utils::{walk_root_tree_all_objects, walk_root_tree_content},
+        utils::walk_root_tree_all_objects,
     },
     refs::parse_current_branch,
 };

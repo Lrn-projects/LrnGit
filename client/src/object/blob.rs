@@ -1,4 +1,5 @@
 use blob::{Blob, Standard};
+use lrngitcore::objects::blob::{FileHashBlob, BlobObject};
 
 use super::utils::split_object_header;
 use super::{index, utils::hash_sha1};
@@ -8,18 +9,6 @@ use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::os::unix::fs::MetadataExt;
-
-pub struct FileHashBlob {
-    pub blob: Vec<u8>,
-    pub hash: [u8; 20],
-    pub hash_split: Vec<char>,
-}
-
-struct BlobObject {
-    // "blob <size>\0" in binary
-    header: Vec<u8>,
-    content: Vec<u8>,
-}
 
 /// The function `add_blob` reads a file, calculates its SHA-1 hash, creates a new blob, and stores the
 /// file in a local repository with error handling.

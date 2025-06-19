@@ -5,7 +5,7 @@ use std::process::exit;
 use std::time::SystemTime;
 
 use chrono::{Local, Offset};
-use serde::{Deserialize, Serialize};
+use lrngitcore::objects::commit::{CommitContent, CommitUser, InitCommitContent};
 
 use crate::fs::new_file_dir;
 use crate::config;
@@ -13,44 +13,6 @@ use crate::object::utils::{git_object_header, compress_file};
 use crate::refs::{init_refs, parse_current_branch};
 
 use super::utils::{get_file_by_hash, hash_sha1, split_object_header};
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Commit {
-    // "commit <size>\0" in binary
-    pub header: Vec<u8>,
-    pub content: CommitContent,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CommitObject {
-    pub commit_hash: Vec<u8>,
-    pub commit_content: CommitContent,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct InitCommitContent {
-    pub tree: [u8; 20],
-    pub author: Vec<u8>,
-    pub commiter: Vec<u8>,
-    pub message: Vec<u8>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct CommitContent {
-    pub tree: [u8; 20],
-    pub parent: Vec<u8>,
-    pub author: Vec<u8>,
-    pub commiter: Vec<u8>,
-    pub message: Vec<u8>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CommitUser {
-    pub name: Vec<u8>,
-    pub email: Vec<u8>,
-    pub timestamp: i64,
-    pub timezone: Vec<u8>,
-}
 
 /// Create a new commit object.
 /// Get the author and commiter from the git config.
