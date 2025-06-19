@@ -53,7 +53,7 @@ pub fn add_folder(dir: &str) {
 }
 
 /**
-The function `git_object_header` generates a Git object header based on the file type and content
+The function `git_object_header` generates a Git object header based on the filetype and content
 length provided.
 
 Arguments:
@@ -147,7 +147,7 @@ pub fn read_blob_file(hash: &str) {
     // "tree" => print_tree_content(&buf),
     // _ => (),
     // }
-    //TODO parse buffer to tree or blob struct to display
+    //TO-Do parse buffer to tree or blob struct to display
 }
 
 /// The function `hash_sha1` calculates the SHA-1 hash of a given vector of bytes and returns the hash
@@ -180,10 +180,10 @@ pub fn get_path_by_hash(hash: &[char]) -> String {
     format!(".lrngit/objects/{folder_name}/{file_name}")
 }
 
-/// parse git object header and return two vectors
+/// Parse git object header and return two vectors
 /// first index of output vector is the header vector, second is the rest of the params buffer
 pub fn split_object_header(mut buf: Vec<u8>) -> Vec<Vec<u8>> {
-    // parse buffer until reach \0
+    // Parse buffer until reach \0
     // remove header from rest of the buffer and add them in a new vec
     let mut header_bytes: Vec<u8> = Vec::new();
     for bytes in buf.clone() {
@@ -211,7 +211,7 @@ pub fn split_hash(hash: &str) -> String {
     path
 }
 
-/// Walkdir trough the tree object from the root tree until reach the specify path and return the
+/// Walk in dir trough the tree object from the root tree until reach the specify path and return the
 /// blob object hash. The file we want to get must be a file committed, or else the tree wont be
 /// created and the function will not work.
 ///
@@ -219,7 +219,7 @@ pub fn split_hash(hash: &str) -> String {
 /// root_tree: the root tree hash as &str
 /// target_path: the path we want to have as tree and blob object, consider we want to get the
 /// files at the end of the path.
-/// hash: mutable reference to a buffer to return through a pointer the hash of the blob at the end
+/// Hash: mutable reference to a buffer to return through a pointer the hash of the blob at the end
 /// of the recursive
 /// content: mutable reference to all the content inside the root tree.
 pub fn target_walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8; 20]) {
@@ -249,7 +249,7 @@ pub fn target_walk_root_tree(root_tree: &str, target_path: &str, hash: &mut [u8;
     }
 }
 
-/// Walkdir trough the tree object from the root tree and fill the content mutable reference in
+/// Walk in dir trough the tree object from the root tree and fill the content mutable reference in
 /// params to get the entire content of the root tree
 ///
 /// Params:
