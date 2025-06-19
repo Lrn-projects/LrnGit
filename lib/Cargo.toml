@@ -1,0 +1,15 @@
+[package]
+name = "lrngitcore"
+version = "0.1.0"
+edition = "2024"
+description = "core library for lrngit, including objects structure and parsing"
+repository = "https://github.com/Lrn-projects/LrnGit.git"
+readme = "./README.md"
+authors = ["Elouan Da-Costa Peixoto <elouandacostapeixoto@gmail.com>"]
+include = ["/src"]
+
+[lib]
+name = "lrngit"
+path = "src/lib.rs"
+
+[dependencies]
