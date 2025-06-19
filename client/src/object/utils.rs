@@ -2,13 +2,28 @@ use flate2::Compression;
 use flate2::write::ZlibEncoder;
 use lrncore::logs::error_log;
 use sha1::{Digest, Sha1};
-use std::{fs::{self, File}, io::{Read, Write}, os::unix::fs::MetadataExt, path::{Path, PathBuf}, process::{exit, Command}};
+use std::{
+    fs::{self, File},
+    io::{Read, Write},
+    os::unix::fs::MetadataExt,
+    path::{Path, PathBuf},
+    process::{Command, exit},
+};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{parser, refs::parse_current_branch, status::{FileStatus, FileStatusEntry}};
+use crate::{
+    parser,
+    refs::parse_current_branch,
+    status::{FileStatus, FileStatusEntry},
+};
 
-use super::{blob::calculate_file_hash_and_blob, commit::parse_commit_by_hash, index::{self, parse_index}, tree::print_tree_content};
+use super::{
+    blob::calculate_file_hash_and_blob,
+    commit::parse_commit_by_hash,
+    index::{self, parse_index},
+    tree::print_tree_content,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ObjectHeader {
@@ -266,6 +281,34 @@ pub fn walk_root_tree_content(
     }
 }
 
+/// Walk through the root tree and get all objects and fill the content mutable reference
+pub fn walk_root_tree_all_objects(
+    root_tree: &str,
+    current_path: &mut PathBuf,
+    content: &mut Vec<(&str, [u8; 20])>,
+) {
+    let root_tree_path = split_hash(root_tree);
+    let mut root_tree_obj = File::open(root_tree_path).expect("Failed to open root tree file");
+    let mut file_buff: Vec<u8> = Vec::new();
+    root_tree_obj
+        .read_to_end(&mut file_buff)
+        .expect("Failed to read root tree content to buffer");
+    let parse_root_tree =
+        parser::parse_tree_entries_obj(file_buff).expect("Failed to parse root tree entries");
+    let mut new_path = current_path.clone();
+    for each in parse_root_tree {
+        new_path.push(str::from_utf8(&each.name).unwrap());
+        if each.mode == 16384 {
+            content.push(("tree", each.hash));
+            walk_root_tree_all_objects(&hex::encode(each.hash), &mut new_path, content);
+        } else {
+            current_path.pop();
+            content.push(("blob", each.hash));
+            new_path.pop();
+        }
+    }
+}
+
 /// Check if a file is staged or just modified by comparing hash from last commit with the one from
 /// index
 fn check_file_staged(file_path: &str) -> FileStatusEntry {
@@ -282,8 +325,8 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
         .position(|x| String::from_utf8_lossy(&x.path) == file_path)
     {
         let entry = index.entries.remove(pos);
-        let disk_hash = calculate_file_hash_and_blob(file_path)
-            .expect("Failed to get hash from file path");
+        let disk_hash =
+            calculate_file_hash_and_blob(file_path).expect("Failed to get hash from file path");
         // if entry.hash != file_hash && entry.hash == disk_hash
         if entry.hash != file_hash && entry.hash == disk_hash.hash {
             FileStatusEntry {
@@ -336,4 +379,3 @@ pub fn check_modified_file(files_path: &str) -> FileStatusEntry {
     }
     file_status
 }
-
