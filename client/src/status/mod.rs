@@ -7,8 +7,9 @@ use std::{
 
 mod helper;
 use helper::sort_file_status_vec;
+use lrngitcore::objects::index::IndexEntry;
 
-use crate::{object::{index::IndexEntry, utils::check_modified_file}, vec_of_path};
+use crate::{object::utils::check_modified_file, vec_of_path};
 
 use crate::object::index;
 

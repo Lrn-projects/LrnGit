@@ -5,7 +5,9 @@ use std::{
     process::Command,
 };
 
-use crate::object::{blob, index::TempIndex, utils::get_path_by_hash};
+use lrngitcore::objects::index::TempIndex;
+
+use crate::object::{blob, utils::get_path_by_hash};
 
 /// Remove file at the end of the path and try to remove directory if empty  
 pub fn delete_path(path: &PathBuf) {
