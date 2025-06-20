@@ -6,14 +6,13 @@ use std::{
     process::exit,
 };
 
+use lrngitcore::objects::tree::RWO;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     object::{commit, utils::walk_root_tree_content},
     refs::parse_current_branch,
 };
-
-use super::tree::RWO;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct IndexHeader {

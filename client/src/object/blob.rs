@@ -1,10 +1,11 @@
 use blob::{Blob, Standard};
 use lrngitcore::objects::blob::{FileHashBlob, BlobObject};
+use lrngitcore::objects::tree::RWO;
 
 use super::utils::split_object_header;
 use super::{index, utils::hash_sha1};
 use crate::object::utils::{compress_file, git_object_header};
-use crate::{fs::new_file_dir, object::tree::RWO};
+use crate::fs::new_file_dir;
 use std::fs;
 use std::fs::File;
 use std::io::{Read, Write};
