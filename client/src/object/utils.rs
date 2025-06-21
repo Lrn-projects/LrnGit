@@ -10,8 +10,6 @@ use std::{
     process::{Command, exit},
 };
 
-use serde::{Deserialize, Serialize};
-
 use crate::{
     parser,
     refs::parse_current_branch,
@@ -24,12 +22,6 @@ use super::{
     index::{self, parse_index},
     tree::print_tree_content,
 };
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ObjectHeader {
-    pub types: Vec<u8>,
-    pub size: usize,
-}
 
 /// Create a new folder in objects
 pub fn add_folder(dir: &str) {
@@ -58,9 +50,9 @@ length provided.
 
 Arguments:
 
-* `file_type`: The `file_type` parameter represents the type of Git object, which can be either
+*  `file_type`: The `file_type` parameter represents the type of Git object, which can be either
   "blob" or "tree".
-* `content_length`: The `content_length` parameter represents the length of the content associated
+*  `content_length`: The `content_length` parameter represents the length of the content associated
   with the Git object. It is used to construct the header of the Git object based on the specified
   `file_type`.
 

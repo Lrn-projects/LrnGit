@@ -1,7 +1,7 @@
 use std::{fs::{self, File}, io::Write, os::unix::fs::PermissionsExt};
 
-use crate::{fs::new_file_dir, parser, types::{BatchIndexEntriesMap, BatchIndexEntriesTuple, BatchIndexEntriesVec}};
-use lrngitcore::objects::tree::{Tree, TreeEntry, DIR, EXE, RWO, SYM};
+use crate::{parser, types::{BatchIndexEntriesMap, BatchIndexEntriesTuple, BatchIndexEntriesVec}};
+use lrngitcore::{fs::new_file_dir, objects::tree::{Tree, TreeEntry, DIR, EXE, RWO, SYM}};
 use crate::object::utils::{git_object_header, compress_file};
 
 use super::utils::hash_sha1;

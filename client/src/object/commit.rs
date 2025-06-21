@@ -5,9 +5,9 @@ use std::process::exit;
 use std::time::SystemTime;
 
 use chrono::{Local, Offset};
+use lrngitcore::fs::new_file_dir;
 use lrngitcore::objects::commit::{CommitContent, CommitUser, InitCommitContent};
 
-use crate::fs::new_file_dir;
 use crate::config;
 use crate::object::utils::{git_object_header, compress_file};
 use crate::refs::{init_refs, parse_current_branch};

@@ -14,3 +14,4 @@ path = "src/lib.rs"
 
 [dependencies]
 serde = { version = "1.0.219", features = ["derive"] }
+lrncore = { git = "https://github.com/Lrn-projects/LrnCore.git", version = "0.2.0", branch="main" }
