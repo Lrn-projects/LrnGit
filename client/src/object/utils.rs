@@ -1,13 +1,14 @@
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
 use lrncore::logs::error_log;
+use lrngitcore::objects::utils::split_hash;
 use sha1::{Digest, Sha1};
 use std::{
     fs::{self, File},
     io::{Read, Write},
     os::unix::fs::MetadataExt,
-    path::{Path, PathBuf},
-    process::{Command, exit},
+    path::PathBuf,
+    process::exit,
 };
 
 use crate::{
@@ -23,27 +24,6 @@ use super::{
     tree::print_tree_content,
 };
 
-/// Create a new folder in objects
-pub fn add_folder(dir: &str) {
-    if dir.is_empty() {
-        return;
-    }
-    if Path::new(&format!(".lrngit/objects/{dir}")).exists() {
-        return;
-    }
-    let new_dir_path = format!(".lrngit/objects/{dir}");
-    let mut mkdir = Command::new("mkdir")
-        .arg(new_dir_path)
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .spawn()
-        .expect("Failed to create all directories");
-    let wait_mkdir = mkdir.wait().expect("Failed to wait the mkdir command");
-    if !wait_mkdir.success() {
-        panic!("Failed to execute the mkdir command");
-    }
-}
-
 /**
 The function `git_object_header` generates a Git object header based on the filetype and content
 length provided.
@@ -51,10 +31,10 @@ length provided.
 Arguments:
 
 *  `file_type`: The `file_type` parameter represents the type of Git object, which can be either
-  "blob" or "tree".
+   "blob" or "tree".
 *  `content_length`: The `content_length` parameter represents the length of the content associated
-  with the Git object. It is used to construct the header of the Git object based on the specified
-  `file_type`.
+   with the Git object. It is used to construct the header of the Git object based on the specified
+   `file_type`.
 
 Returns:
 
@@ -192,15 +172,6 @@ pub fn split_object_header(mut buf: Vec<u8>) -> Vec<Vec<u8>> {
     output_vec.push(header_bytes);
     output_vec.push(new_vec);
     output_vec
-}
-
-/// Split the given hash to return the path to the hash object
-pub fn split_hash(hash: &str) -> String {
-    let split_hash: Vec<char> = hash.chars().collect();
-    let folder_name: String = format!("{}{}", split_hash[0], split_hash[1]);
-    let file_name: String = split_hash[2..].iter().collect::<String>().to_string();
-    let path = format!(".lrngit/objects/{folder_name}/{file_name}");
-    path
 }
 
 /// Walk in dir trough the tree object from the root tree until reach the specify path and return the
