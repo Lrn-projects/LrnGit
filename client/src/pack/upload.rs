@@ -1,12 +1,9 @@
-use std::path::PathBuf;
+use std::{fs::File, io::Read, path::PathBuf};
 
 use serde::Serialize;
 
 use crate::{
-    object::{
-        commit,
-        utils::walk_root_tree_all_objects,
-    },
+    object::{commit, utils::{get_file_by_hash, walk_root_tree_all_objects}},
     refs::parse_current_branch,
 };
 
@@ -22,6 +19,7 @@ struct UploadPackData {
     header: Box<[u8]>,
     object_type: Box<[u8]>,
     hash: [u8; 20],
+    data: Box<[u8]>
 }
 
 pub fn create_upload_pack(refs: &str, last_commit: Vec<u8>) -> Vec<u8> {
@@ -39,10 +37,14 @@ pub fn create_upload_pack(refs: &str, last_commit: Vec<u8>) -> Vec<u8> {
     all_root_tree_objects.dedup();
     let mut data: Vec<UploadPackData> = Vec::new();
     for each in &all_root_tree_objects {
+        let mut file: File = get_file_by_hash(&hex::encode(each.1));
+        let mut file_buff: Vec<u8> = Vec::new();
+        file.read_to_end(&mut file_buff).expect("Failed to read file content");
         let new_object: UploadPackData = UploadPackData {
             header: b"OBJECT".as_slice().to_vec().into_boxed_slice(),
             object_type: each.0.as_bytes().to_vec().into_boxed_slice(),
             hash: each.1,
+            data: file_buff.into_boxed_slice(),
         };
         data.push(new_object);
     }

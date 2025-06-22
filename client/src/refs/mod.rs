@@ -1,4 +1,8 @@
-use std::{fs::File, io::{Read, Write}, path::Path};
+use std::{
+    fs::File,
+    io::{Read, Write},
+    path::Path,
+};
 
 pub fn init_head() {
     let mut file = File::create(".lrngit/HEAD").expect("Failed to create HEAD file");

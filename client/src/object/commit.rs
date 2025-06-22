@@ -9,7 +9,7 @@ use lrngitcore::fs::new_file_dir;
 use lrngitcore::objects::commit::{CommitContent, CommitUser, InitCommitContent};
 
 use crate::config;
-use crate::object::utils::{git_object_header, compress_file};
+use crate::object::utils::{compress_file, git_object_header};
 use crate::refs::{init_refs, parse_current_branch};
 
 use super::utils::{get_file_by_hash, hash_sha1, split_object_header};
@@ -17,7 +17,7 @@ use super::utils::{get_file_by_hash, hash_sha1, split_object_header};
 /// Create a new commit object.
 /// Get the author and commiter from the git config.
 ///
-/// 
+///
 pub fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
     let global_config = config::parse_global_config();
     let offset = Local::now().offset().fix().local_minus_utc();
@@ -57,10 +57,7 @@ pub fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
         bincode::serialize(&commit_content).expect("Failed to serialize commit content")
     };
     let mut commit_bytes: Vec<u8> = Vec::new();
-    commit_bytes.extend_from_slice(&git_object_header(
-        "commit",
-        commit_content_bytes.len(),
-    ));
+    commit_bytes.extend_from_slice(&git_object_header("commit", commit_content_bytes.len()));
     commit_bytes.extend_from_slice(&commit_content_bytes);
     let commit_bytes_compressed = compress_file(commit_bytes.clone());
     // hash tree content with SHA-1
