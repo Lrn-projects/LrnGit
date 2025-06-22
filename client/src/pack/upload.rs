@@ -1,28 +1,13 @@
 use std::{fs::File, io::Read, path::PathBuf};
 
-use serde::Serialize;
+use lrngitcore::pack::upload::{UploadPack, UploadPackData};
 
 use crate::{
     object::{commit, utils::{get_file_by_hash, walk_root_tree_all_objects}},
     refs::parse_current_branch,
 };
 
-#[derive(Serialize)]
-struct UploadPack {
-    header: Box<[u8]>,
-    data: Vec<UploadPackData>,
-    footer: Box<[u8]>,
-}
-
-#[derive(Serialize)]
-struct UploadPackData {
-    header: Box<[u8]>,
-    object_type: Box<[u8]>,
-    hash: [u8; 20],
-    data: Box<[u8]>
-}
-
-pub fn create_upload_pack(refs: &str, last_commit: Vec<u8>) -> Vec<u8> {
+pub fn create_upload_pack(refs: &str, _last_commit: Vec<u8>) -> Vec<u8> {
     let mut header_content: Vec<u8> = b"PUSH ".to_vec();
     header_content.extend_from_slice(refs.as_bytes());
     let header: Box<[u8]> = header_content.as_slice().to_vec().into_boxed_slice();
