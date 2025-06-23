@@ -1,6 +1,10 @@
 use std::{env, io::Write, process::exit};
 
-use crate::{pack::upload::create_upload_pack, refs::{parse_current_branch, parse_head}, remote};
+use crate::{
+    pack::upload::create_upload_pack,
+    refs::{parse_current_branch, parse_head},
+    remote,
+};
 
 pub fn push_command() {
     let args: Vec<String> = env::args().collect();
@@ -23,7 +27,10 @@ pub fn push_command() {
 fn push_remote_branch() {
     let last_commit = parse_current_branch();
     let refs = &parse_head();
-    let mut stream = remote::connect_to_remote();
+    let mut stream = remote::tcp_connect_to_remote();
     let pack = create_upload_pack(refs, last_commit.as_bytes().to_vec());
-    stream.write_all(&pack).unwrap();
+    for each in pack {
+        // Stream each element in upload pack to server
+        stream.write_all(&each).unwrap();
+    }
 }
