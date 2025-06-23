@@ -4,11 +4,16 @@ use lrncore::path::get_current_path;
 
 pub struct GlobalConfig {
     pub user: GlobalConfigUser,
+    pub url: GlobalConfigUrl,
 }
 
 pub struct GlobalConfigUser {
     pub name: String,
     pub email: String,
+}
+
+pub struct GlobalConfigUrl {
+    pub remote: String
 }
 
 pub struct LocalConfig {
@@ -17,8 +22,10 @@ pub struct LocalConfig {
 
 pub struct Remotes {
     pub url: String,
+    #[allow(dead_code)]
     pub fetch: String,
 }
+
 
 pub fn config_commands() {
     let args: Vec<String> = env::args().collect();
@@ -39,6 +46,9 @@ fn config_template() -> String {
     r"[user]
 name = ''
 email = ''
+
+[url]
+remote = ''
 "
     .to_string()
 }
@@ -95,6 +105,7 @@ pub fn parse_global_config() -> GlobalConfig {
     let user_section = ini_file
         .section(Some("user"))
         .expect("Missing [user] section in config file");
+    let url_section = ini_file.section(Some("url")).expect("Missing [url] section in config file");
     let name = user_section
         .get("name")
         .expect("Missing 'name' in [user] section")
@@ -103,8 +114,10 @@ pub fn parse_global_config() -> GlobalConfig {
         .get("email")
         .expect("Missing 'email' in [user] section")
         .to_string();
+    let remote = url_section.get("remote").expect("Missing 'remote' in [url] section").to_string();
     GlobalConfig {
         user: GlobalConfigUser { name, email },
+        url: GlobalConfigUrl { remote }
     }
 }
 
@@ -121,8 +134,8 @@ pub fn parse_local_config() -> LocalConfig {
 fn cat_global_config() {
     let config = parse_global_config();
     println!(
-        "[user]\nname = {}\nemail = {}\n",
-        config.user.name, config.user.email
+        "[user]\nname = {}\nemail = {}\n\n[url]\nremote = {}",
+        config.user.name, config.user.email, config.url.remote
     );
 }
 
