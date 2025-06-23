@@ -7,7 +7,7 @@ pub fn handle_client(mut stream: TcpStream) {
         match stream.read(&mut buffer) {
             Ok(0) => break, // Connection was closed
             Ok(n) => {
-                let received = str::from_utf8(&buffer[..n]).unwrap();
+                let received = String::from_utf8_lossy(&buffer[..n]);
                 println!("Packet: {received:#?}");
                 // Send response to client when packet received
                 if let Err(e) = stream.write_all("Packet received".as_bytes()) {
