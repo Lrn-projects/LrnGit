@@ -1,13 +1,13 @@
 use std::{fs::File, io::Read, path::PathBuf};
 
-use lrngitcore::pack::upload::{UploadPack, UploadPackData};
+use lrngitcore::pack::upload::UploadPackData;
 
 use crate::{
     object::{commit, utils::{get_file_by_hash, walk_root_tree_all_objects}},
     refs::parse_current_branch,
 };
 
-pub fn create_upload_pack(refs: &str, _last_commit: Vec<u8>) -> Vec<u8> {
+pub fn create_upload_pack(refs: &str, _last_commit: Vec<u8>) -> Vec<Box<[u8]>> {
     let mut header_content: Vec<u8> = b"PUSH ".to_vec();
     header_content.extend_from_slice(refs.as_bytes());
     let header: Box<[u8]> = header_content.as_slice().to_vec().into_boxed_slice();
@@ -20,7 +20,7 @@ pub fn create_upload_pack(refs: &str, _last_commit: Vec<u8>) -> Vec<u8> {
     walk_root_tree_all_objects(&root_tree, &mut PathBuf::new(), &mut all_root_tree_objects);
     all_root_tree_objects.sort();
     all_root_tree_objects.dedup();
-    let mut data: Vec<UploadPackData> = Vec::new();
+    let mut upload_pack: Vec<Box<[u8]>> = vec![header];
     for each in &all_root_tree_objects {
         let mut file: File = get_file_by_hash(&hex::encode(each.1));
         let mut file_buff: Vec<u8> = Vec::new();
@@ -31,14 +31,10 @@ pub fn create_upload_pack(refs: &str, _last_commit: Vec<u8>) -> Vec<u8> {
             hash: each.1,
             data: file_buff.into_boxed_slice(),
         };
-        data.push(new_object);
+        let new_object_serialize = bincode::serialize(&new_object).expect("Failed to serialize object for upload pack");
+        upload_pack.push(new_object_serialize.into_boxed_slice());
     }
-
     let footer: Box<[u8]> = b"END".to_vec().into_boxed_slice();
-    let pack: UploadPack = UploadPack {
-        header,
-        data,
-        footer,
-    };
-    bincode::serialize(&pack).expect("Failed to serialize upload pack")
+    upload_pack.push(footer); 
+    upload_pack
 }
