@@ -10,13 +10,20 @@ pub fn handle_client(mut stream: TcpStream) {
                 let received = String::from_utf8_lossy(&buffer[..n]);
                 println!("Packet: {received:#?}");
                 let mut service: Vec<u8> = Vec::new();
-                for byte in buffer {
-                    if byte == b' ' {
-                        break;
-                    } else {
-                        service.push(byte);
+                for (i, &b) in buffer.iter().enumerate() {
+                    println!("byte[{i}] = {b} ({:?})", b as char);
+
+                    if b == b' ' {
+                        println!("Found space at index {i}");
                     }
                 }
+                // for byte in buffer {
+                //     if byte == b' ' {
+                //         break;
+                //     } else {
+                //         service.push(byte);
+                //     }
+                // }
                 println!("service: {:?}", str::from_utf8(&service[..n]).unwrap());
                 // Send response to client when packet received
                 if let Err(e) = stream.write_all("Packet received".as_bytes()) {
