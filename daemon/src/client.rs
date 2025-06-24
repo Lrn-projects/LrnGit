@@ -2,13 +2,22 @@ use std::io::{Read, Write};
 use std::net::TcpStream;
 
 pub fn handle_client(mut stream: TcpStream) {
-    let mut buffer = [0; 512];
+    let mut buffer: [u8; 512] = [0; 512];
     loop {
         match stream.read(&mut buffer) {
             Ok(0) => break, // Connection was closed
             Ok(n) => {
                 let received = String::from_utf8_lossy(&buffer[..n]);
                 println!("Packet: {received:#?}");
+                let mut service: Vec<u8> = Vec::new();
+                for i in &buffer[..n] {
+                    if *i == b' ' {
+                        break;
+                    } else {
+                        service.push(*i);
+                    }
+                }
+                println!("service: {:?}", str::from_utf8(&service[..n]).unwrap());
                 // Send response to client when packet received
                 if let Err(e) = stream.write_all("Packet received".as_bytes()) {
                     eprintln!("Failed to send response: {e}");
