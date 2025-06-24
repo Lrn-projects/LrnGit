@@ -10,11 +10,11 @@ pub fn handle_client(mut stream: TcpStream) {
                 let received = String::from_utf8_lossy(&buffer[..n]);
                 println!("Packet: {received:#?}");
                 let mut service: Vec<u8> = Vec::new();
-                for i in &buffer[..n] {
-                    if *i == b' ' {
+                for byte in buffer {
+                    if byte == b' ' {
                         break;
                     } else {
-                        service.push(*i);
+                        service.push(byte);
                     }
                 }
                 println!("service: {:?}", str::from_utf8(&service[..n]).unwrap());
