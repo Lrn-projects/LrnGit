@@ -10,11 +10,11 @@ pub fn handle_client(mut stream: TcpStream) {
                 let received = String::from_utf8_lossy(&buffer[..n]);
                 println!("Packet: {received:#?}");
                 let mut service: Vec<u8> = Vec::new();
-                for (i, &b) in buffer.iter().enumerate() {
-                    println!("byte[{i}] = {b} ({:?})", b as char);
-
+                for &b in buffer.iter() {
                     if b == b' ' {
-                        println!("Found space at index {i}");
+                        break;
+                    } else {
+                        service.push(b);
                     }
                 }
                 // for byte in buffer {
