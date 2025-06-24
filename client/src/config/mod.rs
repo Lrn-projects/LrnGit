@@ -1,6 +1,12 @@
-use std::{env, fs::File, io::Write, process::exit};
+use std::{
+    env,
+    fs::File,
+    io::Write,
+    process::exit,
+};
 
 use lrncore::path::get_current_path;
+use serde::Serialize;
 
 pub struct GlobalConfig {
     pub user: GlobalConfigUser,
@@ -13,19 +19,20 @@ pub struct GlobalConfigUser {
 }
 
 pub struct GlobalConfigUrl {
-    pub remote: String
+    pub remote: String,
 }
 
+#[derive(Serialize, Debug)]
 pub struct LocalConfig {
-    pub remotes: Remotes
+    pub remotes: Remotes,
 }
 
+#[derive(Serialize, Debug)]
 pub struct Remotes {
     pub url: String,
     #[allow(dead_code)]
     pub fetch: String,
 }
-
 
 pub fn config_commands() {
     let args: Vec<String> = env::args().collect();
@@ -105,7 +112,9 @@ pub fn parse_global_config() -> GlobalConfig {
     let user_section = ini_file
         .section(Some("user"))
         .expect("Missing [user] section in config file");
-    let url_section = ini_file.section(Some("url")).expect("Missing [url] section in config file");
+    let url_section = ini_file
+        .section(Some("url"))
+        .expect("Missing [url] section in config file");
     let name = user_section
         .get("name")
         .expect("Missing 'name' in [user] section")
@@ -114,21 +123,46 @@ pub fn parse_global_config() -> GlobalConfig {
         .get("email")
         .expect("Missing 'email' in [user] section")
         .to_string();
-    let remote = url_section.get("remote").expect("Missing 'remote' in [url] section").to_string();
+    let remote = url_section
+        .get("remote")
+        .expect("Missing 'remote' in [url] section")
+        .to_string();
     GlobalConfig {
         user: GlobalConfigUser { name, email },
-        url: GlobalConfigUrl { remote }
+        url: GlobalConfigUrl { remote },
     }
 }
 
 /// Parse the configuration file in local repository
 pub fn parse_local_config() -> LocalConfig {
     let config_path = get_current_path() + "/.lrngit/config";
-    let ini_file = ini::Ini::load_from_file(&config_path).expect("Failed to load local config file");
-    let remote_section = ini_file.section(Some("remote")).expect("Missing [remote] section in local config file");
-    let url = remote_section.get("url").expect("Missing 'url' in [remote] section").to_owned();
-    let fetch = remote_section.get("fetch").expect("Missing 'fetch' in [remote] section").to_owned();
-    LocalConfig { remotes: Remotes { url, fetch } }
+    let ini_file =
+        ini::Ini::load_from_file(&config_path).expect("Failed to load local config file");
+    let remote_section = ini_file
+        .section(Some("remote"))
+        .expect("Missing [remote] section in local config file");
+    let url = remote_section
+        .get("url")
+        .expect("Missing 'url' in [remote] section")
+        .to_owned();
+    let fetch = remote_section
+        .get("fetch")
+        .expect("Missing 'fetch' in [remote] section")
+        .to_owned();
+    LocalConfig {
+        remotes: Remotes { url, fetch },
+    }
+}
+
+pub fn update_remote_url_local_config(url: &str) {
+    let config_path = get_current_path() + "/.lrngit/config";
+    let mut config_file =
+        ini::Ini::load_from_file(&config_path).expect("Failed to open global config file");
+    let mut remote = config_file.with_section(Some("remote"));
+    remote.set("url", url);
+    config_file
+        .write_to_file(config_path)
+        .expect("Failed to update global config file");
 }
 
 fn cat_global_config() {
@@ -145,9 +179,10 @@ pub fn init_config_repo() {
         File::create_new(".lrngit/config").expect("Failed to create local repository config file");
     let template = r"[remote]
 url = ''
-fetch = ''
+fetch = +refs/heads/*:refs/remotes/origin/*
 "
     .to_string();
-    config.write_all(template.as_bytes()).expect("Failed to write template in config file");
+    config
+        .write_all(template.as_bytes())
+        .expect("Failed to write template in config file");
 }
-

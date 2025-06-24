@@ -16,6 +16,7 @@ pub mod types;
 mod push;
 pub mod remote;
 pub mod pack;
+pub mod tcp;
 
 use std::env;
 use std::process::exit;
@@ -66,6 +67,7 @@ enum Commands {
     CatFile { arg: String },
     LsFile,
     Status,
+    Remote,
     Log,
     Config,
     Version,
@@ -115,6 +117,7 @@ fn main() {
         },
         Some("ls-file") => Commands::LsFile,
         Some("status") => Commands::Status,
+        Some("remote") => Commands::Remote,
         Some("log") => Commands::Log,
         Some("config") => Commands::Config,
         Some("version") => Commands::Version,
@@ -135,6 +138,7 @@ fn main() {
         Commands::CatFile { arg } => object::utils::read_blob_file(&arg),
         Commands::LsFile => object::index::ls_file(),
         Commands::Status => status::status_command(),
+        Commands::Remote => remote::remote_command(),
         Commands::Log => log::log_command(),
         Commands::Config => config::config_commands(),
         Commands::Version => lrncore::usage_exit::command_usage(&lrngit_version()),
