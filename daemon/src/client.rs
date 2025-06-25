@@ -31,7 +31,7 @@ pub fn handle_client(mut stream: TcpStream) {
                 let path_str: &str = str::from_utf8(&path).unwrap().trim();
                 match service_str {
                     "lrngit-receive-pack" => {
-                        process::spawn_service("lrngit-receive-service", path_str);
+                        process::fork_service("lrngit-receive-service", path_str, &stream);
                     }
                     "lrngit-upload-pack" => {}
                     _ => {}
