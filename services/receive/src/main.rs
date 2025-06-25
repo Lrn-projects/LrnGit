@@ -8,7 +8,7 @@ use std::{
 fn main() {
     println!("[SERVICE] lrngit-receive");
     let stdin = stdin();
-    let lrngit_repo_path: &str = "/home/ubuntu/lrngit/repositories";
+    let lrngit_repo_path: &str = "/home/ubuntu/lrngit/repositories/";
     let mut lines: Vec<String> = Vec::new();
     for line in stdin.lock().lines() {
         let line_str = line.unwrap();
@@ -20,5 +20,4 @@ fn main() {
         exit(1)
     }
     set_current_dir(repo_path).expect("Failed to change current dir");
-    println!("pwd: {:?}", current_dir());
 }
