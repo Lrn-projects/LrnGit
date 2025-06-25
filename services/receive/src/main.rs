@@ -1,3 +1,9 @@
+use std::io::{stdin, BufRead};
+
 fn main() {
-    println!("Hello, world!");
+    println!("lrngit-receive-service");
+    let stdin = stdin();
+    for line in stdin.lock().lines() {
+        println!("{}", line.unwrap());
+    }
 }

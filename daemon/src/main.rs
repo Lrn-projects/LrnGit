@@ -4,6 +4,7 @@ use std::{
 };
 
 mod client;
+pub mod process;
 
 fn main() -> std::io::Result<()> {
     // Listening on port 9418

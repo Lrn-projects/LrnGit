@@ -1,6 +1,8 @@
 use std::io::{Read, Write};
 use std::net::TcpStream;
 
+use crate::process;
+
 pub fn handle_client(mut stream: TcpStream) {
     let mut buffer: [u8; 512] = [0; 512];
     loop {
@@ -24,7 +26,14 @@ pub fn handle_client(mut stream: TcpStream) {
                 //         service.push(byte);
                 //     }
                 // }
-                println!("service: {:?}", str::from_utf8(&service[..n]).unwrap());
+                let service_str: &str = str::from_utf8(&service).unwrap();
+                match service_str {
+                    "lrngit-receive-pack" => {
+                        process::spawn_service(service_str, "just testing");
+                }
+                    "lrngit-upload-pack" => {}
+                    _ => {}
+                }
                 // Send response to client when packet received
                 if let Err(e) = stream.write_all("Packet received".as_bytes()) {
                     eprintln!("Failed to send response: {e}");
