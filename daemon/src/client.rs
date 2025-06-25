@@ -21,11 +21,14 @@ pub fn handle_client(mut stream: TcpStream) {
                     if !temp {
                         service.push(b);
                     } else {
+                        if b == b'\0' {
+                            break;
+                        }
                         path.push(b);
                     }
                 }
                 let service_str: &str = str::from_utf8(&service).unwrap();
-                let path_str: &str = str::from_utf8(&path).unwrap();
+                let path_str: &str = str::from_utf8(&path).unwrap().trim();
                 println!("debug: {:?}", path_str);
                 match service_str {
                     "lrngit-receive-pack" => {
