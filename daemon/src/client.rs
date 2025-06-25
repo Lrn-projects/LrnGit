@@ -12,25 +12,25 @@ pub fn handle_client(mut stream: TcpStream) {
                 let received = String::from_utf8_lossy(&buffer[..n]);
                 println!("Packet: {received:#?}");
                 let mut service: Vec<u8> = Vec::new();
+                let mut path: Vec<u8> = Vec::new();
+                let mut temp: bool = false;
                 for &b in buffer.iter() {
                     if b == b' ' {
-                        break;
-                    } else {
+                        temp = true;
+                    }
+                    if !temp {
                         service.push(b);
+                    } else {
+                        path.push(b);
                     }
                 }
-                // for byte in buffer {
-                //     if byte == b' ' {
-                //         break;
-                //     } else {
-                //         service.push(byte);
-                //     }
-                // }
                 let service_str: &str = str::from_utf8(&service).unwrap();
+                let path_str: &str = str::from_utf8(&path).unwrap();
+                println!("debug: {:?}", path_str);
                 match service_str {
                     "lrngit-receive-pack" => {
                         process::spawn_service("lrngit-receive-service", "just testing");
-                }
+                    }
                     "lrngit-upload-pack" => {}
                     _ => {}
                 }
