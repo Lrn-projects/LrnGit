@@ -1,5 +1,6 @@
 use std::{
-    env::current_dir, io::Write, process::{Command, Stdio}
+    io::Write,
+    process::{Command, Stdio},
 };
 
 pub fn spawn_service(name: &str, arg: &str) {
@@ -19,6 +20,4 @@ pub fn spawn_service(name: &str, arg: &str) {
     if !wait.success() {
         panic!("Process failed to execute")
     }
-    let pwd = current_dir().expect("Failed to get pwd");
-    println!("pwd: {pwd:?}");
 }

@@ -29,10 +29,9 @@ pub fn handle_client(mut stream: TcpStream) {
                 }
                 let service_str: &str = str::from_utf8(&service).unwrap();
                 let path_str: &str = str::from_utf8(&path).unwrap().trim();
-                println!("debug: {:?}", path_str);
                 match service_str {
                     "lrngit-receive-pack" => {
-                        process::spawn_service("lrngit-receive-service", "just testing");
+                        process::spawn_service("lrngit-receive-service", path_str);
                     }
                     "lrngit-upload-pack" => {}
                     _ => {}
