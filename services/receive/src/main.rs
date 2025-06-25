@@ -16,6 +16,7 @@ fn main() {
     }
     let repo_path = lrngit_repo_path.to_owned() + &lines[0];
     if !Path::new(&repo_path).exists() {
+        println!("path doesn't exist");
         exit(1)
     }
     set_current_dir(repo_path).expect("Failed to change current dir");
