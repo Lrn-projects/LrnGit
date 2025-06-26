@@ -1,4 +1,4 @@
-use std::{ffi::CString, net::TcpStream, os::fd::AsRawFd};
+use std::{ffi::CString, net::TcpStream, os::fd::{AsRawFd, IntoRawFd}};
 
 use nix::{
     libc::{self, close, dup2, execvp},
@@ -7,7 +7,7 @@ use nix::{
 };
 
 pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
-    let fd = socket.as_raw_fd();
+    let fd = socket.into_raw_fd();
     match unsafe { fork() } {
         Ok(ForkResult::Parent { child, .. }) => {
             println!("Continuing execution in parent process, new child has pid: {child}");
@@ -24,7 +24,6 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
             if unsafe { dup2(fd, 2) } == -1 {
                 panic!("dup2 stderr failed");
             }
-            unsafe { close(fd) };
             let cmd = CString::new(name).unwrap();
             let args = [CString::new(arg).unwrap()];
             // Prepare argv: [program, arg1, ..., null]
@@ -32,7 +31,6 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
             c_args.push(std::ptr::null());
             unsafe {
                 execvp(cmd.as_ptr(), c_args.as_ptr());
-                drop(socket);
                 // If execvp returns, it failed
                 panic!("exec failed");
             }
