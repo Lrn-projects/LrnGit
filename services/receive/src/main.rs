@@ -10,12 +10,11 @@ fn main() {
         eprintln!("ERR: repository name argument missing");
         exit(1);
     }
-    let repo_path = lrngit_repo_path.to_owned() + &args[0];
+    let repo_path = lrngit_repo_path.to_owned() + &args[1];
     if !Path::new(&repo_path).exists() {
         eprintln!("ERR repository doesn't exist");
         exit(1)
     }
-    println!("debug: {:?}", repo_path);
     set_current_dir(repo_path).expect("Failed to change current dir");
     let mut buffer = [0u8; 1024];
     loop {
