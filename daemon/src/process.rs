@@ -1,16 +1,17 @@
-use std::{ffi::CString, net::TcpStream, os::fd::{AsRawFd, IntoRawFd}};
+use std::{
+    ffi::CString, fs, net::TcpStream, os::fd::{AsRawFd, IntoRawFd}
+};
 
 use nix::{
     libc::{self, dup2, execvp},
     sys::wait::waitpid,
-    unistd::{fork, ForkResult, close},
+    unistd::{ForkResult, close, fork},
 };
 
 pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
-    let fd = socket.as_raw_fd();
+    let fd = socket.into_raw_fd();
     match unsafe { fork() } {
         Ok(ForkResult::Parent { child, .. }) => {
-            drop(socket);
             println!("Continuing execution in parent process, new child has pid: {child}");
             waitpid(child, None).unwrap();
         }
@@ -38,4 +39,13 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
         }
         Err(_) => println!("Fork failed"),
     }
+    match fs::read_dir("/proc/self/fd") {
+        Ok(it) => it,
+        Err(err) => {
+            panic!("{err:?}")
+        },
+    }.for_each(|entry| {
+        let entry = entry;
+        println!("PARENT still has fd: {:?}", entry.unwrap().path());
+    });
 }
