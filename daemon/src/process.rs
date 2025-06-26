@@ -11,10 +11,9 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
         .stdin(unsafe { Stdio::from_raw_fd(fd) })
         .spawn()
         .expect("Failed to execute asked lrngit-service");
+    drop(socket);
     let wait = process.wait().expect("Failed to wait the process");
     if !wait.success() {
-        drop(socket);
         panic!("Process failed to execute");
     }
-    drop(socket);
 }

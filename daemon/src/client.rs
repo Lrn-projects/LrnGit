@@ -38,7 +38,6 @@ pub fn handle_client(mut stream: TcpStream) {
         }
         Err(e) => {
             eprintln!("Failed to read from socket: {e}");
-            drop(stream);
         }
     }
 }
