@@ -5,15 +5,13 @@ use std::{
 fn main() {
     println!("[SERVICE] lrngit-receive");
     let args: Vec<String> = env::args().collect();
-    let mut stream = unsafe { TcpStream::from_raw_fd(0)};
-    stream.write_all("prout".as_bytes()).unwrap();
     let lrngit_repo_path: &str = "/home/ubuntu/lrngit/repositories/";
     if args.len() < 2 {
         eprintln!("ERR: repository name argument missing");
         io::stderr().flush().unwrap();
         exit(1);
     }
-    let repo_path = lrngit_repo_path.to_owned() + &args[1];
+    let repo_path = lrngit_repo_path.to_owned() + &args[0];
     if !Path::new(&repo_path).exists() {
         eprintln!("ERR repository doesn't exist");
         io::stderr().flush().unwrap();
