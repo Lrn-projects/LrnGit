@@ -7,9 +7,10 @@ use nix::{
 };
 
 pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
-    let fd = socket.into_raw_fd();
+    let fd = socket.as_raw_fd();
     match unsafe { fork() } {
         Ok(ForkResult::Parent { child, .. }) => {
+            drop(socket);
             println!("Continuing execution in parent process, new child has pid: {child}");
             waitpid(child, None).unwrap();
         }
@@ -27,7 +28,6 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
             unsafe { close(fd) };
             let cmd = CString::new(name).unwrap();
             let args = [CString::new(arg).unwrap()];
-            // Prepare argv: [program, arg1, ..., null]
             let mut c_args: Vec<*const libc::c_char> = args.iter().map(|s| s.as_ptr()).collect();
             c_args.push(std::ptr::null());
             unsafe {
