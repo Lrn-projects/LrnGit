@@ -1,9 +1,9 @@
 use std::{ffi::CString, net::TcpStream, os::fd::AsRawFd};
 
 use nix::{
-    libc::{self, dup2, execvp},
+    libc::{self, close, dup2, execvp},
     sys::wait::waitpid,
-    unistd::{ForkResult, fork},
+    unistd::{fork, ForkResult},
 };
 
 pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
@@ -24,6 +24,7 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
             if unsafe { dup2(fd, 2) } == -1 {
                 panic!("dup2 stderr failed");
             }
+            unsafe { close(fd) };
             let cmd = CString::new(name).unwrap();
             let args = [CString::new(arg).unwrap()];
             // Prepare argv: [program, arg1, ..., null]
