@@ -6,7 +6,7 @@ use crate::config::parse_local_config;
 
 /// Connect to remote host and return stream
 pub fn tcp_connect_to_remote(service: &str) -> TcpStream {
-    if service != "lrngit-receive-pack" || service != "lrngit-upload-pack" {
+    if service != "lrngit-receive-pack" && service != "lrngit-upload-pack" {
         exit(1)
     }
     let local_config = parse_local_config();
