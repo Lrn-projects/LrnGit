@@ -1,22 +1,13 @@
 use std::{ffi::CString, net::TcpStream, os::fd::AsRawFd};
 
 use nix::{
-    libc::{self, execvp},
+    libc::{self, dup2, execvp},
     sys::wait::waitpid,
     unistd::{ForkResult, fork},
 };
 
 pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
-    // let fd = socket.as_raw_fd();
-    // let mut process = Command::new(name)
-    //     .arg(arg)
-    //     .stdin(unsafe { Stdio::from_raw_fd(fd) })
-    //     .spawn()
-    //     .expect("Failed to execute asked lrngit-service");
-    // let wait = process.wait().expect("Failed to wait the process");
-    // if !wait.success() {
-    //     panic!("Process failed to execute");
-    // }
+    let fd = socket.as_raw_fd();
     match unsafe { fork() } {
         Ok(ForkResult::Parent { child, .. }) => {
             println!("Continuing execution in parent process, new child has pid: {child}");
@@ -24,10 +15,17 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
         }
         Ok(ForkResult::Child) => {
             // Unsafe to use `println!` (or `unwrap`) here. See Safety.
+            if unsafe { dup2(fd, 0) } == -1 {
+                panic!("dup2 stdin failed");
+            }
+            if unsafe { dup2(fd, 1) } == -1 {
+                panic!("dup2 stdout failed");
+            }
+            if unsafe { dup2(fd, 2) } == -1 {
+                panic!("dup2 stderr failed");
+            }
             let cmd = CString::new(name).unwrap();
-            let args = [
-                CString::new(arg).unwrap(),
-            ];
+            let args = [CString::new(arg).unwrap()];
             // Prepare argv: [program, arg1, ..., null]
             let mut c_args: Vec<*const libc::c_char> = args.iter().map(|s| s.as_ptr()).collect();
             c_args.push(std::ptr::null());
