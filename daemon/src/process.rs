@@ -1,5 +1,8 @@
 use std::{
-    ffi::CString, fs, net::TcpStream, os::fd::{AsRawFd, IntoRawFd}
+    ffi::CString,
+    fs,
+    net::TcpStream,
+    os::fd::{AsRawFd, IntoRawFd},
 };
 
 use nix::{
@@ -14,6 +17,16 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
         Ok(ForkResult::Parent { child, .. }) => {
             println!("Continuing execution in parent process, new child has pid: {child}");
             waitpid(child, None).unwrap();
+            match fs::read_dir("/proc/self/fd") {
+                Ok(it) => it,
+                Err(err) => {
+                    panic!("{err:?}")
+                }
+            }
+            .for_each(|entry| {
+                let entry = entry;
+                println!("PARENT still has fd: {:?}", entry.unwrap().path());
+            });
         }
         Ok(ForkResult::Child) => {
             // Unsafe to use `println!` (or `unwrap`) here. See Safety.
@@ -39,13 +52,4 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
         }
         Err(_) => println!("Fork failed"),
     }
-    match fs::read_dir("/proc/self/fd") {
-        Ok(it) => it,
-        Err(err) => {
-            panic!("{err:?}")
-        },
-    }.for_each(|entry| {
-        let entry = entry;
-        println!("PARENT still has fd: {:?}", entry.unwrap().path());
-    });
 }
