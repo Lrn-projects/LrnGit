@@ -1,9 +1,9 @@
 use std::{ffi::CString, net::TcpStream, os::fd::{AsRawFd, IntoRawFd}};
 
 use nix::{
-    libc::{self, close, dup2, execvp},
+    libc::{self, dup2, execvp},
     sys::wait::waitpid,
-    unistd::{fork, ForkResult},
+    unistd::{fork, ForkResult, close},
 };
 
 pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
@@ -25,7 +25,7 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
             if unsafe { dup2(fd, 2) } == -1 {
                 panic!("dup2 stderr failed");
             }
-            unsafe { close(fd) };
+            close(fd).expect("Failed to close file descriptor");
             let cmd = CString::new(name).unwrap();
             let args = [CString::new(arg).unwrap()];
             let mut c_args: Vec<*const libc::c_char> = args.iter().map(|s| s.as_ptr()).collect();
