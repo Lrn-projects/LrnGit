@@ -3,7 +3,7 @@ use std::os::fd::IntoRawFd;
 
 use crate::process;
 
-pub fn handle_client(mut stream: TcpStream) {
+pub fn handle_client(stream: TcpStream) {
     let mut buffer: [u8; 512] = [0; 512];
     match stream.peek(&mut buffer) {
         Ok(0) => panic!("connection closed"), // Connection was closed
