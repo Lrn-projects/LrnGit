@@ -31,6 +31,7 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
             c_args.push(std::ptr::null());
             unsafe {
                 execvp(cmd.as_ptr(), c_args.as_ptr());
+                drop(socket);
                 // If execvp returns, it failed
                 panic!("exec failed");
             }
