@@ -1,9 +1,13 @@
-use std::{env, io::Write, process::exit};
+use std::{
+    env,
+    io::{Read, Write},
+    process::exit,
+};
 
 use crate::{
     pack::upload::create_upload_pack,
     refs::{parse_current_branch, parse_head},
-    tcp
+    tcp,
 };
 
 pub fn push_command() {
@@ -33,4 +37,14 @@ fn push_remote_branch() {
         // Stream each element in upload pack to server
         stream.write_all(&each).unwrap();
     }
+    let mut buffer = [0u8; 1024];
+    loop {
+        let n = stream.read(&mut buffer).unwrap();
+        if n == 0 {
+            println!("Connection closed.");
+            break;
+        }
+        println!("Received: {}", String::from_utf8_lossy(&buffer[..n]));
+    }
+    stream.shutdown(std::net::Shutdown::Write).expect("Failed to shutdown strea");
 }
