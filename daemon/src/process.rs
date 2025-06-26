@@ -1,26 +1,23 @@
 use std::{
     net::TcpStream,
-    os::fd::{FromRawFd, IntoRawFd, RawFd},
+    os::fd::{AsRawFd, FromRawFd, IntoRawFd, RawFd},
     process::{Command, Stdio},
 };
 
-use nix::fcntl::{self, FcntlArg};
+use nix::fcntl::{self, FcntlArg, FdFlag};
 
-fn make_fd_inheritable(fd: RawFd) {
-    use std::os::fd::BorrowedFd;
-    // SAFETY: fd must be valid and open for the duration of this function
+use std::os::fd::BorrowedFd;
+
+fn make_fd_inheritable(fd: i32) {
     let borrowed_fd = unsafe { BorrowedFd::borrow_raw(fd) };
-    let flags = fcntl::fcntl(borrowed_fd, fcntl::FcntlArg::F_GETFD).unwrap();
-    let mut flags = fcntl::FdFlag::from_bits_truncate(flags);
-    flags.remove(fcntl::FdFlag::FD_CLOEXEC);
-    fcntl::fcntl(borrowed_fd, fcntl::FcntlArg::F_SETFD(flags)).unwrap();
+    let mut flags =
+        FdFlag::from_bits_truncate(fcntl::fcntl(borrowed_fd, FcntlArg::F_GETFD).unwrap());
+    flags.remove(FdFlag::FD_CLOEXEC);
+    fcntl::fcntl(borrowed_fd, FcntlArg::F_SETFD(flags)).unwrap();
 }
 
 pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
-    let fd = {
-        let fd = socket.into_raw_fd();
-        fd
-    }; // socket drop
+    let fd = socket.as_raw_fd();
     make_fd_inheritable(fd);
     let process = Command::new(name)
         .stdin(unsafe { Stdio::from_raw_fd(fd) })
