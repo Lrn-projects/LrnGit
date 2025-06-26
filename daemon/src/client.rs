@@ -6,7 +6,7 @@ use crate::process;
 pub fn handle_client(mut stream: TcpStream) {
     let mut buffer: [u8; 512] = [0; 512];
     match stream.read(&mut buffer) {
-        Ok(0) => drop(stream), // Connection was closed
+        Ok(0) => panic!("connection closed"), // Connection was closed
         Ok(n) => {
             let received = String::from_utf8_lossy(&buffer[..n]);
             println!("Packet: {received:#?}");
