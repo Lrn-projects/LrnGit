@@ -15,6 +15,7 @@ fn main() {
         exit(1)
     }
     set_current_dir(repo_path).expect("Failed to change current dir");
+    println!("repository found");
     let mut input = String::new();
     loop {
         std::io::stdin().read_to_string(&mut input).unwrap();
