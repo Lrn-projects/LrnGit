@@ -1,5 +1,5 @@
 use std::io::{Read, Write};
-use std::net::TcpStream;
+use std::net::{Shutdown, TcpStream};
 
 use crate::process;
 
@@ -31,8 +31,7 @@ pub fn handle_client(mut stream: TcpStream) {
             match service_str {
                 "lrngit-receive-pack" => {
                     process::fork_service("lrngit-receive-service", path_str, &stream);
-                    drop(stream);
-                    return;
+                    stream.shutdown(Shutdown::Both).expect("Failed to shutdown connection");
                 }
                 "lrngit-upload-pack" => {}
                 _ => {}
