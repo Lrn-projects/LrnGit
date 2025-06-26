@@ -4,7 +4,7 @@ use std::{
     process::{Command, Stdio},
 };
 
-use nix::unistd::dup;
+use nix::{unistd::close, unistd::dup};
 
 pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
     let fd = socket.as_raw_fd();
@@ -25,5 +25,6 @@ pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
     // let wait_process = process
     //     .wait_with_output()
     //     .expect("Failed to wait asked service");
-    std::mem::forget(socket);
+    close(fd).expect("Failed to close fd");
+    drop(socket);
 }
