@@ -12,7 +12,10 @@ use nix::{
 };
 
 pub fn fork_service(name: &str, arg: &str, socket: TcpStream) {
-    let fd = socket.into_raw_fd();
+    let fd = {
+        let fd = socket.into_raw_fd();
+        fd
+    }; // ici, socket est drop
     match unsafe { fork() } {
         Ok(ForkResult::Parent { child, .. }) => {
             println!("Continuing execution in parent process, new child has pid: {child}");
