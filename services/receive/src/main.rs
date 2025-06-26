@@ -1,13 +1,12 @@
 use std::{
-    env::{self, set_current_dir},
-    io::{self, Read, Write},
-    path::Path,
-    process::exit,
+    env::{self, set_current_dir}, io::{self, Read, Write}, net::TcpStream, os::fd::FromRawFd, path::Path, process::exit
 };
 
 fn main() {
     println!("[SERVICE] lrngit-receive");
     let args: Vec<String> = env::args().collect();
+    let mut stream = unsafe { TcpStream::from_raw_fd(0)};
+    stream.write_all("prout".as_bytes()).unwrap();
     let lrngit_repo_path: &str = "/home/ubuntu/lrngit/repositories/";
     if args.len() < 2 {
         eprintln!("ERR: repository name argument missing");
