@@ -1,9 +1,12 @@
 use std::{
     env::{self, set_current_dir},
     io::{self, Read, Write},
+    os::fd::FromRawFd,
     path::Path,
-    process::exit, thread::sleep, time::Duration,
+    process::exit,
 };
+
+use std::net::{Shutdown, TcpStream};
 
 fn main() {
     println!("[SERVICE] lrngit-receive");
@@ -13,14 +16,16 @@ fn main() {
     if args.len() < 2 {
         println!("ERR: repository name argument missing");
         io::stdout().flush().unwrap();
-        sleep(Duration::new(1, 0));
+        // Create stream from fd and shutdown to properly send err to client
+        let _ = unsafe { TcpStream::from_raw_fd(1) }.shutdown(Shutdown::Write);
         exit(1);
     }
     let repo_path = lrngit_repo_path.to_owned() + &args[1];
     if !Path::new(&repo_path).exists() {
         println!("ERR repository doesn't exist");
         io::stdout().flush().unwrap();
-        sleep(Duration::new(1, 0));
+        // Create stream from fd and shutdown to properly send err to client
+        let _ = unsafe { TcpStream::from_raw_fd(1) }.shutdown(Shutdown::Write);
         exit(1)
     }
     set_current_dir(repo_path).expect("Failed to change current dir");
