@@ -1,18 +1,24 @@
 use std::{
-    env::{self, set_current_dir}, io::{self, Read, Write}, path::Path, process::exit
+    env::{self, set_current_dir},
+    io::{self, Read, Write},
+    path::Path,
+    process::exit,
 };
 
 fn main() {
     println!("[SERVICE] lrngit-receive");
+    io::stdout().flush().unwrap();
     let args: Vec<String> = env::args().collect();
     let lrngit_repo_path: &str = "/home/ubuntu/lrngit/repositories/";
     if args.len() < 2 {
-        eprintln!("ERR: repository name argument missing");
+        println!("ERR: repository name argument missing");
+        io::stdout().flush().unwrap();
         exit(1);
     }
     let repo_path = lrngit_repo_path.to_owned() + &args[1];
     if !Path::new(&repo_path).exists() {
-        eprintln!("ERR repository doesn't exist");
+        println!("ERR repository doesn't exist");
+        io::stdout().flush().unwrap();
         exit(1)
     }
     set_current_dir(repo_path).expect("Failed to change current dir");
@@ -20,7 +26,8 @@ fn main() {
     loop {
         let n = io::stdin().read(&mut buffer).expect("read failed");
         if n == 0 {
-            eprintln!("TCP connection closed");
+            println!("TCP connection closed");
+            io::stdout().flush().unwrap();
             break;
         }
 
