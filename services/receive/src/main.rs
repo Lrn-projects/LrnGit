@@ -2,7 +2,7 @@ use std::{
     env::{self, set_current_dir},
     io::{self, Read, Write},
     path::Path,
-    process::exit,
+    process::exit, thread::sleep, time::Duration,
 };
 
 fn main() {
@@ -13,12 +13,14 @@ fn main() {
     if args.len() < 2 {
         println!("ERR: repository name argument missing");
         io::stdout().flush().unwrap();
+        sleep(Duration::new(1, 0));
         exit(1);
     }
     let repo_path = lrngit_repo_path.to_owned() + &args[1];
     if !Path::new(&repo_path).exists() {
         println!("ERR repository doesn't exist");
         io::stdout().flush().unwrap();
+        sleep(Duration::new(1, 0));
         exit(1)
     }
     set_current_dir(repo_path).expect("Failed to change current dir");
