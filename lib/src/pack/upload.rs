@@ -22,7 +22,7 @@ pub fn parse_upload_pack(pack_slice: &[u8]) {
     let parsed_pack: UploadPack = match bincode::deserialize(pack_slice) {
         Ok(p) => p,
         Err(e) => {
-            eprintln!("Error parsing tree");
+            eprintln!("Error parsing tree: {e:?}");
             exit(1)
             // return Err(Box::new(e));
         }
