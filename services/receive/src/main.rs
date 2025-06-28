@@ -29,6 +29,7 @@ fn main() {
         exit(1)
     }
     set_current_dir(repo_path).expect("Failed to change current dir");
+    // Loop over stdin for incoming packets
     let mut buffer = [0u8; 1024];
     loop {
         let n = io::stdin().read(&mut buffer).expect("read failed");

@@ -28,6 +28,8 @@ pub fn push_command() {
     }
 }
 
+/// Push the local change to the remote repository. Get the last commit and refs, enable connection
+/// between client and remote host and send object through an upload pack.
 fn push_remote_branch() {
     let last_commit = parse_current_branch();
     let refs = &parse_head();
@@ -37,6 +39,7 @@ fn push_remote_branch() {
         // Stream each element in upload pack to server
         stream.write_all(&each).unwrap();
     }
+    // Loop over the stream to read all incoming packets
     let mut buffer = [0u8; 1024];
     loop {
         let n = stream.read(&mut buffer).unwrap();
