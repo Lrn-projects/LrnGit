@@ -8,6 +8,8 @@ use std::{
 
 use std::net::{Shutdown, TcpStream};
 
+use lrngitcore::pack::upload::{parse_upload_pack, UploadPack};
+
 fn main() {
     println!("[SERVICE] lrngit-receive");
     io::stdout().flush().unwrap();
@@ -39,7 +41,8 @@ fn main() {
             break;
         }
 
-        println!("Packet: {:?}", String::from_utf8_lossy(&buffer[..n]));
+        let pack: UploadPack = parse_upload_pack(&buffer).expect("Failed to parse upload pack");
+        println!("debug pack: {pack:?}");
         io::stdout().flush().unwrap();
     }
 }

@@ -1,4 +1,4 @@
-use std::process::exit;
+use std::io::{Error, ErrorKind};
 
 use serde::{Deserialize, Serialize};
 
@@ -18,14 +18,13 @@ pub struct UploadPackData {
 }
 
 /// Parse a slice of bytes and return an upload-pack
-pub fn parse_upload_pack(pack_slice: &[u8]) {
+pub fn parse_upload_pack(pack_slice: &[u8]) -> Result<UploadPack, Error>{
     let parsed_pack: UploadPack = match bincode::deserialize(pack_slice) {
         Ok(p) => p,
         Err(e) => {
-            eprintln!("Error parsing tree: {e:?}");
-            exit(1)
-            // return Err(Box::new(e));
+            eprintln!("Error parsing upload pack: {e:?}");
+            return Err(Error::new(ErrorKind::Other, e))
         }
     };
-    println!("debug pack: {parsed_pack:?}");
+    Ok(parsed_pack)
 }
