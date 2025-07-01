@@ -25,8 +25,8 @@ pub struct UploadPackData {
 }
 
 /// Parse a slice of bytes and return an upload-pack
-pub fn parse_upload_pack(pack_slice: &[u8]) -> Result<UploadPack, Error> {
-    let mut parsed_pack: UploadPack = match bincode::deserialize(pack_slice) {
+pub fn parse_upload_pack(pack_slice: Vec<u8>) -> Result<UploadPack, Error> {
+    let mut parsed_pack: UploadPack = match bincode::deserialize(&pack_slice) {
         Ok(p) => p,
         Err(e) => {
             eprintln!("Error parsing upload pack: {e:?}");

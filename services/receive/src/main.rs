@@ -40,15 +40,7 @@ fn main() {
             io::stdout().flush().unwrap();
             break;
         }
-        let mut clean_buff: Vec<u8> = Vec::new();
-        for each in buffer {
-            if each != 0 {
-                clean_buff.push(each);
-            } else {
-                break;
-            } 
-        }
-        let pack: UploadPack = parse_upload_pack(&clean_buff).expect("Failed to parse upload pack");
+        let pack: UploadPack = parse_upload_pack(buffer.into()).expect("Failed to parse upload pack");
         println!("debug pack: {pack:?}");
         io::stdout().flush().unwrap();
     }
