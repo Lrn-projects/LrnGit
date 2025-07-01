@@ -1,11 +1,12 @@
+use std::io::Read;
 use std::net::TcpStream;
 use std::os::fd::IntoRawFd;
 
 use crate::process;
 
-pub fn handle_client(stream: TcpStream) {
+pub fn handle_client(mut stream: TcpStream) {
     let mut buffer: [u8; 512] = [0; 512];
-    match stream.peek(&mut buffer) {
+    match stream.read(&mut buffer) {
         Ok(0) => panic!("connection closed"), // Connection was closed
         Ok(n) => {
             let received = String::from_utf8_lossy(&buffer[..n]);
