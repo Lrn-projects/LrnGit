@@ -46,19 +46,20 @@ fn main() {
             }
         }
         let length = u32::from_le_bytes(stream_length);
-        println!("debug length: {length:?}");
         if length == 0 {
             println!("Received zero-length packet, closing connection.");
             io::stdout().flush().unwrap();
             break;
         }
         let mut buffer = vec![0u8; length as usize];
-        if let Err(e) = io::stdin().read_exact(&mut buffer) {
-            eprintln!("Failed to read framed stream: {e}");
+        io::stdin()
+            .read_exact(&mut buffer)
+            .expect("Failed to read framed stream");
+        if buffer.is_empty() {
+            println!("TCP connection closed");
             io::stdout().flush().unwrap();
             break;
         }
-        println!("debug buff: {buffer:?}");
         match parse_upload_pack(&buffer) {
             Ok(pack) => println!("debug pack: {pack:?}"),
             Err(e) => {

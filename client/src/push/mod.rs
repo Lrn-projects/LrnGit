@@ -4,6 +4,8 @@ use std::{
     process::exit,
 };
 
+use lrngitcore::pack;
+
 use crate::{
     pack::upload::create_upload_pack,
     refs::{parse_current_branch, parse_head},
@@ -35,10 +37,12 @@ fn push_remote_branch() {
     let refs = &parse_head();
     let mut stream = tcp::tcp_connect_to_remote("lrngit-receive-pack");
     let pack = create_upload_pack(refs, last_commit.as_bytes().to_vec());
-    for each in pack {
-        // Stream each element in upload pack to server
-        stream.write_all(&each).unwrap();
-    }
+    let pack_length: u32 = pack.len() as u32;
+    let mut stream_framed: Vec<u8> = Vec::new();
+    stream_framed.extend_from_slice(&pack_length.to_le_bytes());
+    stream_framed.extend_from_slice(&pack);
+    stream.write_all(&stream_framed).expect("Failed to stream upload pack");
+    stream.flush().expect("Failed to flush stream");
     // Loop over the stream to read all incoming packets
     let mut buffer = [0u8; 1024];
     loop {
