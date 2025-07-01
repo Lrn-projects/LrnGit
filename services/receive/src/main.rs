@@ -32,16 +32,18 @@ fn main() {
     }
     set_current_dir(repo_path).expect("Failed to change current dir");
     // Loop over stdin for incoming packets
-    let mut buffer = [0u8; 1024];
+    let mut stream_length = [0u8; 4];
     loop {
-        let n = io::stdin().read(&mut buffer).expect("read failed");
-        if n == 0 {
-            println!("TCP connection closed");
-            io::stdout().flush().unwrap();
-            break;
-        }
+        io::stdin()
+            .read_exact(&mut stream_length)
+            .expect("Failed to read stream length");
+        let length = u32::from_le_bytes(stream_length);
+        let mut buffer = vec![0u8; length as usize];
+        io::stdin()
+            .read_exact(&mut buffer)
+            .expect("Failed to read framed stream");
         println!("debug buff: {buffer:?}");
-        let pack: UploadPack = parse_upload_pack(&buffer[..n]).expect("Failed to parse upload pack");
+        let pack: UploadPack = parse_upload_pack(&buffer).expect("Failed to parse upload pack");
         println!("debug pack: {pack:?}");
         io::stdout().flush().unwrap();
     }
