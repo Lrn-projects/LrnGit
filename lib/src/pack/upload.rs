@@ -11,17 +11,17 @@ pub enum Data {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UploadPack {
-    pub header: Box<[u8]>,
+    pub header: Vec<u8>,
     pub data: Data,
-    pub footer: Box<[u8]>,
+    pub footer: Vec<u8>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UploadPackData {
-    pub header: Box<[u8]>,
-    pub object_type: Box<[u8]>,
+    pub header: Vec<u8>,
+    pub object_type: Vec<u8>,
     pub hash: [u8; 20],
-    pub data: Box<[u8]>,
+    pub data: Vec<u8>,
 }
 
 /// Parse a slice of bytes and return an upload-pack
