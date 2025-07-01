@@ -8,7 +8,7 @@ use std::{
 
 use std::net::{Shutdown, TcpStream};
 
-use lrngitcore::pack::upload::{UploadPack, parse_upload_pack};
+use lrngitcore::pack::upload::{parse_upload_pack, UploadPack};
 
 fn main() {
     println!("[SERVICE] lrngit-receive");
@@ -34,13 +34,14 @@ fn main() {
     // Loop over stdin for incoming packets
     let mut stream_length = [0u8; 4];
     loop {
-        let n = io::stdin()
-            .read(&mut stream_length)
-            .expect("Failed to read stream length");
-        if n == 0 {
-            println!("TCP connection closed");
-            io::stdout().flush().unwrap();
-            break;
+        if let Err(e) = io::stdin().read_exact(&mut stream_length) {
+            if e.kind() == io::ErrorKind::UnexpectedEof {
+                println!("TCP connection closed");
+                io::stdout().flush().unwrap();
+                break;
+            } else {
+                panic!("Failed to read stream length: {e}");
+            }
         }
         let length = u32::from_le_bytes(stream_length);
         let mut buffer = vec![0u8; length as usize];
