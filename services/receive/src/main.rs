@@ -41,7 +41,7 @@ fn main() {
             break;
         }
         println!("debug buff: {buffer:?}");
-        let pack: UploadPack = parse_upload_pack(buffer[..n].into()).expect("Failed to parse upload pack");
+        let pack: UploadPack = parse_upload_pack(&buffer[..n]).expect("Failed to parse upload pack");
         println!("debug pack: {pack:?}");
         io::stdout().flush().unwrap();
     }
