@@ -40,17 +40,33 @@ fn main() {
                 io::stdout().flush().unwrap();
                 break;
             } else {
-                panic!("Failed to read stream length: {e}");
+                eprintln!("Failed to read stream length: {e}");
+                io::stdout().flush().unwrap();
+                break;
             }
         }
         let length = u32::from_le_bytes(stream_length);
+        println!("debug length: {length:?}");
+        if length == 0 {
+            println!("Received zero-length packet, closing connection.");
+            io::stdout().flush().unwrap();
+            break;
+        }
         let mut buffer = vec![0u8; length as usize];
-        io::stdin()
-            .read_exact(&mut buffer)
-            .expect("Failed to read framed stream");
+        if let Err(e) = io::stdin().read_exact(&mut buffer) {
+            eprintln!("Failed to read framed stream: {e}");
+            io::stdout().flush().unwrap();
+            break;
+        }
         println!("debug buff: {buffer:?}");
-        let pack: UploadPack = parse_upload_pack(&buffer).expect("Failed to parse upload pack");
-        println!("debug pack: {pack:?}");
+        match parse_upload_pack(&buffer) {
+            Ok(pack) => println!("debug pack: {pack:?}"),
+            Err(e) => {
+                eprintln!("Failed to parse upload pack: {e}");
+                io::stdout().flush().unwrap();
+                break;
+            }
+        }
         io::stdout().flush().unwrap();
     }
 }
