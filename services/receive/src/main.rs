@@ -8,7 +8,7 @@ use std::{
 
 use std::net::{Shutdown, TcpStream};
 
-use lrngitcore::pack::upload::{parse_upload_pack, UploadPack, UploadPackData};
+use lrngitcore::pack::upload::{UploadPack, UploadPackData, parse_upload_pack};
 
 fn main() {
     println!("[SERVICE] lrngit-receive");
@@ -33,6 +33,8 @@ fn main() {
     set_current_dir(repo_path).expect("Failed to change current dir");
     // Loop over stdin for incoming packets
     let mut stream_length = [0u8; 4];
+    // buffer of 64kb size
+    let mut buffer = vec![0u8; 65536];
     loop {
         if let Err(e) = io::stdin().read_exact(&mut stream_length) {
             if e.kind() == io::ErrorKind::UnexpectedEof {
@@ -51,9 +53,8 @@ fn main() {
             io::stdout().flush().unwrap();
             break;
         }
-        let mut buffer = vec![0u8; length as usize];
         io::stdin()
-            .read_exact(&mut buffer)
+            .read_exact(&mut buffer[..length as usize])
             .expect("Failed to read framed stream");
         if buffer.is_empty() {
             println!("TCP connection closed");
@@ -68,6 +69,7 @@ fn main() {
                 break;
             }
         };
+        println!("debug pack: {:?}", pack);
         println!("Received upload pack");
         io::stdout().flush().unwrap();
     }
