@@ -8,7 +8,7 @@ use std::{
 
 use std::net::{Shutdown, TcpStream};
 
-use lrngitcore::pack::upload::{UploadPack, UploadPackData, parse_upload_pack};
+use lrngitcore::{fs::pack::write_pack_to_disk, pack::upload::parse_upload_pack};
 
 fn main() {
     println!("[SERVICE] lrngit-receive");
@@ -69,8 +69,8 @@ fn main() {
                 break;
             }
         };
-        println!("debug pack: {:?}", pack);
         println!("Received upload pack");
+        write_pack_to_disk(pack.data);
         io::stdout().flush().unwrap();
     }
 }

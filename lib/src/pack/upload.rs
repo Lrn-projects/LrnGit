@@ -5,12 +5,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UploadPack {
     pub header: Vec<u8>,
-    pub data: Vec<UploadPackData>,
+    pub data: Vec<ObjectsPackData>,
     pub footer: Vec<u8>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct UploadPackData {
+pub struct ObjectsPackData {
     pub header: Vec<u8>,
     pub object_type: Vec<u8>,
     pub hash: [u8; 20],
