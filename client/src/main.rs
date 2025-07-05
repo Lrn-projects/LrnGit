@@ -17,6 +17,7 @@ mod push;
 pub mod remote;
 pub mod pack;
 pub mod tcp;
+pub mod pull;
 
 use std::env;
 use std::process::exit;
@@ -37,6 +38,7 @@ Commands:
     add             Add file to local repository
     commit          Commit to the local repository
     push            Push to remote repository
+    pull            Pull from remote repositoy
     branch          Create a new branch or list all branches
     switch          Switch branch to the given one
     cat-file        Cat content of a given hash
@@ -62,6 +64,7 @@ enum Commands {
     Add { arg: String },
     Commit,
     Push,
+    Pull,
     Branch,
     Switch,
     CatFile { arg: String },
@@ -103,6 +106,7 @@ fn main() {
         },
         Some("commit") => Commands::Commit,
         Some("push") => Commands::Push,
+        Some("pull") => Commands::Pull,
         Some("branch") => Commands::Branch,
         Some("switch") => Commands::Switch,
         Some("cat-file") => Commands::CatFile {
@@ -133,6 +137,7 @@ fn main() {
         Commands::Add { arg } => add::add_to_local_repo(arg),
         Commands::Commit => commit::commit_command(),
         Commands::Push => push::push_command(),
+        Commands::Pull => pull::pull_command(),
         Commands::Branch => branch::branch_command(),
         Commands::Switch => switch::switch_command(),
         Commands::CatFile { arg } => object::utils::read_blob_file(&arg),
