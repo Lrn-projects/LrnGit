@@ -1,0 +1,7 @@
+[package]
+name = "lrngit-upload-service"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+lrngitcore = { version = "0.1.0", path = "../../lib" }

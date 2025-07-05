@@ -4,8 +4,6 @@ use std::{
     process::exit,
 };
 
-use lrngitcore::pack;
-
 use crate::{
     pack::upload::create_upload_pack,
     refs::{parse_current_branch, parse_head},

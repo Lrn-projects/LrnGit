@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read, path::PathBuf};
 
-use lrngitcore::pack::upload::{UploadPack, UploadPackData};
+use lrngitcore::pack::upload::{UploadPack, ObjectsPackData};
 
 use crate::{
     object::{commit, utils::{get_file_by_hash, walk_root_tree_all_objects}},
@@ -20,12 +20,12 @@ pub fn create_upload_pack(refs: &str, _last_commit: Vec<u8>) -> Vec<u8> {
     walk_root_tree_all_objects(&root_tree, &mut PathBuf::new(), &mut all_root_tree_objects);
     all_root_tree_objects.sort();
     all_root_tree_objects.dedup();
-    let mut object_vec: Vec<UploadPackData> = Vec::new();
+    let mut object_vec: Vec<ObjectsPackData> = Vec::new();
     for each in &all_root_tree_objects {
         let mut file: File = get_file_by_hash(&hex::encode(each.1));
         let mut file_buff: Vec<u8> = Vec::new();
         file.read_to_end(&mut file_buff).expect("Failed to read file content");
-        let new_object: UploadPackData = UploadPackData {
+        let new_object: ObjectsPackData = ObjectsPackData {
             header: b"OBJECT".as_slice().to_vec(),
             object_type: each.0.as_bytes().to_vec(),
             hash: each.1,

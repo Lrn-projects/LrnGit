@@ -33,7 +33,9 @@ pub fn handle_client(mut stream: TcpStream) {
                 "lrngit-receive-pack" => {
                     process::fork_service("lrngit-receive-service", path_str, stream.into_raw_fd());
                 }
-                "lrngit-upload-pack" => {}
+                "lrngit-upload-pack" => {
+                    process::fork_service("lrngit-upload-service", path_str, stream.into_raw_fd());
+                }
                 _ => {}
             }
         }
