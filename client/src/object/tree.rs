@@ -76,11 +76,13 @@ fn add_tree(entries: Vec<(String, u32, [u8; 20])>) -> [u8; 20] {
     // creation of tree object
     let new_tree: Tree = Tree {
         header: git_object_header("tree", new_tree_entry_vec.len()),
-        entries: new_tree_entry_vec.clone(),
+        entries: new_tree_entry_vec,
     };
-    let tree_vec: Vec<u8> = bincode::serialize(&new_tree).expect("Failed to serialize new tree");
+    let mut tree_concat = new_tree.header;
+    let tree_entries_buff: Vec<u8> = bincode::serialize(&new_tree.entries).expect("Failed to serialize tree entries to bytes");
+    tree_concat.extend(tree_entries_buff);
     // Compress the new tree object with zlib
-    let compressed_bytes_vec = compress_file(tree_vec);
+    let compressed_bytes_vec = compress_file(tree_concat);
     // hash tree content with SHA-1
     let (new_hash, split_hash_result_hex) = hash_sha1(&compressed_bytes_vec);
     // File creation
