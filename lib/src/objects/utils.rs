@@ -1,4 +1,9 @@
-use std::{fs::read_dir, path::PathBuf, str::FromStr};
+use std::{
+    fs::{self, read_dir},
+    io::Read,
+    path::PathBuf,
+    str::FromStr,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -57,7 +62,6 @@ pub fn split_object_header(mut buf: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     (header_bytes, new_vec)
 }
 
-
 pub fn parse_hash_objects(objects_path: Vec<PathBuf>) -> Vec<String> {
     let mut hash_vec: Vec<String> = Vec::new();
     for each_path in objects_path {
@@ -72,7 +76,26 @@ pub fn parse_hash_objects(objects_path: Vec<PathBuf>) -> Vec<String> {
     hash_vec
 }
 
-pub fn parse_object_header(hash: &str) {
+/// Parse given object header and return the object type and the size of the object content
+pub fn parse_object_header(hash: &str) -> (String, usize) {
     let object_path: String = split_hash(hash);
-    // let (object_header_buff,_) = split_object_header(buf);
+    let mut read_file = fs::File::open(object_path).expect("Failed to open file");
+    let mut buf = Vec::new();
+    read_file
+        .read_to_end(&mut buf)
+        .expect("Failed to read file");
+    let mut d = flate2::read::ZlibDecoder::new(buf.as_slice());
+    let mut buffer: Vec<u8> = Vec::new();
+    d.read_to_end(&mut buffer).unwrap();
+    let (mut object_header_buff, _) = split_object_header(buffer);
+    object_header_buff.pop();
+    let header_str = str::from_utf8(&object_header_buff).expect("Failed to cast buffer to str");
+    let split: Vec<&str> = header_str.split(" ").collect();
+    println!("debug: {:?}", split);
+    (
+        split[0].to_owned(),
+        split[1]
+            .parse::<usize>()
+            .expect("Failed to cast str to usize"),
+    )
 }
