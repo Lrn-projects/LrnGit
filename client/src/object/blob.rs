@@ -25,7 +25,7 @@ use std::os::unix::fs::MetadataExt;
 /// The function `add_blob` returns a `String` which is the hexadecimal representation of the SHA-1 hash
 /// of the file content that was read and added to the local repository.
 pub fn add_blob(arg: &str) -> [u8; 20] {
-    let blob_hash = calculate_file_hash_and_blob(arg)
+    let blob_hash = compute_file_hash_and_blob(arg)
         .expect("Failed to get the blob and the hash from the file path");
     // check index entry
     index::remove_index_entry(arg);
@@ -51,8 +51,8 @@ pub fn add_blob(arg: &str) -> [u8; 20] {
     blob_hash.hash
 }
 
-// Calculate file hash and create blob object
-pub fn calculate_file_hash_and_blob(file_path: &str) -> Result<FileHashBlob, std::io::Error> {
+// Compute file hash and create blob object
+pub fn compute_file_hash_and_blob(file_path: &str) -> Result<FileHashBlob, std::io::Error> {
     // read file content
     let read_file = fs::read_to_string(file_path);
     let file: String = match read_file {
@@ -69,8 +69,8 @@ pub fn calculate_file_hash_and_blob(file_path: &str) -> Result<FileHashBlob, std
         content: new_blob.to_vec(),
     };
     // concat the blob object from struct
-    let mut blob_object_concat = blob_object.header.clone();
-    blob_object_concat.extend(blob_object.content.clone());
+    let mut blob_object_concat = blob_object.header;
+    blob_object_concat.extend(blob_object.content);
     // hash file content with SHA-1
     let new_hash: [u8; 20];
     let split_hash_result_hex: Vec<char>;

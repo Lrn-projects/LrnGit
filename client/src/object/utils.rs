@@ -18,7 +18,7 @@ use crate::{
 };
 
 use super::{
-    blob::calculate_file_hash_and_blob,
+    blob::compute_file_hash_and_blob,
     commit::parse_commit_by_hash,
     index::{self, parse_index},
     tree::print_tree_content,
@@ -267,7 +267,7 @@ fn check_file_staged(file_path: &str) -> FileStatusEntry {
     {
         let entry = index.entries.remove(pos);
         let disk_hash =
-            calculate_file_hash_and_blob(file_path).expect("Failed to get hash from file path");
+            compute_file_hash_and_blob(file_path).expect("Failed to get hash from file path");
         // if entry.hash != file_hash && entry.hash == disk_hash
         if entry.hash != file_hash && entry.hash == disk_hash.hash {
             FileStatusEntry {
