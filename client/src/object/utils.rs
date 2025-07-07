@@ -152,28 +152,6 @@ pub fn get_path_by_hash(hash: &[char]) -> String {
     format!(".lrngit/objects/{folder_name}/{file_name}")
 }
 
-/// Parse git object header and return two vectors
-/// first index of output vector is the header vector, second is the rest of the params buffer
-pub fn split_object_header(mut buf: Vec<u8>) -> Vec<Vec<u8>> {
-    // Parse buffer until reach \0
-    // remove header from rest of the buffer and add them in a new vec
-    let mut header_bytes: Vec<u8> = Vec::new();
-    for bytes in buf.clone() {
-        header_bytes.push(bytes);
-        if let Some(index) = buf.iter().position(|value| *value == bytes) {
-            buf.remove(index);
-        }
-        if bytes == 0 {
-            break;
-        }
-    }
-    let mut output_vec = Vec::new();
-    let new_vec = buf.clone();
-    output_vec.push(header_bytes);
-    output_vec.push(new_vec);
-    output_vec
-}
-
 /// Walk in dir trough the tree object from the root tree until reach the specify path and return the
 /// blob object hash. The file we want to get must be a file committed, or else the tree wont be
 /// created and the function will not work.

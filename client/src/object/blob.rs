@@ -2,8 +2,8 @@ use blob::{Blob, Standard};
 use lrngitcore::fs::new_file_dir;
 use lrngitcore::objects::blob::{FileHashBlob, BlobObject};
 use lrngitcore::objects::tree::RWO;
+use lrngitcore::objects::utils::split_object_header;
 
-use super::utils::split_object_header;
 use super::{index, utils::hash_sha1};
 use crate::object::utils::{compress_file, git_object_header};
 use std::fs;
@@ -92,6 +92,6 @@ pub fn read_blob_content(path: &str) -> Vec<u8> {
     let mut d = flate2::read::ZlibDecoder::new(buf.as_slice());
     let mut buffer: Vec<u8> = Vec::new();
     d.read_to_end(&mut buffer).unwrap();
-    let split_blob = split_object_header(buffer);
-    split_blob[1].to_owned()
+    let (_, content) = split_object_header(buffer);
+    content.to_owned()
 }
