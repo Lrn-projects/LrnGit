@@ -69,6 +69,9 @@ fn main() {
                 break;
             }
         };
+        for each in pack.data.iter().clone() {
+            println!("debug pack: {:?}", str::from_utf8(&each.hash).unwrap());
+        }
         println!("Received upload pack");
         write_pack_to_disk(pack.data);
         io::stdout().flush().unwrap();
