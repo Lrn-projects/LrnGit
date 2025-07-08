@@ -4,6 +4,7 @@ use crate::pack::upload::ObjectsPackData;
 
 pub fn write_pack_to_disk(objects: Vec<ObjectsPackData>) {
     for each in objects {
+        println!("debug write_pack_to_disk: {:?}", str::from_utf8(&each.hash).unwrap());
         let hash_chars: Vec<char> = hex::encode(each.hash).chars().collect();
         new_file_dir(&hash_chars, &each.data).expect("Failed to create objects");
     }
