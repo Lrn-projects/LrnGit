@@ -72,7 +72,7 @@ fn push_remote_branch() {
         }
         // println!("Enumerate objects: {:?}", pack.len());
         println!(
-            "Received: {}",
+            "remote: {}",
             String::from_utf8_lossy(&buffer[..length as usize])
         );
     }

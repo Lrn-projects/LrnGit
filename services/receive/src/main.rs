@@ -14,8 +14,6 @@ use lrngitcore::{
 
 fn main() {
     let mut stdout = io::stdout();
-    let message: &str = "[SERVICE] lrngit-receive";
-    write_framed_message_stdout(message.len() as u32, message, &mut stdout);
     let args: Vec<String> = env::args().collect();
     let lrngit_repo_path: &str = "/home/ubuntu/lrngit/repositories/";
     if args.len() < 2 {
