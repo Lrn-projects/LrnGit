@@ -40,7 +40,8 @@ fn main() {
         if let Err(e) = io::stdin().read_exact(&mut stream_length) {
             if e.kind() == io::ErrorKind::UnexpectedEof {
                 let message: &str = "TCP connection closed";
-                println!("{}", format!("{} {}", message.len() as u32, message));
+                let length: u32 = message.len() as u32;
+                println!("{}", format!("{:?} {}", length.to_le_bytes(), message));
                 io::stdout().flush().unwrap();
                 break;
             } else {
@@ -51,7 +52,8 @@ fn main() {
         let length = u32::from_le_bytes(stream_length);
         if length == 0 {
             let message: &str = "Received zero-length packet, closing connection.";
-            println!("{}", format!("{} {}", message.len() as u32, message));
+            let length: u32 = message.len() as u32;
+            println!("{}", format!("{:?} {}", length.to_le_bytes(), message));
             io::stdout().flush().unwrap();
             break;
         }
@@ -61,7 +63,8 @@ fn main() {
             .expect("Failed to read framed stream");
         if buffer.is_empty() {
             let message: &str = "TCP connection closed";
-            println!("{}", format!("{} {}", message.len() as u32, message));
+            let length: u32 = message.len() as u32;
+            println!("{}", format!("{:?} {}", length.to_le_bytes(), message));
             io::stdout().flush().unwrap();
             break;
         }
@@ -72,7 +75,9 @@ fn main() {
                 break;
             }
         };
-        println!("Received upload pack");
+        let message: &str = "Received upload pack";
+        let length: u32 = message.len() as u32;
+        println!("{}", format!("{:?} {}", length.to_le_bytes(), message));
         write_pack_to_disk(pack.data);
         io::stdout().flush().unwrap();
     }
