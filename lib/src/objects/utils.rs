@@ -91,7 +91,6 @@ pub fn parse_object_header(hash: &str) -> (String, usize) {
     object_header_buff.pop();
     let header_str = str::from_utf8(&object_header_buff).expect("Failed to cast buffer to str");
     let split: Vec<&str> = header_str.split(" ").collect();
-    println!("debug: {:?}", split);
     (
         split[0].to_owned(),
         split[1]
