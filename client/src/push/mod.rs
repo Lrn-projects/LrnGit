@@ -1,6 +1,6 @@
 use std::{
     env,
-    io::{Read, Write},
+    io::{self, Read, Write},
     process::exit,
 };
 
@@ -39,17 +39,44 @@ fn push_remote_branch() {
     let mut stream_framed: Vec<u8> = Vec::new();
     stream_framed.extend_from_slice(&pack_length.to_le_bytes());
     stream_framed.extend_from_slice(&pack);
-    stream.write_all(&stream_framed).expect("Failed to stream upload pack");
+    stream
+        .write_all(&stream_framed)
+        .expect("Failed to stream upload pack");
     stream.flush().expect("Failed to flush stream");
     // Loop over the stream to read all incoming packets
-    let mut buffer = [0u8; 1024];
+    let mut stream_length = [0u8; 4];
+    let mut buffer = vec![0u8; 1024];
     loop {
-        let n = stream.read(&mut buffer).unwrap();
-        if n == 0 {
-            println!("Connection closed.");
+        // Read buffer length
+        if let Err(e) = stream.read_exact(&mut stream_length) {
+            if e.kind() == io::ErrorKind::UnexpectedEof {
+                println!("TCP connection closed");
+                break;
+            } else {
+                eprintln!("Failed to read stream length: {e}");
+                break;
+            }
+        }
+        let length = u32::from_le_bytes(stream_length);
+        if length == 0 {
+            println!("Received zero-length packet, closing connection.");
             break;
         }
-        println!("Received: {}", String::from_utf8_lossy(&buffer[..n]));
+        // Read rest of the stream in buffer
+        stream
+            .read_exact(&mut buffer[..length as usize])
+            .expect("Failed to read framed stream");
+        if buffer.is_empty() {
+            println!("TCP connection closed");
+            break;
+        }
+        // println!("Enumerate objects: {:?}", pack.len());
+        println!(
+            "Received: {}",
+            String::from_utf8_lossy(&buffer[..length as usize])
+        );
     }
-    stream.shutdown(std::net::Shutdown::Write).expect("Failed to shutdown strea");
+    stream
+        .shutdown(std::net::Shutdown::Write)
+        .expect("Failed to shutdown stream");
 }
