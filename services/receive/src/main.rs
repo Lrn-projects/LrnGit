@@ -11,10 +11,18 @@ use std::net::{Shutdown, TcpStream};
 use lrngitcore::{fs::pack::write_pack_to_disk, pack::upload::parse_upload_pack};
 
 fn main() {
-    let message: &str = "[SERVICE] lrngit-receive";
-    let length: u32 = message.len() as u32;
-    println!("{}", format!("{:?} {}", length.to_le_bytes(), message));
-    io::stdout().flush().unwrap();
+    let mut stdout = io::stdout();
+    {
+        let message: &str = "[SERVICE] lrngit-receive";
+        let length: u32 = message.len() as u32;
+        stdout
+            .write_all(&length.to_le_bytes())
+            .expect("Failed to write length in stdout");
+        stdout
+            .write_all(&message.as_bytes())
+            .expect("Failed to write message in stdout");
+    }
+    stdout.flush().unwrap();
     let args: Vec<String> = env::args().collect();
     let lrngit_repo_path: &str = "/home/ubuntu/lrngit/repositories/";
     if args.len() < 2 {
