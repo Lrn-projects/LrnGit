@@ -36,28 +36,32 @@ fn main() {
     // buffer of 64kb size
     let mut buffer = vec![0u8; 65536];
     loop {
+        // Read buffer length
         if let Err(e) = io::stdin().read_exact(&mut stream_length) {
             if e.kind() == io::ErrorKind::UnexpectedEof {
-                println!("TCP connection closed");
+                let message: &str = "TCP connection closed";
+                println!("{}", format!("{} {}", message.len() as u32, message));
                 io::stdout().flush().unwrap();
                 break;
             } else {
                 eprintln!("Failed to read stream length: {e}");
-                io::stdout().flush().unwrap();
                 break;
             }
         }
         let length = u32::from_le_bytes(stream_length);
         if length == 0 {
-            println!("Received zero-length packet, closing connection.");
+            let message: &str = "Received zero-length packet, closing connection.";
+            println!("{}", format!("{} {}", message.len() as u32, message));
             io::stdout().flush().unwrap();
             break;
         }
+        // Read rest of the stream in buffer
         io::stdin()
             .read_exact(&mut buffer[..length as usize])
             .expect("Failed to read framed stream");
         if buffer.is_empty() {
-            println!("TCP connection closed");
+            let message: &str = "TCP connection closed";
+            println!("{}", format!("{} {}", message.len() as u32, message));
             io::stdout().flush().unwrap();
             break;
         }
@@ -65,7 +69,6 @@ fn main() {
             Ok(p) => p,
             Err(e) => {
                 eprintln!("Failed to parse upload pack: {e}");
-                io::stdout().flush().unwrap();
                 break;
             }
         };
