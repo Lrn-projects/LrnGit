@@ -11,7 +11,9 @@ use std::net::{Shutdown, TcpStream};
 use lrngitcore::{fs::pack::write_pack_to_disk, pack::upload::parse_upload_pack};
 
 fn main() {
-    println!("[SERVICE] lrngit-receive");
+    let message: &str = "[SERVICE] lrngit-receive";
+    let length: u32 = message.len() as u32;
+    println!("{}", format!("{:?} {}", length.to_le_bytes(), message));
     io::stdout().flush().unwrap();
     let args: Vec<String> = env::args().collect();
     let lrngit_repo_path: &str = "/home/ubuntu/lrngit/repositories/";
@@ -24,7 +26,9 @@ fn main() {
     }
     let repo_path = lrngit_repo_path.to_owned() + &args[1];
     if !Path::new(&repo_path).exists() {
-        println!("ERR repository doesn't exist");
+        let message: &str = "ERR repository doesn't exist";
+        let length: u32 = message.len() as u32;
+        println!("{}", format!("{:?} {}", length.to_le_bytes(), message));
         io::stdout().flush().unwrap();
         // Create stream from fd and shutdown to properly send err to client
         let _ = unsafe { TcpStream::from_raw_fd(1) }.shutdown(Shutdown::Write);
