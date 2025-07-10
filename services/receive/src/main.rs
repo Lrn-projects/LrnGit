@@ -70,7 +70,7 @@ fn main() {
                 break;
             }
         };
-        let message: &str = "Received upload pack";
+        let message: &str = "received upload pack";
         write_framed_message_stdout(message.len() as u32, message, &mut stdout);
         write_pack_to_disk(pack.data);
         io::stdout().flush().unwrap();

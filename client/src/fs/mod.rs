@@ -16,7 +16,7 @@ pub fn delete_path(path: &PathBuf) {
     fs::remove_file(path).expect("Failed to remove path from disk");
 }
 
-fn write_files(buff: &[u8], path: &str) {
+pub fn write_files(buff: &[u8], path: &str) {
     if !fs::exists(path).expect("Failed to check if the path exist") {
         File::create_new(path).expect("Failed to create the new file");
     }

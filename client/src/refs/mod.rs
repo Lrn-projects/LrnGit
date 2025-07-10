@@ -4,6 +4,8 @@ use std::{
     path::Path,
 };
 
+pub mod origin;
+
 pub fn init_head() {
     let mut file = File::create(".lrngit/HEAD").expect("Failed to create HEAD file");
     file.write_all("ref: refs/heads/main".as_bytes())

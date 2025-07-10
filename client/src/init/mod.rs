@@ -6,7 +6,7 @@ use std::{
     env, fs::{self}, path::{Path, PathBuf}, process::Command
 };
 
-use crate::{config, object::index, refs::init_head};
+use crate::{config, object::index, refs::{init_head, origin::{init_origin_head, init_remote_origin}}};
 
 pub fn init_local_repo() {
     // create local repository directory
@@ -37,13 +37,19 @@ pub fn init_local_repo() {
         .arg(".lrngit/refs/heads")
         .arg(".lrngit/refs/tags")
         .arg(".lrngit/refs/remotes")
+        .arg(".lrngit/refs/remotes/origin")
         .spawn()
         .expect("Failed to create all directories");
     let wait_mkdir = mkdir.wait().expect("Failed to wait the mkdir command");
     if !wait_mkdir.success() {
         panic!("Failed to execute mkdir command");
     }
+    // Init head file
     init_head();
+    // Init remote origin dir and files
+    init_remote_origin();
+    // Init ORIG_HEAD file 
+    init_origin_head();
     config::init_config_repo();
     index::init_index();
 }
