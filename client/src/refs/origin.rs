@@ -15,3 +15,8 @@ pub fn init_origin_head() {
     let origin_head_path: &str = ".lrngit/ORIG_HEAD";
     File::create(origin_head_path).expect("Failed to init origin head");
 }
+
+pub fn init_origin_main() {
+    let path: &str = ".lrngit/refs/remotes/origin/main";
+    File::create(path).expect("Failed to init origin main branch");
+}

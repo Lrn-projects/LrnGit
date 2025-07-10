@@ -6,7 +6,7 @@ use std::{
     env, fs::{self}, path::{Path, PathBuf}, process::Command
 };
 
-use crate::{config, object::index, refs::{init_head, origin::{init_origin_head, init_remote_origin}}};
+use crate::{config, object::index, refs::{init_head, origin::{init_origin_head, init_origin_main, init_remote_origin}}};
 
 pub fn init_local_repo() {
     // create local repository directory
@@ -50,7 +50,11 @@ pub fn init_local_repo() {
     init_remote_origin();
     // Init ORIG_HEAD file 
     init_origin_head();
+    // Init default origin branch(main) 
+    init_origin_main();
+    // Init repository local config
     config::init_config_repo();
+    // Init index
     index::init_index();
 }
 
