@@ -9,7 +9,7 @@ use std::{
 use std::net::{Shutdown, TcpStream};
 
 use lrngitcore::{
-    fs::pack::write_pack_to_disk, pack::upload::parse_upload_pack, out::write_framed_message_stdout,
+    fs::pack::write_pack_to_disk, out::write_framed_message_stdout, pack::upload::parse_upload_pack,
 };
 
 fn main() {
@@ -49,10 +49,13 @@ fn main() {
             }
         }
         let length = u32::from_le_bytes(stream_length);
+        let message: String = format!("debug length: {:?}", length);
+        write_framed_message_stdout(message.len() as u32, &message, &mut stdout);
         if length == 0 {
             let message: &str = "Received zero-length packet, closing connection.";
             write_framed_message_stdout(message.len() as u32, message, &mut stdout);
-            break;
+            let _ = unsafe { TcpStream::from_raw_fd(1) }.shutdown(Shutdown::Write);
+            exit(1);
         }
         // Read rest of the stream in buffer
         io::stdin()
