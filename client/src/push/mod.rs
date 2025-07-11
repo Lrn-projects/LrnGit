@@ -4,6 +4,8 @@ use std::{
     process::exit,
 };
 
+use lrngitcore::remote::origin::parse_origin_branch;
+
 use crate::{
     pack::upload::create_upload_pack,
     refs::{parse_current_branch, parse_head},
@@ -32,10 +34,21 @@ pub fn push_command() {
 /// between client and remote host and send object through an upload pack.
 fn push_remote_branch() {
     let last_commit = parse_current_branch();
+    let last_remote_commit = parse_origin_branch();
     let refs = &parse_head();
     let mut stream = tcp::tcp_connect_to_remote("lrngit-receive-pack");
+    // Reference to last local commit and last remote commit pack
+    let mut ref_buff: Vec<u8> = Vec::new();
+    ref_buff.extend_from_slice(&last_commit.as_bytes());
+    ref_buff.extend_from_slice(&last_remote_commit.as_bytes());
+    let ref_buff_len: u32 = ref_buff.len() as u32;
+    let mut ref_pack: Vec<u8> = Vec::new();
+    ref_pack.extend_from_slice(&ref_buff_len);
+    ref_pack.extend_from_slice(&ref_buff);
+    ref_pack.extend_from_slice(last_remote_commit.as_bytes());
     let pack = create_upload_pack(refs, last_commit.as_bytes().to_vec());
     let pack_length: u32 = pack.len() as u32;
+    // Pack object
     let mut stream_framed: Vec<u8> = Vec::new();
     stream_framed.extend_from_slice(&pack_length.to_le_bytes());
     stream_framed.extend_from_slice(&pack);
