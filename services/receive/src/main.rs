@@ -73,7 +73,7 @@ fn main() {
         };
         let mut message: &str = "received upload pack";
         write_framed_message_stdout(message.len() as u32, message, &mut stdout);
-        message = "END";
+        message = "ACK";
         write_framed_message_stdout(message.len() as u32, message, &mut stdout);
         write_pack_to_disk(pack.data);
     }
