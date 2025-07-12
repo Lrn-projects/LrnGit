@@ -38,7 +38,7 @@ fn main() {
     loop {
         let mut stream_length = [0u8; 4];
         // Read buffer length
-        if let Err(e) = io::stdin().read(&mut stream_length) {
+        if let Err(e) = io::stdin().read_exact(&mut stream_length) {
             if e.kind() == io::ErrorKind::UnexpectedEof {
                 let message: &str = "TCP connection closed";
                 write_framed_message_stdout(message.len() as u32, message, &mut stdout);

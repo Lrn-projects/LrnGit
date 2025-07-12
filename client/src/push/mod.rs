@@ -43,7 +43,7 @@ fn push_remote_branch() {
     ref_buff.extend_from_slice(&last_remote_commit.as_bytes());
     let ref_buff_len: u32 = ref_buff.len() as u32;
     let mut ref_pack: Vec<u8> = Vec::new();
-    ref_pack.extend_from_slice(&ref_buff_len);
+    ref_pack.extend_from_slice(&ref_buff_len.to_le_bytes());
     ref_pack.extend_from_slice(&ref_buff);
     ref_pack.extend_from_slice(last_remote_commit.as_bytes());
     let pack = create_upload_pack(refs, last_commit.as_bytes().to_vec());
@@ -56,10 +56,10 @@ fn push_remote_branch() {
         .write_all(&stream_framed)
         .expect("Failed to stream upload pack");
     stream.flush().expect("Failed to flush stream");
-    // Loop over the stream to read all incoming packets
-    let mut stream_length = [0u8; 4];
     let mut buffer = vec![0u8; 1024];
+    // Loop over the stream to read all incoming packets
     loop {
+        let mut stream_length = [0u8; 4];
         // Read buffer length
         if let Err(e) = stream.read_exact(&mut stream_length) {
             if e.kind() == io::ErrorKind::UnexpectedEof {
@@ -84,10 +84,12 @@ fn push_remote_branch() {
             break;
         }
         // println!("Enumerate objects: {:?}", pack.len());
-        println!(
-            "remote: {}",
-            String::from_utf8_lossy(&buffer[..length as usize])
-        );
+        let received: &str =
+            str::from_utf8(&buffer[..length as usize]).expect("Failed to cast buffer to str");
+        if received == "END" {
+            break;
+        }
+        println!("remote: {}", received);
     }
     stream
         .shutdown(std::net::Shutdown::Write)
