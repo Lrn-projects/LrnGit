@@ -133,7 +133,7 @@ fn main() {
     };
 
     match command {
-        Commands::Init => init::init_local_repo(),
+        Commands::Init => init::init_command(),
         Commands::Add { arg } => add::add_to_local_repo(arg),
         Commands::Commit => commit::commit_command(),
         Commands::Push => push::push_command(),

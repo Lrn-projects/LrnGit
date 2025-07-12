@@ -3,10 +3,37 @@ Module handling all init command, init a local repository with all folder hierar
 */
 
 use std::{
-    env, fs::{self}, path::{Path, PathBuf}, process::Command
+    env,
+    fs::{self},
+    path::{Path, PathBuf},
+    process::{exit, Command},
 };
 
-use crate::{config, object::index, refs::{init_head, origin::{init_origin_head, init_origin_main, init_remote_origin}}};
+use crate::{
+    config,
+    object::index,
+    refs::{
+        init_head,
+        origin::{init_origin_head, init_origin_main, init_remote_origin},
+    },
+};
+
+pub fn init_command() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() <= 2 {
+        init_local_repo();
+        exit(0);
+    }
+    match args[2].as_str() {
+        "--bare" => {
+            println!("not implemented")
+        }
+        _ => {
+            lrncore::logs::warning_log("Unknown command");
+            exit(1);
+        }
+    }
+}
 
 pub fn init_local_repo() {
     // create local repository directory
@@ -48,13 +75,12 @@ pub fn init_local_repo() {
     init_head();
     // Init remote origin dir and files
     init_remote_origin();
-    // Init ORIG_HEAD file 
+    // Init ORIG_HEAD file
     init_origin_head();
-    // Init default origin branch(main) 
+    // Init default origin branch(main)
     init_origin_main();
     // Init repository local config
     config::init_config_repo();
     // Init index
     index::init_index();
 }
-
