@@ -39,6 +39,7 @@ fn push_remote_branch() {
     let mut stream = tcp::tcp_connect_to_remote("lrngit-receive-pack");
     // Reference to last local commit and last remote commit pack
     let mut ref_buff: Vec<u8> = Vec::new();
+    ref_buff.extend_from_slice(&refs.as_bytes());
     ref_buff.extend_from_slice(&last_commit.as_bytes());
     ref_buff.extend_from_slice(&last_remote_commit.as_bytes());
     let ref_buff_len: u32 = ref_buff.len() as u32;
@@ -46,16 +47,21 @@ fn push_remote_branch() {
     ref_pack.extend_from_slice(&ref_buff_len.to_le_bytes());
     ref_pack.extend_from_slice(&ref_buff);
     ref_pack.extend_from_slice(last_remote_commit.as_bytes());
-    let pack = create_upload_pack(refs, last_commit.as_bytes().to_vec());
-    let pack_length: u32 = pack.len() as u32;
     // Pack object
+    let pack = create_upload_pack();
+    let pack_length: u32 = pack.len() as u32;
     let mut stream_framed: Vec<u8> = Vec::new();
     stream_framed.extend_from_slice(&pack_length.to_le_bytes());
     stream_framed.extend_from_slice(&pack);
+    // ---- Stream packet to remote host ----
+    // Reference packet
+    // stream.write_all(&ref_pack).expect("Failed to stream references to remote host");
+    // stream.flush().expect("Failed to flush references stream");
+    // Upload pack
     stream
         .write_all(&stream_framed)
-        .expect("Failed to stream upload pack");
-    stream.flush().expect("Failed to flush stream");
+        .expect("Failed to stream upload pack to remote host");
+    stream.flush().expect("Failed to flush upload pack stream");
     let mut buffer = vec![0u8; 1024];
     // Loop over the stream to read all incoming packets
     loop {
@@ -86,7 +92,7 @@ fn push_remote_branch() {
         // println!("Enumerate objects: {:?}", pack.len());
         let received: &str =
             str::from_utf8(&buffer[..length as usize]).expect("Failed to cast buffer to str");
-        if received == "END" {
+        if received == "ACK" {
             break;
         }
         println!("remote: {}", received);

@@ -17,10 +17,8 @@ use crate::{
     refs::parse_current_branch,
 };
 
-pub fn create_upload_pack(refs: &str, _last_commit: Vec<u8>) -> Vec<u8> {
-    let mut header_content: Vec<u8> = b"PUSH ".to_vec();
-    // Add refs at end of the header
-    header_content.extend_from_slice(refs.as_bytes());
+pub fn create_upload_pack() -> Vec<u8> {
+    let header_content: Vec<u8> = b"PACK ".to_vec();
     // Get all objects in local repository
     let last_commit = parse_current_branch();
     let parse_commit = commit::parse_commit_by_hash(&last_commit);
