@@ -1,6 +1,6 @@
 use std::{
     env::{self, set_current_dir},
-    io::{self, Read, Write},
+    io::{self, Read},
     os::fd::FromRawFd,
     path::Path,
     process::exit,
@@ -49,8 +49,6 @@ fn main() {
             }
         }
         let length = u32::from_le_bytes(stream_length);
-        let message: String = format!("debug length: {:?}", length);
-        write_framed_message_stdout(message.len() as u32, &message, &mut stdout);
         if length == 0 {
             let message: &str = "Received zero-length packet, closing connection.";
             write_framed_message_stdout(message.len() as u32, message, &mut stdout);
@@ -73,7 +71,9 @@ fn main() {
                 break;
             }
         };
-        let message: &str = "received upload pack";
+        let mut message: &str = "received upload pack";
+        write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+        message = "END";
         write_framed_message_stdout(message.len() as u32, message, &mut stdout);
         write_pack_to_disk(pack.data);
     }
