@@ -29,10 +29,7 @@ pub fn create_upload_pack() -> Vec<u8> {
     let mut object_vec: Vec<PathBuf> = Vec::new();
     get_all_object(".lrngit/objects/", &mut object_vec);
     let hash = parse_hash_objects(object_vec);
-    // for each in hash {
-    //     let (object_type,_) = parse_object_header(&each);
-    //     println!("header type: {:?}", object_type);
-    // }
+    // Sort all objects from root tree and remove duplication
     all_root_tree_objects.sort();
     all_root_tree_objects.dedup();
     let mut object_vec: Vec<ObjectsPackData> = Vec::new();

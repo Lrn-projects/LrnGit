@@ -17,7 +17,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let lrngit_repo_path: &str = "/home/ubuntu/lrngit/repositories/";
     if args.len() < 2 {
-        let message: &str = "ERR: repository name argument missing";
+        let message: &str = "ERR repository name argument missing";
         write_framed_message_stdout(message.len() as u32, message, &mut stdout);
         // Create stream from fd and shutdown to properly send err to client
         let _ = unsafe { TcpStream::from_raw_fd(1) }.shutdown(Shutdown::Write);
