@@ -1,6 +1,7 @@
 use std::{
     env,
     io::{self, Read, Write},
+    net::TcpStream,
     process::exit,
 };
 
@@ -62,6 +63,10 @@ fn push_remote_branch() {
         .write_all(&stream_framed)
         .expect("Failed to stream upload pack to remote host");
     stream.flush().expect("Failed to flush upload pack stream");
+    handle_client(stream);
+}
+
+fn handle_client(mut stream: TcpStream) {
     let mut buffer = vec![0u8; 1024];
     // Loop over the stream to read all incoming packets
     loop {
