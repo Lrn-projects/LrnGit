@@ -1,6 +1,6 @@
 use std::{
     env::{self, set_current_dir},
-    io::{self, Read},
+    io::{self, Read, Stdin},
     os::fd::FromRawFd,
     path::Path,
     process::exit,
@@ -32,6 +32,10 @@ fn main() {
         exit(1)
     }
     set_current_dir(repo_path).expect("Failed to change current dir");
+    handle_stream(stdout);
+}
+
+fn handle_stream(mut stdout: io::Stdout) {
     // buffer of 64kb size
     let mut buffer = vec![0u8; 65536];
     // Loop over stdin for incoming packets
