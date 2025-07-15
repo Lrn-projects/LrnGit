@@ -76,8 +76,12 @@ fn handle_stream(mut stdout: io::Stdout) {
             str::from_utf8(&buffer[..4]).expect("Failed to cast first 4 buffer's bytes into str");
         let magic_string: &str = &format!("magic number: {:?}", magic_number);
         write_framed_message_stdout(magic_string.len() as u32, magic_string, &mut stdout);
+        // Switch on magic number to handle packet correctly
         match magic_number {
-            "REFS" => println!("received refs"),
+            "REFS" => {
+                let message: &str = "received refs";
+                write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+            }
             "PACK" => {
                 let pack = match parse_upload_pack(&buffer) {
                     Ok(p) => p,
@@ -91,8 +95,11 @@ fn handle_stream(mut stdout: io::Stdout) {
                 message = "ACK";
                 write_framed_message_stdout(message.len() as u32, message, &mut stdout);
                 write_pack_to_disk(pack.data);
-            },
-            _ => ()
+            }
+            _ => {
+                let message: &str = "ACK";
+                write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+            }
         }
     }
 }
