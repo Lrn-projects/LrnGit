@@ -72,20 +72,27 @@ fn handle_stream(mut stdout: io::Stdout) {
             break;
         }
         // Check first 4 bytes to know which packets
-        let magic_number: &str = str::from_utf8(&buffer[..3]).expect("Failed to cast first 4 buffer's bytes into str");
+        let magic_number: &str =
+            str::from_utf8(&buffer[..4]).expect("Failed to cast first 4 buffer's bytes into str");
         let magic_string: &str = &format!("magic number: {:?}", magic_number);
         write_framed_message_stdout(magic_string.len() as u32, magic_string, &mut stdout);
-        let pack = match parse_upload_pack(&buffer) {
-            Ok(p) => p,
-            Err(e) => {
-                eprintln!("Failed to parse upload pack: {e}");
-                break;
-            }
-        };
-        let mut message: &str = "received upload pack";
-        write_framed_message_stdout(message.len() as u32, message, &mut stdout);
-        message = "ACK";
-        write_framed_message_stdout(message.len() as u32, message, &mut stdout);
-        write_pack_to_disk(pack.data);
+        match magic_number {
+            "REFS" => println!("received refs"),
+            "PACK" => {
+                let pack = match parse_upload_pack(&buffer) {
+                    Ok(p) => p,
+                    Err(e) => {
+                        eprintln!("Failed to parse upload pack: {e}");
+                        break;
+                    }
+                };
+                let mut message: &str = "received upload pack";
+                write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+                message = "ACK";
+                write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+                write_pack_to_disk(pack.data);
+            },
+            _ => ()
+        }
     }
 }
