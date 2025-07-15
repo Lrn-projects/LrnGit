@@ -83,6 +83,8 @@ fn handle_stream(mut stdout: io::Stdout) {
                 write_framed_message_stdout(message.len() as u32, message, &mut stdout);
             }
             "PACK" => {
+                // Drain 4 first bytes + \0
+                buffer.drain(0..5);
                 let pack = match parse_upload_pack(&buffer) {
                     Ok(p) => p,
                     Err(e) => {
