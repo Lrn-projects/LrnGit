@@ -40,6 +40,7 @@ fn push_remote_branch() {
     let mut stream = tcp::tcp_connect_to_remote("lrngit-receive-pack");
     // Reference to last local commit and last remote commit pack
     let mut ref_buff: Vec<u8> = Vec::new();
+    ref_buff.extend_from_slice(&b"REFS ".to_vec());
     ref_buff.extend_from_slice(&refs.as_bytes());
     ref_buff.extend_from_slice(&last_commit.as_bytes());
     ref_buff.extend_from_slice(&last_remote_commit.as_bytes());
@@ -50,23 +51,29 @@ fn push_remote_branch() {
     ref_pack.extend_from_slice(last_remote_commit.as_bytes());
     // Pack object
     let pack = create_upload_pack();
-    let pack_length: u32 = pack.len() as u32;
+    let mut upload_pack: Vec<u8> = Vec::new();
+    upload_pack.extend_from_slice(&b"PACK ".to_vec());
+    upload_pack.extend_from_slice(&pack);
+    let pack_length: u32 = upload_pack.len() as u32;
     let mut stream_framed: Vec<u8> = Vec::new();
     stream_framed.extend_from_slice(&pack_length.to_le_bytes());
-    stream_framed.extend_from_slice(&pack);
+    stream_framed.extend_from_slice(&upload_pack);
     // ---- Stream packet to remote host ----
     // Reference packet
-    // stream.write_all(&ref_pack).expect("Failed to stream references to remote host");
-    // stream.flush().expect("Failed to flush references stream");
+    stream
+        .write_all(&ref_pack)
+        .expect("Failed to stream references to remote host");
+    stream.flush().expect("Failed to flush references stream");
     // Upload pack
     stream
         .write_all(&stream_framed)
         .expect("Failed to stream upload pack to remote host");
     stream.flush().expect("Failed to flush upload pack stream");
-    handle_client(stream);
+    handle_server(stream);
 }
 
-fn handle_client(mut stream: TcpStream) {
+/// Handle connection with remote host and read incoming stream
+fn handle_server(mut stream: TcpStream) {
     let mut buffer = vec![0u8; 1024];
     // Loop over the stream to read all incoming packets
     loop {
