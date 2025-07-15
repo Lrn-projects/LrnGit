@@ -1,6 +1,6 @@
 use std::{
     env::{self, set_current_dir},
-    io::{self, Read, Stdin},
+    io::{self, Read},
     os::fd::FromRawFd,
     path::Path,
     process::exit,
@@ -33,6 +33,9 @@ fn main() {
     }
     set_current_dir(repo_path).expect("Failed to change current dir");
     handle_stream(stdout);
+    // Close properly stream when handling stream returned
+    let _ = unsafe { TcpStream::from_raw_fd(1) }.shutdown(Shutdown::Write);
+    exit(1)
 }
 
 fn handle_stream(mut stdout: io::Stdout) {
@@ -68,6 +71,10 @@ fn handle_stream(mut stdout: io::Stdout) {
             write_framed_message_stdout(message.len() as u32, message, &mut stdout);
             break;
         }
+        // Check first 4 bytes to know which packets
+        let magic_number: &str = str::from_utf8(&buffer[..3]).expect("Failed to cast first 4 buffer's bytes into str");
+        let magic_string: &str = &format!("magic number: {:?}", magic_number);
+        write_framed_message_stdout(magic_string.len() as u32, magic_string, &mut stdout);
         let pack = match parse_upload_pack(&buffer) {
             Ok(p) => p,
             Err(e) => {
