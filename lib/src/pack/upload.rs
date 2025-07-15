@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UploadPack {
-    pub header: Vec<u8>,
     pub data: Vec<ObjectsPackData>,
     pub footer: Vec<u8>,
 }
