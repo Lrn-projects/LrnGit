@@ -18,7 +18,6 @@ use crate::{
 };
 
 pub fn create_upload_pack() -> Vec<u8> {
-    let header_content: Vec<u8> = b"PACK ".to_vec();
     // Get all objects in local repository
     let last_commit = parse_current_branch();
     let parse_commit = commit::parse_commit_by_hash(&last_commit);
@@ -54,11 +53,8 @@ pub fn create_upload_pack() -> Vec<u8> {
         };
         object_vec.push(new_object);
     }
-    let footer: Vec<u8> = b"END".to_vec();
     let pack: UploadPack = UploadPack {
-        header: header_content,
         data: object_vec,
-        footer,
     };
     let upload_pack: Vec<u8> = bincode::serialize(&pack).expect("Failed to serialize upload pack");
     upload_pack
