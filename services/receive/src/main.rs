@@ -79,12 +79,17 @@ fn handle_stream(mut stdout: io::Stdout) {
         // Switch on magic number to handle packet correctly
         match magic_number {
             "REFS" => {
-                let message: &str = "received refs";
+                // Drain 4 first bytes + \0
+                buffer.drain(..5);
+                let mut message: &str =
+                    &format!("references: {:?}", String::from_utf8_lossy(&buffer));
+                write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+                message = "received refs";
                 write_framed_message_stdout(message.len() as u32, message, &mut stdout);
             }
             "PACK" => {
                 // Drain 4 first bytes + \0
-                buffer.drain(0..5);
+                buffer.drain(..5);
                 let pack = match parse_upload_pack(&buffer) {
                     Ok(p) => p,
                     Err(e) => {
