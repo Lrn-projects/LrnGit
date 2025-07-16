@@ -42,7 +42,9 @@ fn push_remote_branch() {
     let mut ref_buff: Vec<u8> = Vec::new();
     ref_buff.extend_from_slice(&b"REFS ".to_vec());
     ref_buff.extend_from_slice(&refs.as_bytes());
+    ref_buff.extend_from_slice(&b" ".to_vec());
     ref_buff.extend_from_slice(&last_commit.as_bytes());
+    ref_buff.extend_from_slice(&b" ".to_vec());
     ref_buff.extend_from_slice(&last_remote_commit.as_bytes());
     let ref_buff_len: u32 = ref_buff.len() as u32;
     let mut ref_pack: Vec<u8> = Vec::new();
