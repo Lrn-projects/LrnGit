@@ -9,7 +9,7 @@ use std::{
 use std::net::{Shutdown, TcpStream};
 
 use lrngitcore::{
-    fs::pack::write_pack_to_disk, out::write_framed_message_stdout, pack::upload::parse_upload_pack, parser::parse_refs_pack,
+    fs::pack::write_pack_to_disk, out::write_framed_message_stdout, pack::upload::parse_upload_pack, pack::refs::parse_refs_pack,
 };
 
 fn main() {
@@ -79,7 +79,8 @@ fn handle_stream(mut stdout: io::Stdout) {
             "REFS" => {
                 // Drain 4 first bytes + \0
                 buffer.drain(..5);
-                parse_refs_pack(&buffer[..length as usize]);
+                let refs = parse_refs_pack(&buffer[..length as usize]);
+                eprintln!("refs: {:?}", refs);
                 let message: &str = "received refs";
                 write_framed_message_stdout(message.len() as u32, message, &mut stdout);
             }
