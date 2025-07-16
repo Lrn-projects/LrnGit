@@ -9,7 +9,7 @@ use std::{
 use std::net::{Shutdown, TcpStream};
 
 use lrngitcore::{
-    fs::pack::write_pack_to_disk, out::write_framed_message_stdout, pack::upload::parse_upload_pack,
+    fs::pack::write_pack_to_disk, out::write_framed_message_stdout, pack::upload::parse_upload_pack, parser::parse_refs_pack,
 };
 
 fn main() {
@@ -74,17 +74,13 @@ fn handle_stream(mut stdout: io::Stdout) {
         // Check first 4 bytes to know which packets
         let magic_number: &str =
             str::from_utf8(&buffer[..4]).expect("Failed to cast first 4 buffer's bytes into str");
-        let magic_string: &str = &format!("magic number: {:?}", magic_number);
-        write_framed_message_stdout(magic_string.len() as u32, magic_string, &mut stdout);
         // Switch on magic number to handle packet correctly
         match magic_number {
             "REFS" => {
                 // Drain 4 first bytes + \0
                 buffer.drain(..5);
-                let mut message: &str =
-                    &format!("references: {:?}", String::from_utf8_lossy(&buffer[..length as usize]));
-                write_framed_message_stdout(message.len() as u32, message, &mut stdout);
-                message = "received refs";
+                parse_refs_pack(&buffer[..length as usize]);
+                let message: &str = "received refs";
                 write_framed_message_stdout(message.len() as u32, message, &mut stdout);
             }
             "PACK" => {
