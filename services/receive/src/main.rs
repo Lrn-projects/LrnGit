@@ -82,7 +82,7 @@ fn handle_stream(mut stdout: io::Stdout) {
                 // Drain 4 first bytes + \0
                 buffer.drain(..5);
                 let mut message: &str =
-                    &format!("references: {:?}", String::from_utf8_lossy(&buffer));
+                    &format!("references: {:?}", String::from_utf8_lossy(&buffer[..length as usize]));
                 write_framed_message_stdout(message.len() as u32, message, &mut stdout);
                 message = "received refs";
                 write_framed_message_stdout(message.len() as u32, message, &mut stdout);
