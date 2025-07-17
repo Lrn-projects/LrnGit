@@ -84,7 +84,7 @@ fn handle_stream(mut stdout: io::Stdout) {
                 let message: &str = "received refs";
                 write_framed_message_stdout(message.len() as u32, message, &mut stdout);
                 // Check if refs exist on remote repository
-                if !Path::exists(refs.refs) {
+                if !Path::exists(Path::new(refs.refs)) {
                     let message: &str = "ERR reference doesn't exist on remote host";
                     write_framed_message_stdout(message.len() as u32, message, &mut stdout);
                     break;
