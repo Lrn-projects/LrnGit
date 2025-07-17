@@ -9,7 +9,8 @@ use std::{
 use std::net::{Shutdown, TcpStream};
 
 use lrngitcore::{
-    fs::pack::write_pack_to_disk, out::write_framed_message_stdout, pack::upload::parse_upload_pack, pack::refs::parse_refs_pack,
+    fs::pack::write_pack_to_disk, out::write_framed_message_stdout, pack::refs::parse_refs_pack,
+    pack::upload::parse_upload_pack,
 };
 
 fn main() {
@@ -80,9 +81,14 @@ fn handle_stream(mut stdout: io::Stdout) {
                 // Drain 4 first bytes + \0
                 buffer.drain(..5);
                 let refs = parse_refs_pack(&buffer[..length as usize]);
-                eprintln!("refs: {:?}", refs);
                 let message: &str = "received refs";
                 write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+                // Check if refs exist on remote repository
+                if !Path::exists(refs.refs) {
+                    let message: &str = "ERR reference doesn't exist on remote host";
+                    write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+                    break;
+                }
             }
             "PACK" => {
                 // Drain 4 first bytes + \0
