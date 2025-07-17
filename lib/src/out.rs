@@ -4,10 +4,10 @@ use std::io::Write;
 ///
 /// Arguments:
 ///
-/// length: length of the message in bytes slice. Use reference to_le_bytes.
 /// msg: message to write in stdout as slice.
 /// stdout: ptr to impl of Write.
-pub fn write_framed_message_stdout(length: u32, msg: &str, stdout: &mut impl Write) {
+pub fn write_framed_message_stdout(msg: &str, stdout: &mut impl Write) {
+    let length: usize = msg.len();
     let length_slice = length.to_le_bytes();
     stdout.write_all(&length_slice).expect("Failed to write length to stdout");
     stdout.write_all(&msg.as_bytes()).expect("Failed to write message to stdout");

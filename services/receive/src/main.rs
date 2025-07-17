@@ -18,16 +18,14 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let lrngit_repo_path: &str = "/home/ubuntu/lrngit/repositories/";
     if args.len() < 2 {
-        let message: &str = "ERR repository name argument missing";
-        write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+        write_framed_message_stdout("ERR repository name argument missing", &mut stdout);
         // Create stream from fd and shutdown to properly send err to client
         let _ = unsafe { TcpStream::from_raw_fd(1) }.shutdown(Shutdown::Write);
         exit(1);
     }
     let repo_path = lrngit_repo_path.to_owned() + &args[1];
     if !Path::new(&repo_path).exists() {
-        let message: &str = "ERR repository doesn't exist";
-        write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+        write_framed_message_stdout("ERR repository doesn't exist", &mut stdout);
         // Create stream from fd and shutdown to properly send err to client
         let _ = unsafe { TcpStream::from_raw_fd(1) }.shutdown(Shutdown::Write);
         exit(1)
@@ -42,14 +40,13 @@ fn main() {
 fn handle_stream(mut stdout: io::Stdout) {
     // buffer of 64kb size
     let mut buffer = vec![0u8; 65536];
-    // Loop over stdin for incoming packets
+    // Loop over standard input for incoming packets
     loop {
         let mut stream_length = [0u8; 4];
         // Read buffer length
         if let Err(e) = io::stdin().read_exact(&mut stream_length) {
             if e.kind() == io::ErrorKind::UnexpectedEof {
-                let message: &str = "TCP connection closed";
-                write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+                write_framed_message_stdout("TCP connection closed", &mut stdout);
                 break;
             } else {
                 eprintln!("Failed to read stream length: {e}");
@@ -58,8 +55,7 @@ fn handle_stream(mut stdout: io::Stdout) {
         }
         let length = u32::from_le_bytes(stream_length);
         if length == 0 {
-            let message: &str = "Received zero-length packet, closing connection.";
-            write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+            write_framed_message_stdout("Received zero-length packet, closing connection", &mut stdout);
             let _ = unsafe { TcpStream::from_raw_fd(1) }.shutdown(Shutdown::Write);
             exit(1);
         }
@@ -68,8 +64,7 @@ fn handle_stream(mut stdout: io::Stdout) {
             .read_exact(&mut buffer[..length as usize])
             .expect("Failed to read framed stream");
         if buffer.is_empty() {
-            let message: &str = "TCP connection closed";
-            write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+            write_framed_message_stdout("TCP connection closed", &mut stdout);
             break;
         }
         // Check first 4 bytes to know which packets
@@ -81,12 +76,9 @@ fn handle_stream(mut stdout: io::Stdout) {
                 // Drain 4 first bytes + \0
                 buffer.drain(..5);
                 let refs = parse_refs_pack(&buffer[..length as usize]);
-                let message: &str = "received refs";
-                write_framed_message_stdout(message.len() as u32, message, &mut stdout);
                 // Check if refs exist on remote repository
                 if !Path::exists(Path::new(refs.refs)) {
-                    let message: &str = "ERR reference doesn't exist on remote host";
-                    write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+                    write_framed_message_stdout("ERR reference doesn't exist on remote host", &mut stdout);
                     break;
                 }
             }
@@ -100,15 +92,12 @@ fn handle_stream(mut stdout: io::Stdout) {
                         break;
                     }
                 };
-                let mut message: &str = "received upload pack";
-                write_framed_message_stdout(message.len() as u32, message, &mut stdout);
-                message = "ACK";
-                write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+                write_framed_message_stdout("received upload pack", &mut stdout);
+                write_framed_message_stdout("ACK", &mut stdout);
                 write_pack_to_disk(pack.data);
             }
             _ => {
-                let message: &str = "ACK";
-                write_framed_message_stdout(message.len() as u32, message, &mut stdout);
+                write_framed_message_stdout("ACK", &mut stdout);
             }
         }
     }
