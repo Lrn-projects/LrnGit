@@ -4,7 +4,7 @@ use std::io::Write;
 ///
 /// Arguments:
 ///
-/// msg: message to write in stdout as slice.
+/// msg: message to write in stdout.
 /// stdout: ptr to impl of Write.
 pub fn write_framed_message_stdout(msg: &str, stdout: &mut impl Write) {
     let length: usize = msg.len();

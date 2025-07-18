@@ -37,3 +37,12 @@ pub struct CommitUser {
     pub timestamp: i64,
     pub timezone: Vec<u8>,
 }
+
+/// Unwind commit from given commit to specified commit. Return error if there's missing commits in
+/// 
+/// Parameters:
+/// 'begin': hash of the commit to begin unwinding.
+/// 'end': hash of the commit where ending unwinding.
+pub fn unwind_commits(begin: &str, end: &str) {
+
+}
