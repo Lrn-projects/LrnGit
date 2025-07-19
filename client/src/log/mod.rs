@@ -1,12 +1,11 @@
 use std::{env, io::Read, process::exit};
 
-use lrngitcore::objects::commit::{CommitObject, CommitUser, InitCommitContent};
+use lrngitcore::objects::commit::{parse_commit, parse_commit_author, parse_init_commit, CommitObject, CommitUser, InitCommitContent};
+use lrngitcore::objects::utils::get_file_by_hash;
 
 use crate::{
-    object::utils::get_file_by_hash, refs::parse_current_branch, utils
+    refs::parse_current_branch, utils
 };
-
-use crate::object::commit;
 
 pub fn log_command() {
     let args: Vec<String> = env::args().collect();
@@ -43,7 +42,7 @@ fn log_commits() {
     let mut author: CommitUser;
     for each in commits_vec.0 {
         println!("commit: {}", str::from_utf8(&each.commit_hash).unwrap());
-        author = commit::parse_commit_author(each.commit_content.author);
+        author = parse_commit_author(each.commit_content.author);
         println!(
             "author: {} {}",
             String::from_utf8_lossy(&author.name),
@@ -61,7 +60,7 @@ fn log_commits() {
         println!();
     }
     let init_commit = commits_vec.1;
-    author = commit::parse_commit_author(init_commit.author);
+    author = parse_commit_author(init_commit.author);
     println!("commit: {}", hex::encode(init_commit.tree));
     println!(
         "author: {} {}",
@@ -90,13 +89,13 @@ fn unwind_commits(
     // decode buffer using zlib
     let mut d = flate2::read::ZlibDecoder::new(content_buf.as_slice());
     let mut buffer = Vec::new();
-    // read decoded file and populate buffer
+    // read decoded file and fill buffer
     d.read_to_end(&mut buffer).unwrap();
 
-    let parse_commit = commit::parse_commit(buffer.clone());
+    let parse_commit = parse_commit(buffer.clone());
     let init_commit: InitCommitContent;
     if parse_commit.is_err() {
-        init_commit = commit::parse_init_commit(buffer).unwrap();
+        init_commit = parse_init_commit(buffer).unwrap();
         commits.1 = init_commit;
         return commits;
     };

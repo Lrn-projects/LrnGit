@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::process::exit;
@@ -6,14 +5,14 @@ use std::time::SystemTime;
 
 use chrono::{Local, Offset};
 use lrngitcore::fs::new_file_dir;
-use lrngitcore::objects::commit::{CommitContent, CommitUser, InitCommitContent};
-use lrngitcore::objects::utils::split_object_header;
+use lrngitcore::objects::commit::{parse_commit, CommitContent, CommitUser, InitCommitContent};
+use lrngitcore::objects::utils::get_file_by_hash;
 
 use crate::config;
 use crate::object::utils::{compress_file, git_object_header};
 use crate::refs::{init_refs, parse_current_branch};
 
-use super::utils::{get_file_by_hash, hash_sha1};
+use super::utils::hash_sha1;
 
 /// Create a new commit object.
 /// Get the author and commiter from the git config.
@@ -112,28 +111,3 @@ pub fn parse_commit_by_hash(hash: &str) -> CommitContent {
     }
 }
 
-/// Parse commit from a buffer
-pub fn parse_commit(buf: Vec<u8>) -> Result<CommitContent, Box<dyn Error>> {
-    let (_, content) = split_object_header(buf);
-    let commit: CommitContent = match bincode::deserialize(&content) {
-        Ok(c) => c,
-        Err(e) => {
-            return Err(Box::new(e));
-        }
-    };
-    Ok(commit)
-}
-
-/// Parse the init commit from buffer
-pub fn parse_init_commit(buf: Vec<u8>) -> Result<InitCommitContent, Box<dyn Error>> {
-    let (_, content) = split_object_header(buf);
-    let init_commit: InitCommitContent =
-        bincode::deserialize(&content).expect("Failed to deserialize init commit");
-    Ok(init_commit)
-}
-
-pub fn parse_commit_author(buf: Vec<u8>) -> CommitUser {
-    let commit_user: CommitUser =
-        bincode::deserialize(&buf).expect("Failed to deserialize commit user");
-    commit_user
-}

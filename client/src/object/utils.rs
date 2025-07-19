@@ -138,20 +138,6 @@ pub fn hash_sha1(data: &Vec<u8>) -> ([u8; 20], Vec<char>) {
     (hash_result.into(), split_hash_result_hex)
 }
 
-pub fn get_file_by_hash(hash: &str) -> File {
-    let split_hash: Vec<char> = hash.chars().collect();
-    let folder_name: String = format!("{}{}", split_hash[0], split_hash[1]);
-    let file_name: String = split_hash[2..].iter().collect::<String>().to_string();
-    let path = format!(".lrngit/objects/{folder_name}/{file_name}");
-    File::open(path).expect("Failed to open file")
-}
-
-pub fn get_path_by_hash(hash: &[char]) -> String {
-    let folder_name: String = format!("{}{}", hash[0], hash[1]);
-    let file_name: String = hash[2..].iter().collect::<String>().to_string();
-    format!(".lrngit/objects/{folder_name}/{file_name}")
-}
-
 /// Walk in dir trough the tree object from the root tree until reach the specify path and return the
 /// blob object hash. The file we want to get must be a file committed, or else the tree wont be
 /// created and the function will not work.

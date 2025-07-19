@@ -1,5 +1,5 @@
 use std::{
-    fs::{self, read_dir},
+    fs::{self, File, read_dir},
     io::Read,
     path::PathBuf,
     str::FromStr,
@@ -97,4 +97,18 @@ pub fn parse_object_header(hash: &str) -> (String, usize) {
             .parse::<usize>()
             .expect("Failed to cast str to usize"),
     )
+}
+
+pub fn get_file_by_hash(hash: &str) -> File {
+    let split_hash: Vec<char> = hash.chars().collect();
+    let folder_name: String = format!("{}{}", split_hash[0], split_hash[1]);
+    let file_name: String = split_hash[2..].iter().collect::<String>().to_string();
+    let path = format!(".lrngit/objects/{folder_name}/{file_name}");
+    File::open(path).expect("Failed to open file")
+}
+
+pub fn get_path_by_hash(hash: &[char]) -> String {
+    let folder_name: String = format!("{}{}", hash[0], hash[1]);
+    let file_name: String = hash[2..].iter().collect::<String>().to_string();
+    format!(".lrngit/objects/{folder_name}/{file_name}")
 }

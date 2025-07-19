@@ -5,14 +5,14 @@ use std::{
 };
 
 use lrngitcore::{
-    objects::utils::{get_all_object, parse_hash_objects, parse_object_header},
+    objects::utils::{get_all_object, get_file_by_hash, parse_hash_objects, parse_object_header},
     pack::upload::{ObjectsPackData, UploadPack},
 };
 
 use crate::{
     object::{
         commit,
-        utils::{get_file_by_hash, walk_root_tree_all_objects},
+        utils::walk_root_tree_all_objects,
     },
     refs::parse_current_branch,
 };
