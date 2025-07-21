@@ -91,7 +91,7 @@ pub fn create_commit_object(root_tree_hash: [u8; 20], commit_message: &str) {
 /// Parse the commit object from is hash and return a readable commit object
 #[allow(dead_code)]
 pub fn parse_commit_by_hash(hash: &str) -> CommitContent {
-    let mut commit_object = get_file_by_hash(hash);
+    let mut commit_object = get_file_by_hash(hash, ".lrngit");
     let mut content_buf: Vec<u8> = Vec::new();
     commit_object
         .read_to_end(&mut content_buf)

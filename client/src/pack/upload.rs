@@ -33,7 +33,7 @@ pub fn create_upload_pack() -> Vec<u8> {
     all_root_tree_objects.dedup();
     let mut object_vec: Vec<ObjectsPackData> = Vec::new();
     for each in hash {
-        let mut file: File = get_file_by_hash(&each);
+        let mut file: File = get_file_by_hash(&each, ".lrngit");
         let (object_type, _) = parse_object_header(&each);
         let mut file_buff: Vec<u8> = Vec::new();
         file.read_to_end(&mut file_buff)

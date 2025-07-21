@@ -80,7 +80,7 @@ fn unwind_commits(
     mut commits: (Vec<CommitObject>, InitCommitContent),
 ) -> (Vec<CommitObject>, InitCommitContent) {
     let mut commit_object = get_file_by_hash(
-        str::from_utf8(&commit_hash).expect("Failed to convert buffer to str"),
+        str::from_utf8(&commit_hash).expect("Failed to convert buffer to str"), ".lrngit"
     );
     let mut content_buf: Vec<u8> = Vec::new();
     commit_object

@@ -75,7 +75,7 @@ pub fn parse_commit_author(buf: Vec<u8>) -> CommitUser {
 /// 'end': hash of the commit where ending unwinding.
 pub fn unwind_commits(begin: &str, end: &str) {
     // Begin unwinding
-    let mut commit_object = get_file_by_hash(begin);
+    let mut commit_object = get_file_by_hash(begin, ".");
     let mut content_buf: Vec<u8> = Vec::new();
     commit_object
         .read_to_end(&mut content_buf)
@@ -90,7 +90,7 @@ pub fn unwind_commits(begin: &str, end: &str) {
     let init_commit: InitCommitContent;
     if parse_commit.is_err() {
         init_commit = parse_init_commit(buffer).unwrap();
-        println!("init commit: {:?}", init_commit);
+        eprintln!("init commit: {:?}", init_commit);
         return;
     };
     let commit_unwrapped = parse_commit.unwrap();
@@ -98,6 +98,6 @@ pub fn unwind_commits(begin: &str, end: &str) {
         commit_hash: begin.into(),
         commit_content: commit_unwrapped.clone(),
     };
-    println!("new commit object: {:?}", new_commit_object);
+    eprintln!("new commit object: {:?}", new_commit_object);
     unwind_commits(str::from_utf8(&commit_unwrapped.parent.to_vec()).expect("Failed to cast bytes vector to str"), end)
 }

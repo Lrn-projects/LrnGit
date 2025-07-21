@@ -99,11 +99,11 @@ pub fn parse_object_header(hash: &str) -> (String, usize) {
     )
 }
 
-pub fn get_file_by_hash(hash: &str) -> File {
+pub fn get_file_by_hash(hash: &str, path: &str) -> File {
     let split_hash: Vec<char> = hash.chars().collect();
     let folder_name: String = format!("{}{}", split_hash[0], split_hash[1]);
     let file_name: String = split_hash[2..].iter().collect::<String>().to_string();
-    let path = format!(".lrngit/objects/{folder_name}/{file_name}");
+    let path = format!("{path}/objects/{folder_name}/{file_name}");
     File::open(path).expect("Failed to open file")
 }
 

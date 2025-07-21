@@ -9,9 +9,10 @@ use std::{
 use std::net::{Shutdown, TcpStream};
 
 use lrngitcore::{
-    fs::pack::write_pack_to_disk, out::write_framed_message_stdout, pack::refs::parse_refs_pack,
-    pack::upload::parse_upload_pack,
+    fs::pack::write_pack_to_disk, out::write_framed_message_stdout, pack::{refs::{parse_refs_pack, ParsedRefsPack}, upload::parse_upload_pack},
 };
+
+mod head;
 
 fn main() {
     let mut stdout = io::stdout();
@@ -41,6 +42,7 @@ fn handle_stream(mut stdout: io::Stdout) {
     // buffer of 64kb size
     let mut buffer = vec![0u8; 65536];
     // Loop over standard input for incoming packets
+    let refs: ParsedRefsPack;
     loop {
         let mut stream_length = [0u8; 4];
         // Read buffer length
@@ -75,7 +77,7 @@ fn handle_stream(mut stdout: io::Stdout) {
             "REFS" => {
                 // Drain 4 first bytes + \0
                 buffer.drain(..5);
-                let refs = parse_refs_pack(&buffer[..length as usize]);
+                refs = parse_refs_pack(&buffer[..length as usize]);
                 // Check if refs exist on remote repository
                 if !Path::exists(Path::new(refs.refs)) {
                     write_framed_message_stdout("ERR reference doesn't exist on remote host", &mut stdout);
@@ -93,8 +95,11 @@ fn handle_stream(mut stdout: io::Stdout) {
                     }
                 };
                 write_framed_message_stdout("received upload pack", &mut stdout);
-                write_framed_message_stdout("ACK", &mut stdout);
+                // Write pack content to disk
                 write_pack_to_disk(pack.data);
+                // Update head using refs and pack
+                update_refs(refs, pack);
+                write_framed_message_stdout("ACK", &mut stdout);
             }
             _ => {
                 write_framed_message_stdout("ACK", &mut stdout);
