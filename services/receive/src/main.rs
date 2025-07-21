@@ -8,8 +8,14 @@ use std::{
 
 use std::net::{Shutdown, TcpStream};
 
+use head::update_refs;
 use lrngitcore::{
-    fs::pack::write_pack_to_disk, out::write_framed_message_stdout, pack::{refs::{parse_refs_pack, ParsedRefsPack}, upload::parse_upload_pack},
+    fs::pack::write_pack_to_disk,
+    out::write_framed_message_stdout,
+    pack::{
+        refs::{ParsedRefsPack, parse_refs_pack},
+        upload::parse_upload_pack,
+    },
 };
 
 mod head;
@@ -40,9 +46,15 @@ fn main() {
 
 fn handle_stream(mut stdout: io::Stdout) {
     // buffer of 64kb size
-    let mut buffer = vec![0u8; 65536];
+    let mut buffer = [0u8; 65536];
+    // clone buffer for parsing refs
+    let mut parsed_buffer = [0u8; 65536];
     // Loop over standard input for incoming packets
-    let refs: ParsedRefsPack;
+    let mut refs: ParsedRefsPack = ParsedRefsPack {
+        refs: "",
+        local_commit: "",
+        origin_commit: "",
+    };
     loop {
         let mut stream_length = [0u8; 4];
         // Read buffer length
@@ -57,10 +69,14 @@ fn handle_stream(mut stdout: io::Stdout) {
         }
         let length = u32::from_le_bytes(stream_length);
         if length == 0 {
-            write_framed_message_stdout("Received zero-length packet, closing connection", &mut stdout);
+            write_framed_message_stdout(
+                "Received zero-length packet, closing connection",
+                &mut stdout,
+            );
             let _ = unsafe { TcpStream::from_raw_fd(1) }.shutdown(Shutdown::Write);
             exit(1);
         }
+        // Scope to drop mutable reference of buffer at the end
         // Read rest of the stream in buffer
         io::stdin()
             .read_exact(&mut buffer[..length as usize])
@@ -75,19 +91,20 @@ fn handle_stream(mut stdout: io::Stdout) {
         // Switch on magic number to handle packet correctly
         match magic_number {
             "REFS" => {
-                // Drain 4 first bytes + \0
-                buffer.drain(..5);
-                refs = parse_refs_pack(&buffer[..length as usize]);
+                parsed_buffer.clone_from_slice(&buffer);
+                refs = parse_refs_pack(&parsed_buffer[5..length as usize]);
                 // Check if refs exist on remote repository
                 if !Path::exists(Path::new(refs.refs)) {
-                    write_framed_message_stdout("ERR reference doesn't exist on remote host", &mut stdout);
+                    write_framed_message_stdout(
+                        "ERR reference doesn't exist on remote host",
+                        &mut stdout,
+                    );
                     break;
                 }
             }
             "PACK" => {
                 // Drain 4 first bytes + \0
-                buffer.drain(..5);
-                let pack = match parse_upload_pack(&buffer) {
+                let pack = match parse_upload_pack(&buffer[5..]) {
                     Ok(p) => p,
                     Err(e) => {
                         eprintln!("Failed to parse upload pack: {e}");
@@ -98,7 +115,7 @@ fn handle_stream(mut stdout: io::Stdout) {
                 // Write pack content to disk
                 write_pack_to_disk(pack.data);
                 // Update head using refs and pack
-                update_refs(refs, pack);
+                update_refs(refs);
                 write_framed_message_stdout("ACK", &mut stdout);
             }
             _ => {

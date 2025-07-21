@@ -1,10 +1,10 @@
-use std::{fs::OpenOptions, io::Write};
+use std::{fs::{File, OpenOptions}, io::Write};
 
-use lrngitcore::pack::{refs::ParsedRefsPack, upload::UploadPack};
+use lrngitcore::pack::refs::ParsedRefsPack;
 
 /// Update HEAD file and given refs from 'refs' parameter. Check if there's no conflict and if
 /// there is all mandatory objects to rebuild historic
-pub fn update_refs(refs: ParsedRefsPack, pack: UploadPack) {
+pub fn update_refs(refs: ParsedRefsPack) {
     // Update HEAD
     let mut head: File = OpenOptions::new()
         .read(false)
@@ -12,7 +12,7 @@ pub fn update_refs(refs: ParsedRefsPack, pack: UploadPack) {
         .append(false)
         .open("HEAD")
         .expect("Failed to open HEAD file");
-    let updated_head: &str = &String::from("ref: ") + refs.refs;
+    let updated_head: String = String::from("ref: ") + refs.refs;
     head.write_all(updated_head.as_bytes())
         .expect("Failed to write updated HEAD content");
     // Update refs/heads

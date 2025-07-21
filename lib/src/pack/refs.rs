@@ -1,5 +1,5 @@
 /// Structure used for fast access to element in references pack
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct ParsedRefsPack<'a> {
     pub refs: &'a str,
     pub local_commit: &'a str,
